@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { SARABUN_REGULAR_BASE64, SARABUN_BOLD_BASE64 } from './sarabunFonts';
 
 export interface LogEntry {
   id: string;
@@ -320,50 +321,18 @@ function formatMMSS(seconds: number): string {
  */
 async function loadSarabunFonts(doc: jsPDF): Promise<boolean> {
   try {
-    const fetchFont = async (localPath: string, cdnUrl: string): Promise<ArrayBuffer> => {
-      try {
-        const res = await fetch(localPath);
-        if (res.ok) return await res.arrayBuffer();
-      } catch {
-        // Fallback
-      }
-      const cdnRes = await fetch(cdnUrl);
-      return await cdnRes.arrayBuffer();
-    };
+    if (SARABUN_REGULAR_BASE64 && SARABUN_BOLD_BASE64) {
+      doc.addFileToVFS('Sarabun-Regular.ttf', SARABUN_REGULAR_BASE64);
+      doc.addFont('Sarabun-Regular.ttf', 'Sarabun', 'normal');
 
-    const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
-      let binary = '';
-      const bytes = new Uint8Array(buffer);
-      const len = bytes.byteLength;
-      for (let i = 0; i < len; i++) {
-        binary += String.fromCharCode(bytes[i]);
-      }
-      return window.btoa(binary);
-    };
+      doc.addFileToVFS('Sarabun-Bold.ttf', SARABUN_BOLD_BASE64);
+      doc.addFont('Sarabun-Bold.ttf', 'Sarabun', 'bold');
 
-    const [regBuffer, boldBuffer] = await Promise.all([
-      fetchFont(
-        '/fonts/Sarabun-Regular.ttf',
-        'https://raw.githubusercontent.com/google/fonts/main/ofl/sarabun/Sarabun-Regular.ttf'
-      ),
-      fetchFont(
-        '/fonts/Sarabun-Bold.ttf',
-        'https://raw.githubusercontent.com/google/fonts/main/ofl/sarabun/Sarabun-Bold.ttf'
-      )
-    ]);
-
-    const regBase64 = arrayBufferToBase64(regBuffer);
-    const boldBase64 = arrayBufferToBase64(boldBuffer);
-
-    doc.addFileToVFS('Sarabun-Regular.ttf', regBase64);
-    doc.addFont('Sarabun-Regular.ttf', 'Sarabun', 'normal');
-
-    doc.addFileToVFS('Sarabun-Bold.ttf', boldBase64);
-    doc.addFont('Sarabun-Bold.ttf', 'Sarabun', 'bold');
-
-    return true;
+      return true;
+    }
+    return false;
   } catch (err) {
-    console.error('Failed to load Thai font for PDF:', err);
+    console.error('Failed to load Thai font for PDF, falling back to Helvetica:', err);
     return false;
   }
 }

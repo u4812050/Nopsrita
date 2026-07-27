@@ -51,6 +51,127 @@ const PROCEDURE_PRESETS = [
   { name: 'ROSC Achieved (Return of Spontaneous Circulation)', short: 'ROSC' },
 ];
 
+// Mini EKG Waveform Component for VF (Ventricular Fibrillation)
+function VfEkgIcon({ className = "w-14 h-8" }: { className?: string }) {
+  return (
+    <div className={`${className} bg-slate-950 rounded border border-red-900/60 p-0.5 relative overflow-hidden flex items-center justify-center shrink-0 shadow-inner`}>
+      {/* AHA Red Grid Background */}
+      <svg className="absolute inset-0 w-full h-full opacity-30" viewBox="0 0 60 30">
+        <line x1="0" y1="7.5" x2="60" y2="7.5" stroke="#ef4444" strokeWidth="0.5" strokeDasharray="1,1" />
+        <line x1="0" y1="15" x2="60" y2="15" stroke="#ef4444" strokeWidth="0.5" strokeDasharray="1,1" />
+        <line x1="0" y1="22.5" x2="60" y2="22.5" stroke="#ef4444" strokeWidth="0.5" strokeDasharray="1,1" />
+        <line x1="12" y1="0" x2="12" y2="30" stroke="#ef4444" strokeWidth="0.5" strokeDasharray="1,1" />
+        <line x1="24" y1="0" x2="24" y2="30" stroke="#ef4444" strokeWidth="0.5" strokeDasharray="1,1" />
+        <line x1="36" y1="0" x2="36" y2="30" stroke="#ef4444" strokeWidth="0.5" strokeDasharray="1,1" />
+        <line x1="48" y1="0" x2="48" y2="30" stroke="#ef4444" strokeWidth="0.5" strokeDasharray="1,1" />
+      </svg>
+      {/* High-Contrast Chaotic Coarse VF Waveform */}
+      <svg viewBox="0 0 60 30" className="w-full h-full relative z-10 overflow-visible">
+        <defs>
+          <filter id="vfGlow" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="0.8" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+        <path
+          d="M0 15 C2 5, 4 25, 7 8 C10 27, 13 2, 16 28 C19 11, 22 23, 25 5 C28 26, 31 12, 34 25 C37 3, 40 27, 43 9 C46 23, 49 10, 52 26 C55 12, 58 20, 60 15"
+          fill="none"
+          stroke="#ff4d4d"
+          strokeWidth="2.2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          filter="url(#vfGlow)"
+        />
+      </svg>
+    </div>
+  );
+}
+
+// Mini EKG Waveform Component for Pulseless VT (Ventricular Tachycardia)
+function VtEkgIcon({ className = "w-14 h-8" }: { className?: string }) {
+  return (
+    <div className={`${className} bg-slate-950 rounded border border-slate-700/80 p-0.5 relative overflow-hidden flex items-center justify-center shrink-0 shadow-inner`}>
+      <svg className="absolute inset-0 w-full h-full opacity-25" viewBox="0 0 60 30">
+        <line x1="0" y1="7.5" x2="60" y2="7.5" stroke="#ef4444" strokeWidth="0.5" strokeDasharray="1,1" />
+        <line x1="0" y1="15" x2="60" y2="15" stroke="#ef4444" strokeWidth="0.5" strokeDasharray="1,1" />
+        <line x1="0" y1="22.5" x2="60" y2="22.5" stroke="#ef4444" strokeWidth="0.5" strokeDasharray="1,1" />
+        <line x1="15" y1="0" x2="15" y2="30" stroke="#ef4444" strokeWidth="0.5" strokeDasharray="1,1" />
+        <line x1="30" y1="0" x2="30" y2="30" stroke="#ef4444" strokeWidth="0.5" strokeDasharray="1,1" />
+        <line x1="45" y1="0" x2="45" y2="30" stroke="#ef4444" strokeWidth="0.5" strokeDasharray="1,1" />
+      </svg>
+      <svg viewBox="0 0 60 30" className="w-full h-full relative z-10">
+        <path
+          d="M0 15 L3 3 L7 27 L11 3 L15 27 L19 3 L23 27 L27 3 L31 27 L35 3 L39 27 L43 3 L47 27 L51 3 L55 27 L60 15"
+          fill="none"
+          stroke="#f87171"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </div>
+  );
+}
+
+// Mini EKG Waveform Component for Asystole (Flatline)
+function AsystoleEkgIcon({ className = "w-14 h-8" }: { className?: string }) {
+  return (
+    <div className={`${className} bg-slate-950 rounded border border-slate-700/80 p-0.5 relative overflow-hidden flex items-center justify-center shrink-0 shadow-inner`}>
+      <svg className="absolute inset-0 w-full h-full opacity-25" viewBox="0 0 60 30">
+        <line x1="0" y1="7.5" x2="60" y2="7.5" stroke="#38bdf8" strokeWidth="0.5" strokeDasharray="1,1" />
+        <line x1="0" y1="15" x2="60" y2="15" stroke="#38bdf8" strokeWidth="0.5" strokeDasharray="1,1" />
+        <line x1="0" y1="22.5" x2="60" y2="22.5" stroke="#38bdf8" strokeWidth="0.5" strokeDasharray="1,1" />
+        <line x1="15" y1="0" x2="15" y2="30" stroke="#38bdf8" strokeWidth="0.5" strokeDasharray="1,1" />
+        <line x1="30" y1="0" x2="30" y2="30" stroke="#38bdf8" strokeWidth="0.5" strokeDasharray="1,1" />
+        <line x1="45" y1="0" x2="45" y2="30" stroke="#38bdf8" strokeWidth="0.5" strokeDasharray="1,1" />
+      </svg>
+      <svg viewBox="0 0 60 30" className="w-full h-full relative z-10">
+        <path
+          d="M0 15 L22 15 L24 14 L26 16 L28 15 L60 15"
+          fill="none"
+          stroke="#94a3b8"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </div>
+  );
+}
+
+// Mini EKG Waveform Component for PEA (Pulseless Electrical Activity)
+function PeaEkgIcon({ className = "w-14 h-8" }: { className?: string }) {
+  return (
+    <div className={`${className} bg-slate-950 rounded border border-amber-500/60 p-0.5 relative overflow-hidden flex items-center justify-center shrink-0 shadow-inner`}>
+      <svg className="absolute inset-0 w-full h-full opacity-25" viewBox="0 0 60 30">
+        <line x1="0" y1="7.5" x2="60" y2="7.5" stroke="#38bdf8" strokeWidth="0.5" strokeDasharray="1,1" />
+        <line x1="0" y1="15" x2="60" y2="15" stroke="#38bdf8" strokeWidth="0.5" strokeDasharray="1,1" />
+        <line x1="0" y1="22.5" x2="60" y2="22.5" stroke="#38bdf8" strokeWidth="0.5" strokeDasharray="1,1" />
+        <line x1="15" y1="0" x2="15" y2="30" stroke="#38bdf8" strokeWidth="0.5" strokeDasharray="1,1" />
+        <line x1="30" y1="0" x2="30" y2="30" stroke="#38bdf8" strokeWidth="0.5" strokeDasharray="1,1" />
+        <line x1="45" y1="0" x2="45" y2="30" stroke="#38bdf8" strokeWidth="0.5" strokeDasharray="1,1" />
+      </svg>
+      <svg viewBox="0 0 60 30" className="w-full h-full relative z-10">
+        <path
+          d="M0 18 L6 18 Q8 15 10 18 L12 18 L14 22 L16 2 L18 26 L20 18 L24 18 Q28 12 32 18 L60 18"
+          fill="none"
+          stroke="#38bdf8"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+      {/* NO PULSE Badge Overlay inside EKG preview image */}
+      <div className="absolute bottom-0.5 right-0.5 bg-red-600 text-white font-black text-[6.5px] px-1 rounded-[2px] leading-tight z-20 uppercase tracking-tighter border border-red-400 shadow-xs">
+        NO PULSE
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   // --- SYSTEM STATES ---
   const [systemTime, setSystemTime] = useState<string>('');
@@ -63,7 +184,7 @@ export default function App() {
   const cprSubCycleRef = useRef<number>(1);
   const lastPulseCheckedCycleRef = useRef<number>(0);
   const [voiceAlertsOn, setVoiceAlertsOn] = useState<boolean>(true);
-  const [activeTab, setActiveTab] = useState<'hsts' | 'guidelines' | 'trc_cardiac' | 'trc_tachy_brady' | 'medHistory'>('hsts');
+  const [activeTab, setActiveTab] = useState<'hsts' | 'trc_cardiac' | 'trc_tachy_brady' | 'trc_rosc' | 'medHistory'>('trc_cardiac');
   const [audioTesting, setAudioTesting] = useState<boolean>(false);
 
   // --- CORE CLINICAL STATES ---
@@ -340,6 +461,127 @@ export default function App() {
     }
   }, []);
 
+  // --- UNLOCK WEB AUDIO API ON FIRST USER INTERACTION ---
+  useEffect(() => {
+    const unlockAudio = () => {
+      if (!audioCtxRef.current) {
+        audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
+      if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
+        audioCtxRef.current.resume();
+      }
+      window.removeEventListener('click', unlockAudio);
+      window.removeEventListener('touchstart', unlockAudio);
+    };
+    window.addEventListener('click', unlockAudio);
+    window.addEventListener('touchstart', unlockAudio);
+    return () => {
+      window.removeEventListener('click', unlockAudio);
+      window.removeEventListener('touchstart', unlockAudio);
+    };
+  }, []);
+
+  // --- CLINICAL ALARM & AUDIO CHIME GENERATOR (Web Audio API) ---
+  const playAlertChime = (type: 'cpr_expire' | 'pulse_check' | 'med_due' | 'vent_cue' | 'mode_switch' | 'test') => {
+    try {
+      if (!audioCtxRef.current) {
+        audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
+      const ctx = audioCtxRef.current;
+      if (ctx.state === 'suspended') {
+        ctx.resume();
+      }
+      const now = ctx.currentTime;
+
+      if (type === 'cpr_expire') {
+        // 3-tone urgent clinical bell chime (C5 -> E5 -> G5)
+        [523.25, 659.25, 783.99].forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now + i * 0.12);
+          gain.gain.setValueAtTime(0.25, now + i * 0.12);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.12 + 0.35);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + i * 0.12);
+          osc.stop(now + i * 0.12 + 0.36);
+        });
+      } else if (type === 'pulse_check') {
+        // 2-tone pulse ping
+        [880, 1174.66].forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, now + i * 0.1);
+          gain.gain.setValueAtTime(0.22, now + i * 0.1);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.1 + 0.25);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + i * 0.1);
+          osc.stop(now + i * 0.1 + 0.26);
+        });
+      } else if (type === 'med_due') {
+        // Attention double-beep chime for Epinephrine & Medication Due
+        [750, 750].forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now + i * 0.15);
+          gain.gain.setValueAtTime(0.25, now + i * 0.15);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.15 + 0.12);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + i * 0.15);
+          osc.stop(now + i * 0.15 + 0.13);
+        });
+      } else if (type === 'vent_cue') {
+        // Gentle 2-stage ventilation cue sound
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(440, now);
+        osc.frequency.exponentialRampToValueAtTime(554.37, now + 0.22);
+        gain.gain.setValueAtTime(0.18, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.32);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.33);
+      } else if (type === 'mode_switch') {
+        // Ascending chord chime for mode switch
+        [440, 554.37, 659.25].forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now + i * 0.08);
+          gain.gain.setValueAtTime(0.2, now + i * 0.08);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.3);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + i * 0.08);
+          osc.stop(now + i * 0.08 + 0.31);
+        });
+      } else if (type === 'test') {
+        // Full test chime
+        [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now + i * 0.1);
+          gain.gain.setValueAtTime(0.2, now + i * 0.1);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.1 + 0.25);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + i * 0.1);
+          osc.stop(now + i * 0.1 + 0.26);
+        });
+      }
+    } catch (err) {
+      console.warn("Audio Chime API error:", err);
+    }
+  };
+
   // --- VOICE SPEECH HELPER (Thai Language) ---
   const speakThai = (text: string, onEnd?: () => void, customRate?: number) => {
     if (!voiceAlertsOn) {
@@ -394,7 +636,8 @@ export default function App() {
 
         const utterance = new SpeechSynthesisUtterance(spokenText);
         utterance.lang = 'th-TH';
-        utterance.rate = customRate !== undefined ? customRate : (isCountdown ? 1.2 : (isCycleNoSuffix ? 1.1 : 0.96)); // Crisp 1.1 speed for 30:2 CPR cycle alerts
+        utterance.volume = 1.0; // Maximum clarity for noisy clinical resuscitation rooms
+        utterance.rate = customRate !== undefined ? customRate : 1.1; // Default rate 1.1 for all system voice alerts
         utterance.pitch = 1.05; // Slightly sweet, clear, friendly feminine tone
         
         if (onEnd) {
@@ -442,14 +685,21 @@ export default function App() {
     if (!skipLog) {
       addLog(`ALERT: ${treatmentName} administered. Reassess patient stable vs unstable status immediately (ประเมินอาการคงที่ และไม่คงที่ ซ้ำอีกครั้ง)!`, "system");
     }
+    playAlertChime('med_due');
     speakThai(speechText);
   };
 
   // --- AUDIO TESTER ---
   const testAudioSystem = () => {
     setAudioTesting(true);
-    speakThai("ระบบเสียงเตือนภาษาไทย พร้อมใช้งานแล้วนะคะ");
-    setTimeout(() => setAudioTesting(false), 3000);
+    playAlertChime('test');
+    setTimeout(() => {
+      playAlertChime('vent_cue');
+    }, 400);
+    setTimeout(() => {
+      speakThai("ระบบเสียงเตือนและสัญญาณเสียงการช่วยชีวิตขั้นสูง พร้อมใช้งานแล้วนะคะ");
+    }, 900);
+    setTimeout(() => setAudioTesting(false), 3800);
   };
 
   // --- METRONOME SYNTH (110 BPM, Web Audio) ---
@@ -472,7 +722,7 @@ export default function App() {
       osc.type = 'sine';
       osc.frequency.setValueAtTime(isAccent ? 1200 : 900, ctx.currentTime);
       
-      gain.gain.setValueAtTime(isAccent ? 0.2 : 0.12, ctx.currentTime);
+      gain.gain.setValueAtTime(isAccent ? 0.22 : 0.14, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + (isAccent ? 0.08 : 0.05));
       
       osc.start(ctx.currentTime);
@@ -523,6 +773,7 @@ export default function App() {
               if (lastPulseCheckedCycleRef.current !== currentCycleNumber) {
                 lastPulseCheckedCycleRef.current = currentCycleNumber;
                 setCprCycle(c => c + 1);
+                playAlertChime('cpr_expire');
                 speakThai("ครบ 5 ไซเคิล รีบประเมินชีพจรและอีเคจี", () => {
                   setPulseCheckActive(true);
                   setPulseCheckTime(10);
@@ -534,17 +785,22 @@ export default function App() {
               cprSubCycleRef.current = nextCycle;
               setCprSubCycle302(nextCycle);
 
-              speakThai(`${completedCycle}`, undefined, 1.0);
+              speakThai(`${completedCycle}`);
             }
           }
 
           timerId = setTimeout(scheduleNextTick, nextDelayMs);
         } else {
-          // Continuous compression ticks
+          // Continuous compression ticks (110 BPM)
           metronomeBeatRef.current = (metronomeBeatRef.current % 30) + 1;
           const currentBeat = metronomeBeatRef.current;
           setMetronomeBeat(currentBeat);
           playSynthesizedTick(currentBeat === 30);
+
+          // Ventilation audio cue sound every 11 beats (≈ 6.0 seconds at 110 BPM)
+          if (currentBeat % 11 === 0) {
+            playAlertChime('vent_cue');
+          }
 
           timerId = setTimeout(scheduleNextTick, intervalMs);
         }
@@ -576,6 +832,7 @@ export default function App() {
             
             // Warnings (Only in Continuous CPR mode)
             if (nextValue === 30 && metronomeMode !== '30:2') {
+              playAlertChime('med_due');
               speakThai("เหลือเวลา 30 วินาที เตรียมเช็คริทึ่ม และเตรียมยา");
             }
             
@@ -588,10 +845,11 @@ export default function App() {
               if (lastPulseCheckedCycleRef.current !== currentCycleNumber) {
                 lastPulseCheckedCycleRef.current = currentCycleNumber;
                 setCprCycle(c => c + 1);
+                playAlertChime('cpr_expire');
                 speakThai("ครบ 2 นาที รีบประเมินชีพจรและอีเคจี ค่ะ", () => {
                   setPulseCheckActive(true);
                   setPulseCheckTime(10);
-                }, 1.0);
+                });
               }
               return 120; // reset for next cycle
             }
@@ -604,6 +862,7 @@ export default function App() {
           setEpiTimeRemaining(prev => {
             if (prev <= 1) {
               if (prev === 1) {
+                playAlertChime('med_due');
                 speakThai("ถึงเวลาให้ยาเอพิเนฟริน");
                 setEpiAlertActive(true);
               }
@@ -645,7 +904,8 @@ export default function App() {
       setPulseCheckTime(10);
       setCprButtonFlash(true);
 
-      speakThai("หมดเวลาประเมินชีพจรและอีเคจี รีบ CPR ต่อทันที", () => {
+      playAlertChime('pulse_check');
+      speakThai("หมดเวลาประเมินชีพจรและอีเคจีรีบซีพีอาต่อค่ะ", () => {
         if (!caseActive) {
           setCaseActive(true);
           setCaseStartTime(Date.now());
@@ -783,7 +1043,7 @@ export default function App() {
     setGuidanceMessage(
       "พบคลื่นไฟฟ้าหัวใจ SHOCKABLE! โปรดเลือกชนิดคลื่น (VF หรือ Pulseless VT) แล้วกดปุ่มปล่อยช็อกหัวใจตรงกลางหน้าจอค่ะ"
     );
-    speakThai("คลื่นไฟฟ้าหัวใจต้องการการช็อค โปรดเลือกชนิดคลื่นไฟฟ้าหัวใจ และกดปุ่มปล่อยช็อคหัวใจตรงกลางนะคะ");
+    speakThai("คลื่นไฟฟ้าหัวใจต้องการการช๊อกโปรดเลือกชนิดคลื่นไฟฟ้าหัวใจ วีเอฟ หรือ วีที และกดปุ่มปล่อยช๊อกตรงกลางนะคะ");
     setActiveTab('trc_cardiac');
   };
 
@@ -970,7 +1230,6 @@ export default function App() {
     // Stop CPR and CPR timer
     if (cprActive) {
       setCprActive(false);
-      addLog("CPR Paused immediately: Return of Spontaneous Circulation (ROSC) achieved! (ผู้ป่วยมีชีพจรกลับคืนมาแล้ว หยุดทำ CPR ทันที)", "cpr");
     }
 
     // Stop all continuous drug timers and clear alerts
@@ -989,6 +1248,7 @@ export default function App() {
 
     addLog("ROSC ACHIEVED!-> Switched to Post-Cardiac Arrest Care Protocol", "system");
     speakThai("ยินดีด้วยนะคะ คนไข้กลับมามีชีพจรแล้วค่ะ สิ้นสุดกระบวนการฟื้นคืนชีพ และเริ่มทำตามแนวทางการดูแลหลังกู้ชีพจรสำเร็จทันทีค่ะ");
+    setActiveTab('trc_rosc');
   };
 
   // Log Medication: Epinephrine
@@ -1116,6 +1376,27 @@ export default function App() {
       procName.includes('PETCO2')
     ) {
       setEtco2AlertActive(false);
+    }
+
+    const isLoggingAirway =
+      procName.includes('Advanced Airway') ||
+      procName.includes('ET Tube') ||
+      procName.includes('ET-Tube');
+
+    const isLoggingEtco2 =
+      procName.includes('Intubation Confirmed') ||
+      procName.includes('ETCO2') ||
+      procName.includes('Capnography') ||
+      procName.includes('PETCO2');
+
+    // Auto-switch CPR mode to Continuous 2-Min and voice alert when both Advanced Airway Secured AND Intubation Confirmed by ETCO2 are completed in sequence
+    if (
+      (isLoggingEtco2 && hasCompletedAirway) ||
+      (isLoggingAirway && hasCompletedEtco2)
+    ) {
+      setMetronomeMode('continuous');
+      playAlertChime('mode_switch');
+      speakThai("เปลี่ยนการซีพีอา เป็นแบบสองนาทีต่อเนื่อง และเปลี่ยนการช่วยหายใจทุกหกวินาทีค่ะ");
     }
 
     addLog(`Procedure: ${procName}`, "system");
@@ -1750,7 +2031,7 @@ export default function App() {
                               setGuidanceMessage("พบคลื่นไฟฟ้าหัวใจ VF! พร้อมกดปุ่ม Defibrillation (SHOCK) เพื่อปล่อยช็อกไฟฟ้า 200J");
                               speakThai("เลือกคลื่นไฟฟ้าหัวใจ วีเอฟ เรียบร้อยแล้วค่ะ โปรดกดปุ่มช็อกเพื่อปล่อยพลังงานสองร้อยจูลนะคะ");
                             }}
-                            className={`py-3 px-3.5 rounded-xl font-black text-xs sm:text-sm transition-all active:scale-95 cursor-pointer flex items-center justify-between border ${
+                            className={`py-2.5 px-3 rounded-xl font-black text-xs sm:text-sm transition-all active:scale-95 cursor-pointer flex items-center justify-between gap-2 border ${
                               selectedShockableRhythm === 'VF'
                                 ? 'bg-red-600 text-white border-red-700 shadow-md ring-2 ring-red-400'
                                 : !selectedShockableRhythm
@@ -1758,11 +2039,14 @@ export default function App() {
                                 : 'bg-white hover:bg-red-50 text-slate-800 border-slate-200 shadow-xs'
                             }`}
                           >
-                            <div className="flex flex-col text-left">
-                              <span>VF</span>
-                              <span className={`text-[9px] font-normal ${selectedShockableRhythm === 'VF' || !selectedShockableRhythm ? 'text-red-100' : 'text-slate-500'}`}>Ventricular Fibrillation</span>
+                            <div className="flex items-center gap-2 min-w-0">
+                              <VfEkgIcon className="w-11 h-7 sm:w-13 sm:h-8" />
+                              <div className="flex flex-col text-left min-w-0">
+                                <span className="text-sm font-black leading-tight">VF</span>
+                                <span className={`text-[9px] font-normal truncate ${selectedShockableRhythm === 'VF' || !selectedShockableRhythm ? 'text-red-100' : 'text-slate-500'}`}>Ventricular Fibrillation</span>
+                              </div>
                             </div>
-                            {selectedShockableRhythm === 'VF' && <Check className="w-4 h-4 text-white shrink-0" />}
+                            {selectedShockableRhythm === 'VF' && <Check className="w-4 h-4 text-white shrink-0 ml-1" />}
                           </button>
 
                           <button
@@ -1773,7 +2057,7 @@ export default function App() {
                               setGuidanceMessage("พบคลื่นไฟฟ้าหัวใจ Pulseless VT! พร้อมกดปุ่ม Defibrillation (SHOCK) เพื่อปล่อยช็อกไฟฟ้า 200J");
                               speakThai("เลือกคลื่นไฟฟ้าหัวใจ เพ๊าเหล็ด วีที เรียบร้อยแล้วค่ะ โปรดกดปุ่มช็อกเพื่อปล่อยพลังงานสองร้อยจูลนะคะ");
                             }}
-                            className={`py-3 px-3.5 rounded-xl font-black text-xs sm:text-sm transition-all active:scale-95 cursor-pointer flex items-center justify-between border ${
+                            className={`py-2.5 px-3 rounded-xl font-black text-xs sm:text-sm transition-all active:scale-95 cursor-pointer flex items-center justify-between gap-2 border ${
                               selectedShockableRhythm === 'Pulseless VT'
                                 ? 'bg-red-600 text-white border-red-700 shadow-md ring-2 ring-red-400'
                                 : !selectedShockableRhythm
@@ -1781,11 +2065,14 @@ export default function App() {
                                 : 'bg-white hover:bg-red-50 text-slate-800 border-slate-200 shadow-xs'
                             }`}
                           >
-                            <div className="flex flex-col text-left">
-                              <span>Pulseless VT</span>
-                              <span className={`text-[9px] font-normal ${selectedShockableRhythm === 'Pulseless VT' || !selectedShockableRhythm ? 'text-red-100' : 'text-slate-500'}`}>Pulseless Ventricular Tachycardia</span>
+                            <div className="flex items-center gap-2 min-w-0">
+                              <VtEkgIcon className="w-11 h-7 sm:w-13 sm:h-8" />
+                              <div className="flex flex-col text-left min-w-0">
+                                <span className="text-sm font-black leading-tight">Pulseless VT</span>
+                                <span className={`text-[9px] font-normal truncate ${selectedShockableRhythm === 'Pulseless VT' || !selectedShockableRhythm ? 'text-red-100' : 'text-slate-500'}`}>Pulseless VT</span>
+                              </div>
                             </div>
-                            {selectedShockableRhythm === 'Pulseless VT' && <Check className="w-4 h-4 text-white shrink-0" />}
+                            {selectedShockableRhythm === 'Pulseless VT' && <Check className="w-4 h-4 text-white shrink-0 ml-1" />}
                           </button>
                         </div>
                       </div>
@@ -1910,7 +2197,7 @@ export default function App() {
                               speakThai("เลือกคลื่นไฟฟ้าหัวใจ อะซิสโทลี เรียบร้อยแล้วค่ะ");
                             }
                           }}
-                          className={`py-3 px-3.5 rounded-xl font-black text-xs sm:text-sm transition-all active:scale-95 cursor-pointer flex items-center justify-between border ${
+                          className={`py-2.5 px-3 rounded-xl font-black text-xs sm:text-sm transition-all active:scale-95 cursor-pointer flex items-center justify-between gap-2 border ${
                             selectedNonShockableRhythm === 'Asystole'
                               ? 'bg-slate-800 text-white border-slate-900 shadow-md ring-2 ring-slate-500'
                               : !selectedNonShockableRhythm
@@ -1918,11 +2205,14 @@ export default function App() {
                               : 'bg-white hover:bg-slate-100 text-slate-800 border-slate-200 shadow-xs'
                           }`}
                         >
-                          <div className="flex flex-col text-left">
-                            <span>Asystole</span>
-                            <span className={`text-[9px] font-normal ${selectedNonShockableRhythm === 'Asystole' || !selectedNonShockableRhythm ? 'text-slate-300' : 'text-slate-500'}`}>Flatline / No Activity</span>
+                          <div className="flex items-center gap-2 min-w-0">
+                            <AsystoleEkgIcon className="w-11 h-7 sm:w-13 sm:h-8" />
+                            <div className="flex flex-col text-left min-w-0">
+                              <span className="text-sm font-black leading-tight">Asystole</span>
+                              <span className={`text-[9px] font-normal truncate ${selectedNonShockableRhythm === 'Asystole' || !selectedNonShockableRhythm ? 'text-slate-300' : 'text-slate-500'}`}>Flatline / No Activity</span>
+                            </div>
                           </div>
-                          {selectedNonShockableRhythm === 'Asystole' && <Check className="w-4 h-4 text-white shrink-0" />}
+                          {selectedNonShockableRhythm === 'Asystole' && <Check className="w-4 h-4 text-white shrink-0 ml-1" />}
                         </button>
 
                         <button
@@ -1937,7 +2227,7 @@ export default function App() {
                               speakThai("เลือกคลื่นไฟฟ้าหัวใจ พีอีเอ เรียบร้อยแล้วค่ะ");
                             }
                           }}
-                          className={`py-3 px-3.5 rounded-xl font-black text-xs sm:text-sm transition-all active:scale-95 cursor-pointer flex items-center justify-between border ${
+                          className={`py-2.5 px-3 rounded-xl font-black text-xs sm:text-sm transition-all active:scale-95 cursor-pointer flex items-center justify-between gap-2 border ${
                             selectedNonShockableRhythm === 'PEA'
                               ? 'bg-slate-800 text-white border-slate-900 shadow-md ring-2 ring-slate-500'
                               : !selectedNonShockableRhythm
@@ -1945,11 +2235,14 @@ export default function App() {
                               : 'bg-white hover:bg-slate-100 text-slate-800 border-slate-200 shadow-xs'
                           }`}
                         >
-                          <div className="flex flex-col text-left">
-                            <span>PEA</span>
-                            <span className={`text-[9px] font-normal ${selectedNonShockableRhythm === 'PEA' || !selectedNonShockableRhythm ? 'text-slate-300' : 'text-slate-500'}`}>Pulseless Electrical Activity</span>
+                          <div className="flex items-center gap-2 min-w-0">
+                            <PeaEkgIcon className="w-11 h-7 sm:w-13 sm:h-8" />
+                            <div className="flex flex-col text-left min-w-0">
+                              <span className="text-sm font-black leading-tight">PEA</span>
+                              <span className={`text-[9px] font-normal truncate ${selectedNonShockableRhythm === 'PEA' || !selectedNonShockableRhythm ? 'text-slate-300' : 'text-slate-500'}`}>Pulseless Electrical Activity (No Pulse)</span>
+                            </div>
                           </div>
-                          {selectedNonShockableRhythm === 'PEA' && <Check className="w-4 h-4 text-white shrink-0" />}
+                          {selectedNonShockableRhythm === 'PEA' && <Check className="w-4 h-4 text-white shrink-0 ml-1" />}
                         </button>
                       </div>
                     </div>
@@ -3259,17 +3552,6 @@ export default function App() {
           <section id="guideline_checklists" className="bg-white border border-slate-200 rounded-[16px] p-2.5 shadow-md flex flex-col">
             <div className="flex border-b border-slate-200 pb-1.5 gap-1.5 overflow-x-auto scrollbar-thin">
               <button
-                id="tab_btn_guidelines"
-                onClick={() => setActiveTab('guidelines')}
-                className={`px-2 py-0.5 rounded-md font-black text-[10px] transition-colors cursor-pointer whitespace-nowrap ${
-                  activeTab === 'guidelines' 
-                    ? 'bg-cyan-50 text-cyan-800 border border-cyan-200/80' 
-                    : 'text-slate-500 hover:text-slate-800'
-                }`}
-              >
-                AHA Algorithms
-              </button>
-              <button
                 id="tab_btn_trc_cardiac"
                 onClick={() => setActiveTab('trc_cardiac')}
                 className={`px-2 py-0.5 rounded-md font-black text-[10px] transition-colors cursor-pointer whitespace-nowrap ${
@@ -3290,6 +3572,17 @@ export default function App() {
                 }`}
               >
                 TRC 2025 (Tachy/Brady) 🇹🇭
+              </button>
+              <button
+                id="tab_btn_trc_rosc"
+                onClick={() => setActiveTab('trc_rosc')}
+                className={`px-2 py-0.5 rounded-md font-black text-[10px] transition-colors cursor-pointer whitespace-nowrap ${
+                  activeTab === 'trc_rosc' 
+                    ? 'bg-emerald-50 text-emerald-800 border border-emerald-200/80' 
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                ROSC Care 🇹🇭
               </button>
               <button
                 id="tab_btn_procedures"
@@ -3392,38 +3685,6 @@ export default function App() {
                 </div>
               )}
 
-              {activeTab === 'guidelines' && (
-                <div className="bg-slate-50 p-2 rounded-lg border border-slate-200/80 space-y-1.5">
-                  <h4 className="text-[10px] font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1">
-                    <CheckSquare className="w-3.5 h-3.5 text-cyan-700" />
-                    ACLS Cardiac Arrest Matrix
-                  </h4>
-                  
-                  <div className="space-y-1 text-[9.5px] leading-tight text-slate-700">
-                    <div className="border-l-2 border-red-500 pl-2 py-0.5 bg-white rounded shadow-xs">
-                      <strong className="text-red-600 uppercase block font-black">Shockable (VF/pVT):</strong>
-                      <span className="text-[8.5px] text-slate-600 block">
-                        Shock &rarr; CPR 2m &rarr; Shock &rarr; CPR 2m + Epinephrine &rarr; Shock &rarr; CPR 2m + Amiodarone 300mg.
-                      </span>
-                    </div>
-
-                    <div className="border-l-2 border-cyan-500 pl-2 py-0.5 bg-white rounded shadow-xs">
-                      <strong className="text-cyan-700 uppercase block font-black">Non-Shockable (Asystole/PEA):</strong>
-                      <span className="text-[8.5px] text-slate-600 block">
-                        Epi ASAP &rarr; CPR 2 mins &rarr; Reassess rhythm &rarr; Resume CPR &rarr; Rule out 5H & 5T.
-                      </span>
-                    </div>
-
-                    <div className="border-l-2 border-emerald-500 pl-2 py-0.5 bg-white rounded shadow-xs">
-                      <strong className="text-emerald-700 uppercase block font-black">High-Quality CPR Parameters:</strong>
-                      <span className="text-[8.5px] text-slate-600 block">
-                        Rate: 100-120/min • Depth: 2-2.4 in (5-6 cm) • Recoil fully • Min interruptions (&lt;10s).
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
               {activeTab === 'trc_cardiac' && (
                 <div className="bg-slate-50 p-2 rounded-lg border border-slate-200/80 space-y-2">
                   <div className="flex justify-between items-center border-b border-slate-200 pb-1">
@@ -3477,11 +3738,11 @@ export default function App() {
                   <div className="flex justify-between items-center border-b border-slate-200 pb-1">
                     <h4 className="text-[10px] font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1">
                       <Activity className="w-3.5 h-3.5 text-cyan-600" />
-                      Tachy/Brady & ROSC - TRC 25 🇹🇭
+                      Tachy/Brady - TRC 2025 🇹🇭
                     </h4>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                     {/* Tachycardia Card */}
                     <div className="bg-white p-2 rounded-lg border border-cyan-100 shadow-xs flex flex-col justify-between leading-tight">
                       <div>
@@ -3517,25 +3778,81 @@ export default function App() {
                         </div>
                       </div>
                     </div>
+                  </div>
+                </div>
+              )}
 
-                    {/* Post-Cardiac Arrest Care (ROSC) */}
-                    <div className="bg-white p-2 rounded-lg border border-emerald-100 shadow-xs flex flex-col justify-between leading-tight">
+              {activeTab === 'trc_rosc' && (
+                <div className="bg-slate-50 p-2 rounded-lg border border-slate-200/80 space-y-2">
+                  <div className="flex justify-between items-center border-b border-slate-200 pb-1">
+                    <h4 className="text-[10px] font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1">
+                      <Heart className="w-3.5 h-3.5 text-emerald-600 animate-pulse" />
+                      Post-Cardiac Arrest Care (ROSC) - TRC 2025 🇹🇭
+                    </h4>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    {/* Airway & Ventilation */}
+                    <div className="bg-white p-2 rounded-lg border border-emerald-200 shadow-xs flex flex-col justify-between leading-tight">
                       <div>
-                        <span className="text-[9px] font-black text-emerald-700 uppercase block mb-0.5">3. ROSC Care</span>
-                        <span className="text-[7.5px] text-slate-500 block mb-1">Post-Cardiac Arrest Care protocol parameters</span>
+                        <span className="text-[9px] font-black text-emerald-700 uppercase block mb-0.5">1. Airway & Ventilation</span>
+                        <span className="text-[7.5px] text-slate-500 block mb-1">การจัดการทางเดินหายใจและการระบายอากาศ</span>
                       </div>
                       <div className="space-y-1 text-[8px] mt-1">
-                        <div className="bg-emerald-50/40 p-1 rounded border border-emerald-100/75">
-                          <strong className="text-emerald-800 block">• Airway & Ventilation:</strong>
-                          <span>SpO2 90-98%, PaCO2 35-45 mmHg • Avoid hyperventilation</span>
+                        <div className="bg-emerald-50/60 p-1 rounded border border-emerald-100">
+                          <strong className="text-emerald-800 block">• SpO2 Target:</strong>
+                          <span>92-98% (ป้องกัน Hypoxia และ Hyperoxia)</span>
                         </div>
-                        <div className="bg-cyan-50/40 p-1 rounded border border-cyan-100/75">
-                          <strong className="text-cyan-800 block">• Blood Pressure Control:</strong>
-                          <span>MAP &ge; 65 mmHg (IV bolus, Dopamine/Norepi)</span>
+                        <div className="bg-emerald-50/60 p-1 rounded border border-emerald-100">
+                          <strong className="text-emerald-800 block">• PaCO2 / PETCO2:</strong>
+                          <span>PaCO2 35-45 mmHg (PETCO2 35-40 mmHg)</span>
                         </div>
-                        <div className="bg-indigo-50/40 p-1 rounded border border-indigo-100/75">
-                          <strong className="text-indigo-800 block">• Temperature Control / Neurological:</strong>
-                          <span>32-37.5&deg;C อย่างน้อย 36 ชม. (หากไม่รู้สึกตัว)</span>
+                        <div className="bg-amber-50 p-1 rounded border border-amber-200 text-amber-900 font-semibold">
+                          ⚠️ หลีกเลี่ยง Hyperventilation (เริ่ม 10 ครั้ง/นาที)
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Hemodynamics & BP */}
+                    <div className="bg-white p-2 rounded-lg border border-cyan-200 shadow-xs flex flex-col justify-between leading-tight">
+                      <div>
+                        <span className="text-[9px] font-black text-cyan-800 uppercase block mb-0.5">2. Hemodynamics & BP</span>
+                        <span className="text-[7.5px] text-slate-500 block mb-1">การดูแลระบบไหลเวียนโลหิตและความดัน</span>
+                      </div>
+                      <div className="space-y-1 text-[8px] mt-1">
+                        <div className="bg-cyan-50/60 p-1 rounded border border-cyan-100">
+                          <strong className="text-cyan-800 block">• Target BP:</strong>
+                          <span>SBP &ge; 90 mmHg / MAP &ge; 65 mmHg</span>
+                        </div>
+                        <div className="bg-cyan-50/60 p-1 rounded border border-cyan-100">
+                          <strong className="text-cyan-800 block">• Fluid Bolus:</strong>
+                          <span>ให้ IV Crystalloid ชดเชยปริมาตรเลือด</span>
+                        </div>
+                        <div className="bg-cyan-50/60 p-1 rounded border border-cyan-100">
+                          <strong className="text-cyan-800 block">• Vasopressor Drip:</strong>
+                          <span>Norepinephrine / Epinephrine / Dopamine</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* ECG, STEMI & TTM */}
+                    <div className="bg-white p-2 rounded-lg border border-purple-200 shadow-xs flex flex-col justify-between leading-tight">
+                      <div>
+                        <span className="text-[9px] font-black text-purple-800 uppercase block mb-0.5">3. STEMI & Temperature (TTM)</span>
+                        <span className="text-[7.5px] text-slate-500 block mb-1">การสวนหัวใจและการประคองสมอง</span>
+                      </div>
+                      <div className="space-y-1 text-[8px] mt-1">
+                        <div className="bg-purple-50/60 p-1 rounded border border-purple-100">
+                          <strong className="text-purple-800 block">• 12-Lead ECG / PCI:</strong>
+                          <span>ทำ ECG ด่วน หากพบ STEMI ส่งสวนหัวใจ PCI ทันที</span>
+                        </div>
+                        <div className="bg-purple-50/60 p-1 rounded border border-purple-100">
+                          <strong className="text-purple-800 block">• Temperature Control:</strong>
+                          <span>32-37.5&deg;C อย่างน้อย 36 ชม. หากไม่รู้สึกตัว</span>
+                        </div>
+                        <div className="bg-purple-50/60 p-1 rounded border border-purple-100">
+                          <strong className="text-purple-800 block">• Neuro Evaluation:</strong>
+                          <span>ส่ง Head CT, ตรวจระดับน้ำตาล & เกลือแร่</span>
                         </div>
                       </div>
                     </div>
