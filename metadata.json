@@ -1,0 +1,8 @@
+{
+  "name": "Remix Smart ACLS COPILOT",
+  "description": "An interactive, high-contrast resuscitation assistant for CPR timers, rhythm assessments, and epinephrine logging based on AHA guidelines.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
