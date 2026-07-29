@@ -40,10 +40,12 @@ function translateLogTextToEnglish(text: string): string {
     [/กดหน้าอกต่อ/gi, 'Resume CPR'],
     [/เลือกการนับ CPR 2 นาทีแบบต่อเนื่อง|เลือกการนับเวลา CPR 2 นาที แบบต่อเนื่อง/gi, 'Mode: 2-Min Continuous CPR'],
     [/เลือกการนับ CPR แบบ 30 ต่อ 2|เลือกการนับ 30 ต่อ 2/gi, 'Mode: 30:2 CPR (5 Cycles)'],
+    [/CPR 30:2 ครบ 5 Cycle|CPR 30:2 ครบ 5 รอบ|ครบ 5 รอบ สามสิบต่อสอง|ครบ 5 ไซเคิล/gi, 'Completed 5 Cycles of 30:2 CPR'],
+    [/CPR ต่อเนื่องครบ 2 นาที|CPR ครบ 2 นาที/gi, 'Completed 2-Min Continuous CPR'],
+    [/ประเมินชีพจรและ EKG|ประเมินชีพจรและอีเคจี/gi, 'Assess Pulse & Rhythm (EKG)'],
     [/ครบรอบที่ (\d+)/gi, 'Completed 30:2 Cycle $1'],
     [/รอบที่ (\d+) จาก 5/gi, '30:2 Cycle $1 of 5'],
-    [/ครบ 5 รอบ สามสิบต่อสอง|ครบ 5 ไซเคิล/gi, 'Completed 5 Cycles of 30:2'],
-    [/ประเมินชีพจรและอีเคจี/gi, 'Assess Pulse & Rhythm'],
+    [/รอบที่ (\d+)/gi, 'Cycle $1'],
     [/ปล่อยช็อกครั้งที่ (\d+)/gi, 'Defibrillation #$1 Delivered'],
     [/ช็อคได้/gi, 'Shockable Rhythm'],
     [/ช็อคไม่ได้/gi, 'Non-Shockable Rhythm'],
@@ -281,7 +283,19 @@ function parseLogRow(entry: LogEntry) {
   // 5. Nurse's Note
   let nurseNote = translateLogTextToEnglish(text);
 
-  if (textLower.includes('noradrenaline') || textLower.includes('นอร์อดรีนาลีน')) {
+  if (textLower.includes('alteplase') || textLower.includes('rtpa') || textLower.includes('อัลเตเพลส')) {
+    nurseNote = `[X] Administered Alteplase (rtPA) 50mg IV bolus`;
+  } else if (textLower.includes('naloxone') || textLower.includes('นาล็อกโซน')) {
+    nurseNote = `[X] Administered Naloxone 0.4mg IV`;
+  } else if (textLower.includes('d50') || textLower.includes('insulin') || textLower.includes('อินซูลิน')) {
+    nurseNote = `[X] Administered Regular Insulin 10U + D50W IV`;
+  } else if (textLower.includes('mgso4') || textLower.includes('magnesium') || textLower.includes('แมกนีเซียม')) {
+    nurseNote = `[X] Administered MgSO4 2g IV`;
+  } else if (textLower.includes('gluconate') || textLower.includes('calcium') || textLower.includes('แคลเซียม')) {
+    nurseNote = `[X] Administered Ca Gluconate 10% IV`;
+  } else if (textLower.includes('nahco3') || textLower.includes('bicarbonate') || textLower.includes('ไบคาบ') || textLower.includes('ไบคาร์บอเนต')) {
+    nurseNote = `[X] Administered NaHCO3 50mEq IV`;
+  } else if (textLower.includes('noradrenaline') || textLower.includes('นอร์อดรีนาลีน')) {
     nurseNote = `Noradrenaline Infusion (${nurseNote})`;
   }
 
@@ -423,12 +437,10 @@ export async function generateResuscitationPDF(logs: LogEntry[], stats: SummaryS
     ]
   ];
 
-  // Convert logs to table rows (excluding 2-Minute Continuous mode switch log entries, 30s warnings, and cycle complete logs)
+  // Convert logs to table rows (excluding mode switch log entries, 30s warnings, etc.)
   const filteredLogs = logs.filter(entry => {
     const txt = entry.text || '';
-    return !txt.includes('Switched CPR Mode to 2-Minute Continuous CPR') &&
-           !txt.includes('2-Minute Continuous') &&
-           !txt.includes('2-Min Continuous') &&
+    return !txt.includes('Switched CPR Mode to') &&
            !txt.includes('30 seconds left in CPR Cycle') &&
            !txt.includes('Rhythm evaluation required immediately!');
   });
