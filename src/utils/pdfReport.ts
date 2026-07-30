@@ -50,6 +50,7 @@ function translateLogTextToEnglish(text: string): string {
     [/ช็อคได้/gi, 'Shockable Rhythm'],
     [/ช็อคไม่ได้/gi, 'Non-Shockable Rhythm'],
     [/เรียบร้อยแล้วค่ะ|เรียบร้อยแล้ว|แล้วค่ะ|ค่ะ|ครับ/gi, ''],
+    [/ให้ยานอร์เอพิเนฟริน|ให้ยานอร์อดรีนาลีน/gi, 'Administer Norepinephrine'],
     [/ให้ยาเอพิเนฟริน|ให้ยาอดรีนาลีน/gi, 'Administer Epinephrine'],
     [/เปิดเส้นหลอดเลือดดำ|เปิดเส้น IV/gi, 'IV/IO Line Established'],
     [/ท่อช่วยหายใจ|ใส่ท่อช่วยหายใจ/gi, 'Advanced Airway Intubation (ET Tube)'],
@@ -208,8 +209,22 @@ function parseLogRow(entry: LogEntry) {
      textLower.includes('ให้ยา'));
 
   if (isMedicationLog) {
-    // 1. Adrenaline / Epinephrine
-    if (textLower.includes('epinephrine') || textLower.includes('adrenaline') || textLower.includes('เอพิเนฟริน') || textLower.includes('อดรีนาลีน')) {
+    const isNorEpi =
+      textLower.includes('norepinephrine') ||
+      textLower.includes('noradrenaline') ||
+      textLower.includes('นอร์เอพิเนฟริน') ||
+      textLower.includes('นอร์อดรีนาลีน') ||
+      textLower.includes('nor-epinephrine') ||
+      textLower.includes('nor-adrenaline');
+
+    // 1. Adrenaline / Epinephrine (Exclude Norepinephrine/Noradrenaline)
+    if (
+      !isNorEpi &&
+      (textLower.includes('epinephrine') ||
+       textLower.includes('adrenaline') ||
+       textLower.includes('เอพิเนฟริน') ||
+       textLower.includes('อดรีนาลีน'))
+    ) {
       const mgMatch = text.match(/(\d+(\.\d+)?)\s*mg/i);
       const mcgMatch = text.match(/(\d+-\d+)\s*mcg/i) || text.match(/(\d+)\s*mcg/i);
       if (mgMatch) {
@@ -295,8 +310,10 @@ function parseLogRow(entry: LogEntry) {
     nurseNote = `[X] Administered Ca Gluconate 10% IV`;
   } else if (textLower.includes('nahco3') || textLower.includes('bicarbonate') || textLower.includes('ไบคาบ') || textLower.includes('ไบคาร์บอเนต')) {
     nurseNote = `[X] Administered NaHCO3 50mEq IV`;
-  } else if (textLower.includes('noradrenaline') || textLower.includes('นอร์อดรีนาลีน')) {
-    nurseNote = `Noradrenaline Infusion (${nurseNote})`;
+  } else if (textLower.includes('noradrenaline') || textLower.includes('norepinephrine') || textLower.includes('นอร์อดรีนาลีน') || textLower.includes('นอร์เอพิเนฟริน')) {
+    if (!nurseNote.toLowerCase().includes('norepinephrine') && !nurseNote.toLowerCase().includes('noradrenaline')) {
+      nurseNote = `Norepinephrine Infusion (${nurseNote})`;
+    }
   }
 
   return {

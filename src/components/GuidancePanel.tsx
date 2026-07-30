@@ -80,7 +80,7 @@ interface GuidancePanelProps {
   handleLogProcedure: (procName: string) => void;
   completedProcedures: string[];
   handleLogPresetMed: (medName: string, skipSpeech?: boolean) => void;
-  triggerReassessmentAlert: (treatmentName: string, speechText: string, skipLog?: boolean) => void;
+  triggerReassessmentAlert: (treatmentName: string, speechText?: string, skipLog?: boolean) => void;
   addLog: (text: string, type?: 'cpr' | 'med' | 'shock' | 'rhythm' | 'note' | 'system') => void;
   speakThai: (text: string, onEnd?: () => void, customRate?: number) => void;
   customNote: string;
@@ -91,6 +91,8 @@ interface GuidancePanelProps {
   hasCompletedIvAccess?: boolean;
   airwayAlertActive?: boolean;
   etco2AlertActive?: boolean;
+  showStabilityModal?: boolean;
+  setShowStabilityModal?: (val: boolean) => void;
 }
 
 export function GuidancePanel({
@@ -156,6 +158,7 @@ export function GuidancePanel({
   hasCompletedIvAccess = false,
   airwayAlertActive = false,
   etco2AlertActive = false,
+  setShowStabilityModal,
 }: GuidancePanelProps) {
   const isProceduresFlashing = ivAccessAlertActive || airwayAlertActive || etco2AlertActive;
 
@@ -434,7 +437,7 @@ export function GuidancePanel({
             <div className="bg-slate-950 p-2 rounded-xl border border-slate-800 space-y-2">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {/* Protocol Sub-Filter Header (Brady vs Tachy) */}
-                <div className="flex items-center justify-between bg-slate-900/80 p-1.5 rounded-lg border border-slate-800">
+                <div className="flex items-center justify-between bg-slate-900/80 p-1.5 rounded-lg border border-slate-800 h-[60px]">
                   <span className="text-[10px] font-black uppercase text-slate-300 flex items-center gap-1">
                     <Activity className="w-3.5 h-3.5 text-cyan-400" />
                     โหมดหัวใจ:
@@ -449,7 +452,7 @@ export function GuidancePanel({
                       }`}
                     >
                       <Activity className="w-3 h-3 text-amber-300" />
-                      <span>BRADYCARDIA</span>
+                      <span>BRADY</span>
                     </button>
 
                     <button
@@ -461,52 +464,41 @@ export function GuidancePanel({
                       }`}
                     >
                       <Zap className="w-3 h-3 text-indigo-300" />
-                      <span>TACHYCARDIA</span>
+                      <span>TACHY</span>
                     </button>
                   </div>
                 </div>
 
-                {/* 1. Clinical Stability Selector */}
-                <div className="flex items-center justify-between bg-slate-900/80 p-1.5 rounded-lg border border-slate-800">
-                  <span className="text-[10px] font-black uppercase text-slate-300 flex items-center gap-1">
-                    <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
-                    ประเมินอาการ:
-                  </span>
-                  <div className="flex gap-1 shrink-0">
-                    <button
-                      onClick={() => {
-                        setStabilityStatus('stable');
-                        addLog('Clinical Assessment: STABLE Patient', 'system');
-                        speakThai('ประเมินแล้ว อาการคงที่ค่ะ');
-                      }}
-                      className={`py-1 px-2 rounded font-bold text-[9px] transition-all cursor-pointer border ${
-                        stabilityStatus === 'stable'
-                          ? 'bg-emerald-600 border-emerald-400 text-white shadow-xs ring-2 ring-emerald-500/30'
-                          : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
-                      }`}
-                    >
-                      STABLE (คงที่)
-                    </button>
+                {/* 1. Clinical Stability Display */}
+                <div className="flex items-center justify-between bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 gap-2 h-[60px]">
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+                    <span className="text-xs font-black uppercase text-slate-300">
+                      สภาวะทางคลินิก:
+                    </span>
+                  </div>
 
-                    <button
-                      onClick={() => {
-                        setStabilityStatus('unstable');
-                        addLog('Clinical Assessment: UNSTABLE Patient', 'system');
-                        speakThai('ประเมินแล้ว อาการไม่คงที่ค่ะ');
-                      }}
-                      className={`py-1 px-2 rounded font-bold text-[9px] transition-all cursor-pointer border ${
-                        stabilityStatus === 'unstable'
-                          ? 'bg-rose-600 border-rose-400 text-white shadow-xs animate-pulse ring-2 ring-rose-500/40'
-                          : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
-                      }`}
-                    >
-                      UNSTABLE (ไม่คงที่)
-                    </button>
+                  <div className="text-xs font-black">
+                    {stabilityStatus === 'stable' && (
+                      <span className="px-3 py-1 rounded-lg bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 flex items-center gap-1.5 shadow-xs">
+                        <Check className="w-4 h-4 text-emerald-400" /> STABLE
+                      </span>
+                    )}
+                    {stabilityStatus === 'unstable' && (
+                      <span className="px-3 py-1 rounded-lg bg-rose-500/20 border border-rose-500/50 text-rose-400 flex items-center gap-1.5 shadow-xs animate-pulse">
+                        <AlertTriangle className="w-4 h-4 text-rose-400" /> UNSTABLE
+                      </span>
+                    )}
+                    {!stabilityStatus && (
+                      <span className="px-3 py-1 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center gap-1.5 shadow-xs">
+                        ยังไม่ได้ประเมิน
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
               <div className="text-[8.5px] text-slate-400 px-1 leading-tight">
-                * สัญญาณวิกฤต: Hypotension, AMS, Signs of Shock, Ischemic Chest Discomfort, Acute Heart Failure
+                * สัญญาณวิกฤต: Hypotension, AMS (สับสน/ซึม), Signs of Shock, Ischemic Chest Pain, Acute Heart Failure
               </div>
             </div>
 
@@ -560,7 +552,9 @@ export function GuidancePanel({
                       <button
                         onClick={() => {
                           handleLogProcedure('Monitor & Observe Vital Signs / 12-Lead ECG');
-                          speakThai('เฝ้าระวังอาการ และบันทึกคลื่นไฟฟ้าหัวใจ 12 ลีด ค่ะ');
+                          speakThai('เฝ้าระวังอาการ และบันทึกอีเคจี 12 หลีด ค่ะ', () => {
+                            setShowStabilityModal?.(true);
+                          });
                         }}
                         className="p-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-lg text-left text-[10px] font-bold transition-all cursor-pointer flex justify-between items-center"
                       >
@@ -608,7 +602,9 @@ export function GuidancePanel({
                       <button
                         onClick={() => {
                           handleLogProcedure('Vagal Maneuvers Performed');
-                          speakThai('ทำเวกัล มะนูเวอร์ เรียบร้อยแล้วค่ะ');
+                          speakThai('ทำวาก้อมานูเว่อ เรียบร้อยค่ะ', () => {
+                            setShowStabilityModal?.(true);
+                          });
                         }}
                         className="p-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-lg text-left text-[10px] font-bold transition-all cursor-pointer flex justify-between items-center"
                       >
@@ -718,7 +714,9 @@ export function GuidancePanel({
                       <button
                         onClick={() => {
                           handleLogProcedure('Transcutaneous Pacing (TCP) Started');
-                          speakThai('เริ่มทำ เพซซิ่ง ผ่านผิวหนัง ทรานสคิวเทเนียส เพซซิ่ง ทันทีค่ะ');
+                          speakThai('เริ่มทำเพ๊สซิ่งผ่านผิวหนัง เรียบร้อยค่ะ', () => {
+                            setShowStabilityModal?.(true);
+                          });
                         }}
                         className="p-1.5 bg-gradient-to-r from-amber-900 to-amber-800 hover:from-amber-800 hover:to-amber-700 border border-amber-500 text-amber-100 rounded-lg text-left text-[10px] font-bold transition-all cursor-pointer flex justify-between items-center shadow-xs"
                       >
@@ -763,62 +761,7 @@ export function GuidancePanel({
                     </span>
 
                     <div className="grid grid-cols-2 gap-1.5">
-                      <button
-                        onClick={() => {
-                          handleLogProcedure('Synchronized Cardioversion 50-100J Delivered');
-                          triggerReassessmentAlert('Synchronized Cardioversion 50-100J', 'ทำการปล่อยช็อคคาดิโอเวอชั่น ขนาด 50 ถึง 100 จูล เรียบร้อยแล้วค่ะ');
-                        }}
-                        className="p-1.5 bg-gradient-to-r from-indigo-900 to-indigo-800 hover:from-indigo-800 hover:to-indigo-700 border border-indigo-500 text-white rounded-lg text-left font-bold transition-all cursor-pointer flex justify-between items-center"
-                      >
-                        <div>
-                          <span className="font-black text-[10px] block">Cardioversion 50-100J</span>
-                          <span className="text-[8px] text-indigo-200 block">Narrow Regular (SVT)</span>
-                        </div>
-                        <Zap className="w-3.5 h-3.5 text-yellow-300 shrink-0 ml-1" />
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          handleLogProcedure('Synchronized Cardioversion 120-200J Delivered');
-                          triggerReassessmentAlert('Synchronized Cardioversion 120-200J', 'ทำการปล่อยช็อคคาดิโอเวอชั่น ขนาด 120 ถึง 200 จูล เรียบร้อยแล้วค่ะ');
-                        }}
-                        className="p-1.5 bg-gradient-to-r from-indigo-900 to-indigo-800 hover:from-indigo-800 hover:to-indigo-700 border border-indigo-500 text-white rounded-lg text-left font-bold transition-all cursor-pointer flex justify-between items-center"
-                      >
-                        <div>
-                          <span className="font-black text-[10px] block">Cardioversion 120-200J</span>
-                          <span className="text-[8px] text-indigo-200 block">Narrow Irregular (AFib)</span>
-                        </div>
-                        <Zap className="w-3.5 h-3.5 text-yellow-300 shrink-0 ml-1" />
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          handleLogProcedure('Synchronized Cardioversion 100J Delivered');
-                          triggerReassessmentAlert('Synchronized Cardioversion 100J', 'ทำการปล่อยช็อคคาดิโอเวอชั่น ขนาด 100 จูล เรียบร้อยแล้วค่ะ');
-                        }}
-                        className="p-1.5 bg-gradient-to-r from-indigo-900 to-indigo-800 hover:from-indigo-800 hover:to-indigo-700 border border-indigo-500 text-white rounded-lg text-left font-bold transition-all cursor-pointer flex justify-between items-center"
-                      >
-                        <div>
-                          <span className="font-black text-[10px] block">Cardioversion 100J</span>
-                          <span className="text-[8px] text-indigo-200 block">Wide Regular (Monomorphic VT)</span>
-                        </div>
-                        <Zap className="w-3.5 h-3.5 text-yellow-300 shrink-0 ml-1" />
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          handleDeliverShock();
-                          triggerReassessmentAlert('Defibrillation 200J', 'ช็อคเดฟิบบริลเลชั่น 200 จูล สำหรับ โพลีมอร์ฟิก วีที เรียบร้อยแล้วค่ะ');
-                        }}
-                        className="p-1.5 bg-gradient-to-r from-rose-900 to-rose-800 hover:from-rose-800 hover:to-rose-700 border border-rose-500 text-white rounded-lg text-left font-bold transition-all cursor-pointer flex justify-between items-center"
-                      >
-                        <div>
-                          <span className="font-black text-[10px] block text-rose-100">Defibrillation 200J</span>
-                          <span className="text-[8px] text-rose-200 block">Polymorphic VT / Unsychronized</span>
-                        </div>
-                        <Zap className="w-3.5 h-3.5 text-yellow-300 shrink-0 ml-1" />
-                      </button>
-
+                      {/* 1. Sedation */}
                       <button
                         onClick={() => handleLogPresetMed('Midazolam 2.5mg IV (Sedation)')}
                         className="p-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-lg text-left text-[10px] font-bold transition-all cursor-pointer flex justify-between items-center"
@@ -830,6 +773,7 @@ export function GuidancePanel({
                         <ChevronRight className="w-3.5 h-3.5 text-purple-400 shrink-0 ml-1" />
                       </button>
 
+                      {/* 2. Adenosine */}
                       <button
                         onClick={() => handleLogPresetMed('Adenosine 6mg IV rapid push')}
                         className="p-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-lg text-left text-[10px] font-bold transition-all cursor-pointer flex justify-between items-center"
@@ -839,6 +783,51 @@ export function GuidancePanel({
                           <span className="text-[8px] text-slate-400 block">If narrow regular while prepping shock</span>
                         </div>
                         <span className="text-[9px] font-mono text-indigo-300 bg-indigo-950 px-1 rounded border border-indigo-800 shrink-0 ml-1">#{adenosineCount}</span>
+                      </button>
+
+                      {/* 3. Cardioversion 100J */}
+                      <button
+                        onClick={() => {
+                          handleLogProcedure('Synchronized Cardioversion 100J Delivered');
+                          triggerReassessmentAlert('Synchronized Cardioversion 100J', 'ทำคาดิโอเวอชั่น 100 จูน ค่ะ', true);
+                        }}
+                        className="p-1.5 bg-gradient-to-r from-indigo-900 to-indigo-800 hover:from-indigo-800 hover:to-indigo-700 border border-indigo-500 text-white rounded-lg text-left font-bold transition-all cursor-pointer flex justify-between items-center"
+                      >
+                        <div>
+                          <span className="font-black text-[10px] block">Cardioversion 100J</span>
+                          <span className="text-[8px] text-indigo-200 block">Narrow/Wide Reg.(SVT, MonomorphicVT)</span>
+                        </div>
+                        <Zap className="w-3.5 h-3.5 text-yellow-300 shrink-0 ml-1" />
+                      </button>
+
+                      {/* 4. Cardioversion 200J */}
+                      <button
+                        onClick={() => {
+                          handleLogProcedure('Synchronized Cardioversion 200J Delivered');
+                          triggerReassessmentAlert('Synchronized Cardioversion 200J', 'ทำคาดิโอเวอชั่น 200 จูน ค่ะ', true);
+                        }}
+                        className="p-1.5 bg-gradient-to-r from-indigo-900 to-indigo-800 hover:from-indigo-800 hover:to-indigo-700 border border-indigo-500 text-white rounded-lg text-left font-bold transition-all cursor-pointer flex justify-between items-center"
+                      >
+                        <div>
+                          <span className="font-black text-[10px] block">Cardioversion 200J</span>
+                          <span className="text-[8px] text-indigo-200 block">Narrow Irregular (AFib)</span>
+                        </div>
+                        <Zap className="w-3.5 h-3.5 text-yellow-300 shrink-0 ml-1" />
+                      </button>
+
+                      {/* 5. Defibrillation 200J */}
+                      <button
+                        onClick={() => {
+                          handleDeliverShock();
+                          triggerReassessmentAlert('Defibrillation 200J', 'ช็อคเดฟิบบริลเลชั่น 200 จูน เรียบร้อยค่ะ');
+                        }}
+                        className="p-1.5 bg-gradient-to-r from-rose-900 to-rose-800 hover:from-rose-800 hover:to-rose-700 border border-rose-500 text-white rounded-lg text-left font-bold transition-all cursor-pointer flex justify-between items-center"
+                      >
+                        <div>
+                          <span className="font-black text-[10px] block text-rose-100">Defibrillation 200J</span>
+                          <span className="text-[8px] text-rose-200 block">Polymorphic VT / Unsychronized</span>
+                        </div>
+                        <Zap className="w-3.5 h-3.5 text-yellow-300 shrink-0 ml-1" />
                       </button>
                     </div>
                   </div>

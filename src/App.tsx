@@ -15,6 +15,7 @@ import { LogsPanel } from './components/LogsPanel';
 import { PulseCheckModal } from './components/PulseCheckModal';
 import { ResetConfirmModal } from './components/ResetConfirmModal';
 import { PalsCalcModal } from './components/PalsCalcModal';
+import { ClinicalStabilityModal } from './components/ClinicalStabilityModal';
 import { Clock, Zap, Activity, ListFilter, Heart } from 'lucide-react';
 
 const SAVE_KEY = 'smart_acls_copilot_state_v2';
@@ -24,7 +25,7 @@ export default function App() {
   const [systemTime, setSystemTime] = useState<string>('');
   const [copied, setCopied] = useState<boolean>(false);
   const [metronomeOn, setMetronomeOn] = useState<boolean>(true);
-  const [metronomeTempo, setMetronomeTempo] = useState<number>(110);
+  const [metronomeTempo, setMetronomeTempo] = useState<number>(100);
   const [metronomeMode, setMetronomeMode] = useState<'30:2' | 'continuous'>('30:2');
   const [metronomeBeat, setMetronomeBeat] = useState<number>(0);
   const metronomeBeatRef = useRef<number>(0);
@@ -102,6 +103,7 @@ export default function App() {
   // Dialog / Warning state
   const [showResetConfirm, setShowResetConfirm] = useState<boolean>(false);
   const [showPalsModal, setShowPalsModal] = useState<boolean>(false);
+  const [showStabilityModal, setShowStabilityModal] = useState<boolean>(false);
 
   // 10-Second Pulse & EKG assessment timer states
   const [pulseCheckActive, setPulseCheckActive] = useState<boolean>(false);
@@ -516,13 +518,36 @@ export default function App() {
     }
   };
 
-  const triggerReassessmentAlert = (treatmentName: string, speechText: string, skipLog: boolean = false) => {
+  const checkIsBradyTachyGroup = () => {
+    if (lastRhythmDecision === 'bradycardia' || lastRhythmDecision === 'tachycardia') {
+      return true;
+    }
+    if (activeTab === 'trc_tachy_brady' && lastRhythmDecision !== 'shockable' && lastRhythmDecision !== 'non-shockable' && lastRhythmDecision !== 'rosc') {
+      return true;
+    }
+    return false;
+  };
+
+  const triggerReassessmentAlert = (treatmentName: string, speechText?: string, skipLog: boolean = false) => {
     setReassessWarningActive(true);
     if (!skipLog) {
       addLog(`ALERT: ${treatmentName} administered. Reassess patient stable vs unstable status immediately (ประเมินอาการคงที่ และไม่คงที่ ซ้ำอีกครั้ง)!`, "system");
     }
     playAlertChime('med_due');
-    speakThai(speechText);
+
+    const shouldShowPopup = checkIsBradyTachyGroup();
+
+    if (speechText) {
+      speakThai(speechText, () => {
+        if (shouldShowPopup) {
+          setShowStabilityModal(true);
+        }
+      });
+    } else {
+      if (shouldShowPopup) {
+        setShowStabilityModal(true);
+      }
+    }
   };
 
   // --- AUDIO TESTER ---
@@ -987,7 +1012,9 @@ export default function App() {
     );
 
     addLog("Rhythm Checked: Bradycardia", "rhythm");
-    speakThai("ชีพจรช้าผิดปกติค่ะ ช่วยประเมินอาการคงที่และไม่คงที่ด้วยนะคะ หากมีอาการไม่คงที่ แนะนำให้ยาอะโทรพีน หนึ่งมิลลิกรัมทันทีค่ะ");
+    speakThai("ชีพจรช้าผิดปกติค่ะ", () => {
+      setShowStabilityModal(true);
+    });
     setActiveTab('trc_tachy_brady');
     setMobileViewTab('guidelines');
   };
@@ -1016,7 +1043,9 @@ export default function App() {
     );
 
     addLog("Rhythm Checked: Tachycardia", "rhythm");
-    speakThai("คนไข้ชีพจรเร็วผิดปกติค่ะ ช่วยประเมินอาการคงที่และไม่คงที่ด้วยนะคะ หากมีอาการไม่คงที่ แนะนำทำคาดิโอเวอชั่นทันทีค่ะ");
+    speakThai("ชีพจรเร็วผิดปกติค่ะ", () => {
+      setShowStabilityModal(true);
+    });
     setActiveTab('trc_tachy_brady');
     setMobileViewTab('guidelines');
   };
@@ -1137,26 +1166,43 @@ export default function App() {
       setCaseStartTime(Date.now());
     }
 
-    if (medName.toLowerCase().includes('amiodarone')) {
+    const lower = medName.toLowerCase();
+
+    if (lower.includes('amiodarone')) {
       setAmioCount(prev => prev + 1);
       setAmioAlertActive(false);
       setLidoAlertActive(false);
-    } else if (medName.toLowerCase().includes('lidocaine')) {
+    } else if (lower.includes('lidocaine')) {
       setLidoCount(prev => prev + 1);
       setAmioAlertActive(false);
       setLidoAlertActive(false);
-    } else if (medName.toLowerCase().includes('atropine')) {
+    } else if (lower.includes('atropine')) {
       setAtropineCount(prev => prev + 1);
-    } else if (medName.toLowerCase().includes('adenosine')) {
+    } else if (lower.includes('adenosine')) {
       setAdenosineCount(prev => prev + 1);
     }
 
     addLog(`Medication: ${medName} administered`, "med");
+
     if (!skipSpeech) {
-      if (medName.toLowerCase().includes('dopamine')) {
-        speakThai('ให้ยาโดปามีน ดิบค่ะ');
+      if (lower.includes('atropine')) {
+        speakThai('ให้ยาอะโทพีน หนึ่งมิลลิกำค่ะ');
+      } else if (lower.includes('dopamine')) {
+        speakThai('ให้ยาโดพามีน ดิบค่ะ');
+      } else if (lower.includes('epinephrine') && lower.includes('drip')) {
+        speakThai('ให้ยาอีพิเน๊ฟริน ดิบค่ะ');
+      } else if (lower.includes('adenosine') && lower.includes('6mg')) {
+        speakThai('ให้ยาอะดีโนซีน หกมิลลิกำ doubleไซริ๊งค่ะ');
+      } else if (lower.includes('adenosine') && lower.includes('12mg')) {
+        speakThai('ให้ยาอะดีโนซีน สิบสองมิลลิกำ doubleไซริ๊งค่ะ');
+      } else if (lower.includes('amiodarone') && lower.includes('150')) {
+        speakThai('ให้ยาอะมิโอดาโรน หนึ่งร้อยห้าสิบมิลลิกำ ค่ะ');
+      } else if (lower.includes('diltiazem') || lower.includes('metoprolol') || lower.includes('rate control')) {
+        speakThai('ให้ยาควบคุมการเต้นของหัวใจค่ะ');
+      } else if (lower.includes('midazolam') || lower.includes('sedation')) {
+        speakThai('ให้ยาก่อมประสาดค่ะ');
       } else {
-        speakThai(`ให้ยา ${medName.split(' ')[0]} เรียบร้อย`);
+        speakThai(`ให้ยา ${medName.split(' ')[0]} เรียบร้อยแล้วค่ะ`);
       }
     }
   };
@@ -1312,10 +1358,11 @@ export default function App() {
     setPulseCheckTime(10);
     lastPulseCheckedCycleRef.current = 0;
     setMetronomeOn(true);
+    setMetronomeTempo(100);
     setShowResetConfirm(false);
 
     setTimeout(() => {
-      speakThai("เริ่มต้นใหม่ค่ะ", undefined, 1.0);
+      speakThai("เริ่มต้นใหม่ค่ะ", undefined, 1.1);
     }, 50);
   };
 
@@ -1380,7 +1427,7 @@ export default function App() {
   };
 
   return (
-    <div id="smart_acls_root" className="h-screen max-h-screen w-screen overflow-hidden bg-slate-950 text-slate-100 flex flex-col font-sans select-none">
+    <div id="smart_acls_root" className="min-h-screen h-[100dvh] w-full max-w-full overflow-x-hidden bg-slate-950 text-slate-100 flex flex-col font-sans select-none antialiased">
       {/* 1. HEADER BAR */}
       <HeaderBar
         systemTime={systemTime}
@@ -1389,10 +1436,6 @@ export default function App() {
         cprCycle={cprCycle}
         cprSubCycle302={cprSubCycle302}
         formatMMSS={formatMMSS}
-        onOpenPalsModal={() => setShowPalsModal(true)}
-        handleLogPresetMed={handleLogPresetMed}
-        addLog={addLog}
-        speakThai={speakThai}
       />
 
       {/* 2. CONTROL BAR */}
@@ -1412,55 +1455,57 @@ export default function App() {
         confirmNewCase={confirmNewCase}
         addLog={addLog}
         speakThai={speakThai}
+        onOpenPalsModal={() => setShowPalsModal(true)}
+        handleLogPresetMed={handleLogPresetMed}
       />
 
-      {/* 3. MAIN WORKSPACE (Single Screen Desktop / Tabbed Mobile & Tablet) */}
-      <main className="flex-1 overflow-hidden p-2 sm:p-3 flex flex-col lg:flex-row gap-2.5">
-        {/* Mobile / Tablet Tab Selector Header */}
-        <div className="flex lg:hidden items-center justify-between bg-slate-900 border border-slate-800 rounded-lg p-1 shrink-0">
+      {/* 3. MAIN WORKSPACE (Single Screen Desktop & Tablet Landscape / Tabbed Mobile & Tablet Portrait) */}
+      <main className="flex-1 overflow-y-auto lg:overflow-hidden p-1.5 sm:p-2.5 lg:p-3 flex flex-col lg:flex-row gap-2 sm:gap-2.5 max-w-full">
+        {/* Mobile & Tablet Portrait Tab Selector Header (Hidden on Tablet Landscape & Desktop) */}
+        <div className="flex lg:hidden items-center justify-between bg-slate-900 border border-slate-800 rounded-lg p-1 shrink-0 gap-1 overflow-x-auto no-scrollbar shadow-md">
           <button
             onClick={() => setMobileViewTab('cpr')}
-            className={`flex-1 py-1.5 text-[11px] font-black rounded-md flex items-center justify-center gap-1 transition-all cursor-pointer ${
-              mobileViewTab === 'cpr' ? 'bg-cyan-600 text-white' : 'text-slate-400 hover:text-slate-200'
+            className={`flex-1 min-w-0 py-2 sm:py-2.5 px-2 sm:px-3 text-[10px] sm:text-xs font-black rounded-md flex items-center justify-center gap-1.5 transition-all cursor-pointer truncate ${
+              mobileViewTab === 'cpr' ? 'bg-cyan-600 text-white shadow-xs ring-1 ring-cyan-400' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
             }`}
           >
-            <Clock className="w-3.5 h-3.5" />
-            <span>CPR Timer</span>
+            <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+            <span className="truncate">CPR Timer</span>
           </button>
 
           <button
             onClick={() => setMobileViewTab('meds')}
-            className={`flex-1 py-1.5 text-[11px] font-black rounded-md flex items-center justify-center gap-1 transition-all cursor-pointer ${
-              mobileViewTab === 'meds' ? 'bg-cyan-600 text-white' : 'text-slate-400 hover:text-slate-200'
+            className={`flex-1 min-w-0 py-2 sm:py-2.5 px-2 sm:px-3 text-[10px] sm:text-xs font-black rounded-md flex items-center justify-center gap-1.5 transition-all cursor-pointer truncate ${
+              mobileViewTab === 'meds' ? 'bg-cyan-600 text-white shadow-xs ring-1 ring-cyan-400' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
             }`}
           >
-            <Zap className="w-3.5 h-3.5 text-amber-400" />
-            <span>Actions & Meds</span>
+            <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400 shrink-0" />
+            <span className="truncate">Actions & Meds</span>
           </button>
 
           <button
             onClick={() => setMobileViewTab('guidelines')}
-            className={`flex-1 py-1.5 text-[11px] font-black rounded-md flex items-center justify-center gap-1 transition-all cursor-pointer ${
-              mobileViewTab === 'guidelines' ? 'bg-cyan-600 text-white' : 'text-slate-400 hover:text-slate-200'
+            className={`flex-1 min-w-0 py-2 sm:py-2.5 px-2 sm:px-3 text-[10px] sm:text-xs font-black rounded-md flex items-center justify-center gap-1.5 transition-all cursor-pointer truncate ${
+              mobileViewTab === 'guidelines' ? 'bg-cyan-600 text-white shadow-xs ring-1 ring-cyan-400' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
             }`}
           >
-            <Activity className="w-3.5 h-3.5" />
-            <span>Guidelines</span>
+            <Activity className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+            <span className="truncate">Guidelines</span>
           </button>
 
           <button
             onClick={() => setMobileViewTab('logs')}
-            className={`flex-1 py-1.5 text-[11px] font-black rounded-md flex items-center justify-center gap-1 transition-all cursor-pointer ${
-              mobileViewTab === 'logs' ? 'bg-cyan-600 text-white' : 'text-slate-400 hover:text-slate-200'
+            className={`flex-1 min-w-0 py-2 sm:py-2.5 px-2 sm:px-3 text-[10px] sm:text-xs font-black rounded-md flex items-center justify-center gap-1.5 transition-all cursor-pointer truncate ${
+              mobileViewTab === 'logs' ? 'bg-cyan-600 text-white shadow-xs ring-1 ring-cyan-400' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
             }`}
           >
-            <ListFilter className="w-3.5 h-3.5" />
-            <span>Logs ({logs.length})</span>
+            <ListFilter className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+            <span className="truncate">Logs ({logs.length})</span>
           </button>
         </div>
 
-        {/* LEFT COLUMN: TIMERS & QUICK ACTIONS (50-55% width on desktop) */}
-        <div className={`flex-1 lg:w-[50%] xl:w-[52%] flex-col gap-2.5 overflow-hidden ${
+        {/* LEFT COLUMN: TIMERS & QUICK ACTIONS (50% width on tablet landscape & desktop) */}
+        <div className={`flex-1 lg:w-[50%] xl:w-[52%] flex-col gap-2 sm:gap-2.5 overflow-visible lg:overflow-y-auto h-full ${
           mobileViewTab === 'cpr' || mobileViewTab === 'meds' ? 'flex' : 'hidden lg:flex'
         }`}>
           {/* CPR Timer Card */}
@@ -1517,8 +1562,8 @@ export default function App() {
           </div>
         </div>
 
-        {/* RIGHT COLUMN: GUIDANCE & LOGS FEED (45-50% width on desktop) */}
-        <div className={`flex-1 lg:w-[50%] xl:w-[48%] flex-col gap-2.5 overflow-hidden h-full ${
+        {/* RIGHT COLUMN: GUIDANCE & LOGS FEED (50% width on tablet landscape & desktop) */}
+        <div className={`flex-1 lg:w-[50%] xl:w-[48%] flex-col gap-2 sm:gap-2.5 overflow-visible lg:overflow-y-auto h-full ${
           mobileViewTab === 'guidelines' || mobileViewTab === 'logs' ? 'flex' : 'hidden lg:flex'
         }`}>
           {/* Interactive Protocol Guidance */}
@@ -1586,6 +1631,8 @@ export default function App() {
               hasCompletedIvAccess={hasCompletedIvAccess}
               airwayAlertActive={airwayAlertActive}
               etco2AlertActive={etco2AlertActive}
+              showStabilityModal={showStabilityModal}
+              setShowStabilityModal={setShowStabilityModal}
             />
           </div>
 
@@ -1625,6 +1672,15 @@ export default function App() {
       <PalsCalcModal
         isOpen={showPalsModal}
         onClose={() => setShowPalsModal(false)}
+        addLog={addLog}
+        speakThai={speakThai}
+      />
+
+      <ClinicalStabilityModal
+        isOpen={showStabilityModal}
+        onClose={() => setShowStabilityModal(false)}
+        rhythmType={lastRhythmDecision}
+        onSelectStability={(status) => setStabilityStatus(status)}
         addLog={addLog}
         speakThai={speakThai}
       />
