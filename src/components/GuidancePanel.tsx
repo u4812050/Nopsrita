@@ -93,6 +93,8 @@ interface GuidancePanelProps {
   etco2AlertActive?: boolean;
   showStabilityModal?: boolean;
   setShowStabilityModal?: (val: boolean) => void;
+  showProceduresModal?: boolean;
+  setShowProceduresModal?: (val: boolean) => void;
 }
 
 export function GuidancePanel({
@@ -159,6 +161,7 @@ export function GuidancePanel({
   airwayAlertActive = false,
   etco2AlertActive = false,
   setShowStabilityModal,
+  setShowProceduresModal,
 }: GuidancePanelProps) {
   const isProceduresFlashing = ivAccessAlertActive || airwayAlertActive || etco2AlertActive;
 
@@ -183,70 +186,53 @@ export function GuidancePanel({
   return (
     <div className="bg-slate-900 rounded-xl border border-slate-800 flex flex-col h-full overflow-hidden shadow-xl">
       {/* Tab Navigation Header */}
-      <div className="bg-slate-950 p-1 border-b border-slate-800 flex items-center gap-1 overflow-x-auto shrink-0">
+      <div className="bg-slate-950 p-1 border-b border-slate-800 flex items-center justify-between gap-1 overflow-x-auto no-scrollbar shrink-0">
         <button
           onClick={() => setActiveTab('trc_cardiac')}
-          className={`flex-1 py-1.5 px-2 rounded-lg text-[11px] font-black transition-all cursor-pointer whitespace-nowrap flex items-center justify-center gap-1 ${
+          className={`shrink-0 w-[100px] py-1.5 px-1 rounded-lg text-[10px] sm:text-[11px] font-black transition-all cursor-pointer whitespace-nowrap flex items-center justify-center gap-1 ${
             activeTab === 'trc_cardiac'
               ? 'bg-rose-600 text-white shadow-xs'
               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
           }`}
         >
-          <Zap className="w-3.5 h-3.5" />
-          <span>Cardiac Arrest</span>
+          <Zap className="w-3.5 h-3.5 shrink-0" />
+          <span className="truncate">Cardiac Arrest</span>
         </button>
 
         <button
           onClick={() => setActiveTab('trc_tachy_brady')}
-          className={`flex-1 py-1.5 px-2 rounded-lg text-[11px] font-black transition-all cursor-pointer whitespace-nowrap flex items-center justify-center gap-1 ${
+          className={`shrink-0 w-[100px] py-1.5 px-1 rounded-lg text-[10px] sm:text-[11px] font-black transition-all cursor-pointer whitespace-nowrap flex items-center justify-center gap-1 ${
             activeTab === 'trc_tachy_brady'
               ? 'bg-amber-600 text-white shadow-xs'
               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
           }`}
         >
-          <Activity className="w-3.5 h-3.5" />
-          <span>Tachy / Brady</span>
+          <Activity className="w-3.5 h-3.5 shrink-0" />
+          <span className="truncate">Tachy/Brady</span>
         </button>
 
         <button
           onClick={() => setActiveTab('trc_rosc')}
-          className={`flex-1 py-1.5 px-2 rounded-lg text-[11px] font-black transition-all cursor-pointer whitespace-nowrap flex items-center justify-center gap-1 ${
+          className={`shrink-0 w-[62px] py-1.5 px-1 rounded-lg text-[10px] sm:text-[11px] font-black transition-all cursor-pointer whitespace-nowrap flex items-center justify-center gap-1 ${
             activeTab === 'trc_rosc'
               ? 'bg-emerald-600 text-white shadow-xs'
               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
           }`}
         >
-          <Heart className="w-3.5 h-3.5" />
-          <span>ROSC Care</span>
+          <Heart className="w-3.5 h-3.5 shrink-0" />
+          <span className="truncate">ROSC</span>
         </button>
 
         <button
           onClick={() => setActiveTab('hsts')}
-          className={`flex-1 py-1.5 px-2 rounded-lg text-[11px] font-black transition-all cursor-pointer whitespace-nowrap flex items-center justify-center gap-1 ${
+          className={`shrink-0 w-[82px] py-1.5 px-1 rounded-lg text-[10px] sm:text-[11px] font-black transition-all cursor-pointer whitespace-nowrap flex items-center justify-center gap-1 ${
             activeTab === 'hsts'
               ? 'bg-cyan-600 text-white shadow-xs'
               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
           }`}
         >
-          <CheckSquare className="w-3.5 h-3.5" />
-          <span>5Hs & 5Ts</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('medHistory')}
-          className={`flex-1 py-1.5 px-2 rounded-lg text-[11px] font-black transition-all cursor-pointer whitespace-nowrap flex items-center justify-center gap-1 ${
-            activeTab === 'medHistory'
-              ? 'bg-slate-700 text-white shadow-xs'
-              : isProceduresFlashing
-              ? 'bg-amber-500 text-slate-950 font-black animate-pulse ring-2 ring-amber-300 shadow-md'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
-          }`}
-        >
-          <PlusCircle className="w-3.5 h-3.5" />
-          <span>Procedures</span>
-          {isProceduresFlashing && (
-            <span className="w-2 h-2 rounded-full bg-rose-600 animate-ping ml-0.5" />
-          )}
+          <CheckSquare className="w-3.5 h-3.5 shrink-0" />
+          <span className="truncate">5Hs & 5Ts</span>
         </button>
       </div>
 
@@ -357,8 +343,9 @@ export function GuidancePanel({
                       setSelectedNonShockableRhythm('Asystole');
                       addLog('Selected Rhythm Type: Asystole', 'rhythm');
                       speakThai('เลือก คลื่นไฟฟ้าหัวใจ อะซิสโทลี');
-                      if (!hasCompletedIvAccess && setIvAccessAlertActive) {
-                        setIvAccessAlertActive(true);
+                      if (!hasCompletedIvAccess) {
+                        if (setIvAccessAlertActive) setIvAccessAlertActive(true);
+                        if (setShowProceduresModal) setShowProceduresModal(true);
                       }
                     }}
                     className={`p-1.5 rounded-lg border text-left flex items-center gap-2 cursor-pointer transition-all ${
@@ -379,8 +366,9 @@ export function GuidancePanel({
                       setSelectedNonShockableRhythm('PEA');
                       addLog('Selected Rhythm Type: PEA', 'rhythm');
                       speakThai('เลือก คลื่นไฟฟ้าหัวใจ พีอีเอ');
-                      if (!hasCompletedIvAccess && setIvAccessAlertActive) {
-                        setIvAccessAlertActive(true);
+                      if (!hasCompletedIvAccess) {
+                        if (setIvAccessAlertActive) setIvAccessAlertActive(true);
+                        if (setShowProceduresModal) setShowProceduresModal(true);
                       }
                     }}
                     className={`p-1.5 rounded-lg border text-left flex items-center gap-2 cursor-pointer transition-all ${
@@ -1350,72 +1338,6 @@ export function GuidancePanel({
           </div>
         )}
 
-        {/* TAB 5: PROCEDURES */}
-        {activeTab === 'medHistory' && (
-          <div className="space-y-3">
-            {/* Procedure Presets */}
-            <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2">
-              <h4 className="font-black text-cyan-400 text-xs uppercase tracking-wider flex items-center justify-between">
-                <span>Procedure Presets</span>
-                {isProceduresFlashing && (
-                  <span className="text-[10px] font-mono text-amber-300 font-bold animate-pulse flex items-center gap-1">
-                    <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
-                    โปรดเลือกทำหัตถการแนะนำ
-                  </span>
-                )}
-              </h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {PROCEDURE_PRESETS.map((proc) => {
-                  const isDone = completedProcedures.includes(proc.name);
-
-                  // Alert flashing flags
-                  const isIvProc = proc.name.includes('IV / IO') || proc.short === 'IV Access';
-                  const isAirwayProc = proc.name.includes('Advanced Airway') || proc.short === 'Airway Secured';
-                  const isEtco2Proc = proc.name.includes('Intubation Confirmed') || proc.short === 'ETCO2 Confirmed';
-
-                  const isFlashIv = isIvProc && ivAccessAlertActive && !isDone;
-                  const isFlashAirway = isAirwayProc && airwayAlertActive && !isDone;
-                  const isFlashEtco2 = isEtco2Proc && etco2AlertActive && !isDone && !airwayAlertActive;
-                  const isFlashing = isFlashIv || isFlashAirway || isFlashEtco2;
-
-                  let btnStyle = isDone
-                    ? 'bg-emerald-950 border-emerald-700 text-emerald-300'
-                    : 'bg-slate-900 hover:bg-slate-800 border-slate-800 text-slate-300';
-
-                  if (isFlashIv) {
-                    btnStyle = 'bg-amber-600 hover:bg-amber-500 border-amber-300 text-white font-black animate-pulse ring-2 ring-amber-400 shadow-md';
-                  } else if (isFlashAirway || isFlashEtco2) {
-                    btnStyle = 'bg-cyan-600 hover:bg-cyan-500 border-cyan-300 text-white font-black animate-pulse ring-2 ring-cyan-400 shadow-md';
-                  }
-
-                  return (
-                    <button
-                      key={proc.name}
-                      onClick={() => handleLogProcedure(proc.name)}
-                      className={`p-2.5 rounded-lg text-left font-bold text-xs transition-all cursor-pointer flex items-center justify-between border ${btnStyle}`}
-                    >
-                      <div>
-                        <span className="block">{proc.short}</span>
-                        {isFlashing && (
-                          <span className="text-[9px] font-mono text-amber-200 block font-normal">
-                            ⚡ แนะนำให้บันทึกหัตถการนี้
-                          </span>
-                        )}
-                      </div>
-                      {isDone ? (
-                        <Check className="w-4 h-4 text-emerald-400 shrink-0 ml-1" />
-                      ) : isFlashing ? (
-                        <AlertTriangle className="w-4 h-4 text-amber-200 shrink-0 ml-1 animate-bounce" />
-                      ) : (
-                        <Plus className="w-4 h-4 text-slate-500 shrink-0 ml-1" />
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

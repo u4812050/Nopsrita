@@ -9,11 +9,12 @@
 /* Single viewport fit base setup */
 html, body, #root {
   height: 100%;
-  max-height: 100vh;
+  min-height: 100dvh;
+  width: 100%;
   margin: 0;
   padding: 0;
   overflow: hidden;
-  background-color: #0f172a;
+  background-color: #020617;
 }
 
 /* Custom glow animations and scrollbar optimizations for critical care screens */

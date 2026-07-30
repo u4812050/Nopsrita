@@ -37,7 +37,7 @@ export function HeaderBar({
       </div>
 
       {/* Right Side Key Clinical Counters */}
-      <div className="flex items-center gap-1.5 sm:gap-4 shrink-0">
+      <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
         {/* Elapsed Case Time */}
         <div className="flex items-center gap-1 xs:gap-2 bg-slate-950/80 px-1.5 sm:px-2.5 py-1 rounded-lg border border-slate-800 shadow-inner">
           <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-cyan-400 shrink-0" />

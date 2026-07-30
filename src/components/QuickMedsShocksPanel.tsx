@@ -52,7 +52,7 @@ export function QuickMedsShocksPanel({
   shockButtonFlashing,
 }: QuickMedsShocksPanelProps) {
   return (
-    <div className="bg-slate-900 rounded-xl border border-slate-800 p-2 sm:p-2.5 flex flex-col gap-1.5 sm:gap-2 shadow-xl shrink-0 sm:-mt-1 max-w-full">
+    <div className="bg-slate-900 rounded-xl border border-slate-800 p-2 sm:p-2.5 flex flex-col gap-1.5 sm:gap-2 shadow-xl flex-1 w-full max-w-full h-full min-h-0 overflow-y-auto">
       {/* Section Title */}
       <div className="flex items-center justify-between border-b border-slate-800 pb-1">
         <span className="text-[10px] sm:text-[11px] font-black uppercase text-cyan-400 tracking-wider flex items-center gap-1.5">

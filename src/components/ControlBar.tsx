@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Volume2, RotateCcw, Heart, Baby, Syringe, ChevronDown, Sparkles, Check, Info } from 'lucide-react';
+import { Volume2, RotateCcw, Heart, Baby, Syringe, ChevronDown, Sparkles, Check, Info, Stethoscope, Plus, AlertTriangle } from 'lucide-react';
 import { ALT_RESUSCITATION_MEDS, AltMedItem } from '../data/altMeds';
+import { PROCEDURE_PRESETS } from '../types';
 
 interface ControlBarProps {
   testAudioSystem: () => void;
@@ -20,6 +21,13 @@ interface ControlBarProps {
   speakThai: (text: string) => void;
   onOpenPalsModal: () => void;
   handleLogPresetMed?: (medName: string, skipSpeech?: boolean) => void;
+  completedProcedures?: string[];
+  handleLogProcedure?: (procName: string) => void;
+  ivAccessAlertActive?: boolean;
+  airwayAlertActive?: boolean;
+  etco2AlertActive?: boolean;
+  showProceduresModal?: boolean;
+  setShowProceduresModal?: (val: boolean) => void;
 }
 
 export function ControlBar({
@@ -40,10 +48,19 @@ export function ControlBar({
   speakThai,
   onOpenPalsModal,
   handleLogPresetMed,
+  completedProcedures = [],
+  handleLogProcedure,
+  ivAccessAlertActive = false,
+  airwayAlertActive = false,
+  etco2AlertActive = false,
+  showProceduresModal = false,
+  setShowProceduresModal,
 }: ControlBarProps) {
   const [showAltMedsPopover, setShowAltMedsPopover] = useState<boolean>(false);
   const [lastLoggedMed, setLastLoggedMed] = useState<string | null>(null);
   const [selectedMedDetail, setSelectedMedDetail] = useState<AltMedItem | null>(null);
+
+  const isProceduresFlashing = ivAccessAlertActive || airwayAlertActive || etco2AlertActive;
 
   const handleAdministerAltMed = (med: AltMedItem) => {
     if (handleLogPresetMed) {
@@ -221,7 +238,7 @@ export function ControlBar({
             {/* MODAL DIALOG FOR ALTERNATIVE RESUSCITATION MEDS (Rendered in foreground) */}
             {showAltMedsPopover && (
               <div
-                className="fixed inset-0 z-[9998] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-fadeIn"
+                className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-fadeIn"
                 onClick={() => setShowAltMedsPopover(false)}
               >
                 <div
@@ -301,6 +318,142 @@ export function ControlBar({
               </div>
             )}
           </div>
+
+          {/* Procedures Button & Pop-up Modal */}
+          <div className="relative">
+            <button
+              id="btn_procedures_control"
+              onClick={() => setShowProceduresModal && setShowProceduresModal(!showProceduresModal)}
+              title="Procedures & Critical Interventions (IV/IO Access, Advanced Airway, ETCO2, etc.)"
+              className={`px-2.5 py-1 rounded-md font-mono text-[11px] font-black transition-all cursor-pointer flex items-center gap-1.5 border shadow-md active:scale-95 shrink-0 ${
+                showProceduresModal
+                  ? 'bg-gradient-to-r from-amber-600 to-orange-600 text-white border-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.4)]'
+                  : isProceduresFlashing
+                  ? 'bg-gradient-to-r from-amber-600 to-amber-700 text-white border-amber-300 animate-pulse ring-2 ring-amber-400 shadow-[0_0_14px_rgba(245,158,11,0.6)]'
+                  : 'bg-gradient-to-r from-amber-950 to-slate-900 hover:from-amber-900 hover:to-slate-800 text-amber-300 hover:text-white border border-amber-500/50 hover:border-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.25)]'
+              }`}
+            >
+              <Stethoscope className={`w-3.5 h-3.5 text-amber-400 shrink-0 ${isProceduresFlashing ? 'animate-bounce' : ''}`} />
+              <span className="tracking-tight text-amber-200">Procedures</span>
+              {isProceduresFlashing && (
+                <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
+              )}
+            </button>
+
+            {/* PROCEDURES MODAL POP-UP */}
+            {showProceduresModal && (
+              <div
+                className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-fadeIn"
+                onClick={() => setShowProceduresModal && setShowProceduresModal(false)}
+              >
+                <div
+                  className="bg-slate-900 border border-amber-500/60 rounded-2xl w-full max-w-lg sm:max-w-xl p-3.5 sm:p-5 shadow-2xl space-y-3 sm:space-y-4 text-left relative z-10 my-auto"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="flex items-center justify-between border-b border-amber-900/60 pb-2.5">
+                    <div className="flex items-center gap-2">
+                      <Stethoscope className="w-4 h-4 text-amber-400 shrink-0" />
+                      <h3 className="text-sm sm:text-base font-black font-mono text-amber-200">
+                        Procedures & Interventions (บันทึกหัตถการ)
+                      </h3>
+                    </div>
+                    <button
+                      onClick={() => setShowProceduresModal && setShowProceduresModal(false)}
+                      className="text-slate-400 hover:text-white text-sm font-mono px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer transition-colors"
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  {/* ACTIVE ALERT GUIDANCE NOTICE */}
+                  {isProceduresFlashing && (
+                    <div className="bg-amber-950/90 border border-amber-500/80 rounded-xl p-3 text-amber-200 text-xs space-y-1.5 animate-pulse shadow-md">
+                      <div className="flex items-center gap-1.5 font-black text-amber-300">
+                        <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+                        <span>⚡ แจ้งเตือนหัตถการแนะนำตามเกณฑ์ ACLS:</span>
+                      </div>
+                      <div className="text-[11px] text-amber-100/90 space-y-0.5 pl-5">
+                        {ivAccessAlertActive && (
+                          <p>• <strong>IV / IO Access:</strong> เปิดเส้นทางให้ยาก่อนบริหารยา Epinephrine</p>
+                        )}
+                        {airwayAlertActive && (
+                          <p>• <strong>Advanced Airway:</strong> ใส่ท่อช่วยหายใจขั้นสูง (ET Tube)</p>
+                        )}
+                        {etco2AlertActive && (
+                          <p>• <strong>ETCO2 Capnography:</strong> ติดตามตำแหน่งท่อช่วยหายใจ (ปรับ CPR แบบต่อเนื่อง)</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  <p className="text-[11px] text-amber-300/80 font-medium -mt-1">
+                    คลิกเพื่อบันทึกหัตถการฉุกเฉินและการรักษาขั้นสูง (AHA ACLS 2025)
+                  </p>
+
+                  {/* PROCEDURE PRESETS GRID */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[60vh] sm:max-h-[380px] overflow-y-auto pr-1">
+                    {PROCEDURE_PRESETS.map((proc) => {
+                      const isDone = completedProcedures?.includes(proc.name);
+
+                      const isIvProc = proc.name.includes('IV / IO') || proc.short === 'IV Access';
+                      const isAirwayProc = proc.name.includes('Advanced Airway') || proc.short === 'Airway Secured';
+                      const isEtco2Proc = proc.name.includes('Intubation Confirmed') || proc.short === 'ETCO2 Confirmed';
+
+                      const isFlashIv = isIvProc && ivAccessAlertActive && !isDone;
+                      const isFlashAirway = isAirwayProc && airwayAlertActive && !isDone;
+                      const isFlashEtco2 = isEtco2Proc && etco2AlertActive && !isDone && !airwayAlertActive;
+                      const isFlashing = isFlashIv || isFlashAirway || isFlashEtco2;
+
+                      let btnStyle = isDone
+                        ? 'bg-emerald-950/90 border-emerald-700 text-emerald-300'
+                        : isFlashing
+                        ? 'bg-amber-600 hover:bg-amber-500 border-amber-300 text-white font-black animate-pulse ring-2 ring-amber-400 shadow-md'
+                        : 'bg-slate-950/90 hover:bg-slate-800 border-amber-900/40 text-slate-200';
+
+                      return (
+                        <button
+                          key={proc.name}
+                          onClick={() => {
+                            if (handleLogProcedure) handleLogProcedure(proc.name);
+                          }}
+                          className={`p-3 rounded-xl text-left font-bold text-xs transition-all cursor-pointer flex items-center justify-between border active:scale-95 shadow-md ${btnStyle}`}
+                        >
+                          <div>
+                            <span className="block font-black font-mono text-sm">{proc.short}</span>
+                            <span className="text-[10px] opacity-80 block font-sans font-normal">{proc.name}</span>
+                            {isFlashing && (
+                              <span className="text-[9px] font-mono text-amber-200 block font-bold mt-1">
+                                ⚡ แนะนำให้บันทึกหัตถการนี้
+                              </span>
+                            )}
+                          </div>
+                          {isDone ? (
+                            <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-900/60 px-2 py-1 rounded-md border border-emerald-700 shrink-0 ml-1">
+                              <Check className="w-3.5 h-3.5 text-emerald-400" /> ทำแล้ว
+                            </span>
+                          ) : isFlashing ? (
+                            <AlertTriangle className="w-4 h-4 text-amber-200 shrink-0 ml-1 animate-bounce" />
+                          ) : (
+                            <Plus className="w-4 h-4 text-slate-500 shrink-0 ml-1" />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-[10px] sm:text-xs font-mono text-slate-400">
+                    <span>AHA ACLS/PALS Guideline 2025</span>
+                    <button
+                      onClick={() => setShowProceduresModal && setShowProceduresModal(false)}
+                      className="px-3 py-1.5 rounded-lg bg-amber-950 hover:bg-amber-900 border border-amber-800 text-amber-200 font-bold cursor-pointer transition-colors text-xs"
+                    >
+                      ปิดหน้าต่าง
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Right Side Actions */}
@@ -329,7 +482,7 @@ export function ControlBar({
 
       {/* Drug Info Modal */}
       {selectedMedDetail && (
-        <div className="fixed inset-0 z-[9999] bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn">
+        <div className="fixed inset-0 z-[99999] bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn">
           <div className="bg-slate-900 border border-purple-500/50 rounded-2xl max-w-sm w-full p-5 shadow-2xl space-y-4 text-left">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <div className="flex items-center gap-2">

@@ -15,7 +15,7 @@ export function ResetConfirmModal({
   if (!showResetConfirm) return null;
 
   return (
-    <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[99999] flex items-center justify-center p-4">
       <div className="bg-slate-900 border border-rose-500/80 rounded-2xl max-w-sm w-full p-5 text-center shadow-2xl relative overflow-hidden">
         <div className="w-12 h-12 rounded-full bg-rose-500/20 border border-rose-500 flex items-center justify-center mx-auto mb-3">
           <AlertTriangle className="w-6 h-6 text-rose-400" />

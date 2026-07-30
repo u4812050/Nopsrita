@@ -55,7 +55,15 @@ export default function App() {
   const [ivAccessAlertActive, setIvAccessAlertActive] = useState<boolean>(false);
   const [airwayAlertActive, setAirwayAlertActive] = useState<boolean>(false);
   const [etco2AlertActive, setEtco2AlertActive] = useState<boolean>(false);
+  const [showProceduresModal, setShowProceduresModal] = useState<boolean>(false);
   const [completedProcedures, setCompletedProcedures] = useState<string[]>([]);
+
+  // Auto-open procedures pop-up modal when a procedure alert is triggered according to ACLS protocol
+  useEffect(() => {
+    if (ivAccessAlertActive || airwayAlertActive || etco2AlertActive) {
+      setShowProceduresModal(true);
+    }
+  }, [ivAccessAlertActive, airwayAlertActive, etco2AlertActive]);
 
   const hasCompletedIvAccess = completedProcedures.some(p => p.includes('IV / IO') || p.includes('IV Access') || p.includes('IV Line'));
   const hasCompletedAirway = completedProcedures.some(p => p.includes('Advanced Airway') || p.includes('ET Tube') || p.includes('ET-Tube'));
@@ -975,10 +983,6 @@ export default function App() {
 
     addLog("Rhythm Checked: Non-Shockable", "rhythm");
 
-    if (!hasCompletedIvAccess) {
-      setIvAccessAlertActive(true);
-    }
-
     setGuidanceMessage(
       "พบคลื่นไฟฟ้าหัวใจ NON-SHOCKABLE! โปรดเลือกชนิดคลื่น (Asystole/PEA) และทำ IV Access เพื่อเปิดเส้นทางบริหารยา"
     );
@@ -1427,7 +1431,7 @@ export default function App() {
   };
 
   return (
-    <div id="smart_acls_root" className="min-h-screen h-[100dvh] w-full max-w-full overflow-x-hidden bg-slate-950 text-slate-100 flex flex-col font-sans select-none antialiased">
+    <div id="smart_acls_root" className="min-h-[100dvh] h-[100dvh] w-screen max-w-full overflow-hidden bg-slate-950 text-slate-100 flex flex-col font-sans select-none antialiased">
       {/* 1. HEADER BAR */}
       <HeaderBar
         systemTime={systemTime}
@@ -1457,59 +1461,66 @@ export default function App() {
         speakThai={speakThai}
         onOpenPalsModal={() => setShowPalsModal(true)}
         handleLogPresetMed={handleLogPresetMed}
+        completedProcedures={completedProcedures}
+        handleLogProcedure={handleLogProcedure}
+        ivAccessAlertActive={ivAccessAlertActive}
+        airwayAlertActive={airwayAlertActive}
+        etco2AlertActive={etco2AlertActive}
+        showProceduresModal={showProceduresModal}
+        setShowProceduresModal={setShowProceduresModal}
       />
 
-      {/* 3. MAIN WORKSPACE (Single Screen Desktop & Tablet Landscape / Tabbed Mobile & Tablet Portrait) */}
-      <main className="flex-1 overflow-y-auto lg:overflow-hidden p-1.5 sm:p-2.5 lg:p-3 flex flex-col lg:flex-row gap-2 sm:gap-2.5 max-w-full">
-        {/* Mobile & Tablet Portrait Tab Selector Header (Hidden on Tablet Landscape & Desktop) */}
-        <div className="flex lg:hidden items-center justify-between bg-slate-900 border border-slate-800 rounded-lg p-1 shrink-0 gap-1 overflow-x-auto no-scrollbar shadow-md">
+      {/* 3. MAIN WORKSPACE (Side-by-side on Tablet/Desktop md+, Tabbed full screen on Mobile) */}
+      <main className="flex-1 overflow-y-auto md:overflow-hidden p-1 sm:p-2 md:p-2.5 flex flex-col md:flex-row gap-1.5 sm:gap-2 max-w-full h-full min-h-0">
+        {/* Mobile View Tab Selector Header (Hidden on Tablet md and Desktop lg) */}
+        <div className="flex md:hidden items-center justify-between bg-slate-900 border border-slate-800 rounded-lg p-1 shrink-0 gap-1 overflow-x-auto no-scrollbar shadow-md w-full">
           <button
             onClick={() => setMobileViewTab('cpr')}
-            className={`flex-1 min-w-0 py-2 sm:py-2.5 px-2 sm:px-3 text-[10px] sm:text-xs font-black rounded-md flex items-center justify-center gap-1.5 transition-all cursor-pointer truncate ${
+            className={`flex-1 min-w-0 py-2 px-1.5 sm:px-2 text-[10px] sm:text-xs font-black rounded-md flex items-center justify-center gap-1 transition-all cursor-pointer truncate ${
               mobileViewTab === 'cpr' ? 'bg-cyan-600 text-white shadow-xs ring-1 ring-cyan-400' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
             }`}
           >
-            <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+            <Clock className="w-3.5 h-3.5 shrink-0" />
             <span className="truncate">CPR Timer</span>
           </button>
 
           <button
             onClick={() => setMobileViewTab('meds')}
-            className={`flex-1 min-w-0 py-2 sm:py-2.5 px-2 sm:px-3 text-[10px] sm:text-xs font-black rounded-md flex items-center justify-center gap-1.5 transition-all cursor-pointer truncate ${
+            className={`flex-1 min-w-0 py-2 px-1.5 sm:px-2 text-[10px] sm:text-xs font-black rounded-md flex items-center justify-center gap-1 transition-all cursor-pointer truncate ${
               mobileViewTab === 'meds' ? 'bg-cyan-600 text-white shadow-xs ring-1 ring-cyan-400' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
             }`}
           >
-            <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400 shrink-0" />
+            <Zap className="w-3.5 h-3.5 text-amber-400 shrink-0" />
             <span className="truncate">Actions & Meds</span>
           </button>
 
           <button
             onClick={() => setMobileViewTab('guidelines')}
-            className={`flex-1 min-w-0 py-2 sm:py-2.5 px-2 sm:px-3 text-[10px] sm:text-xs font-black rounded-md flex items-center justify-center gap-1.5 transition-all cursor-pointer truncate ${
+            className={`flex-1 min-w-0 py-2 px-1.5 sm:px-2 text-[10px] sm:text-xs font-black rounded-md flex items-center justify-center gap-1 transition-all cursor-pointer truncate ${
               mobileViewTab === 'guidelines' ? 'bg-cyan-600 text-white shadow-xs ring-1 ring-cyan-400' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
             }`}
           >
-            <Activity className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+            <Activity className="w-3.5 h-3.5 shrink-0" />
             <span className="truncate">Guidelines</span>
           </button>
 
           <button
             onClick={() => setMobileViewTab('logs')}
-            className={`flex-1 min-w-0 py-2 sm:py-2.5 px-2 sm:px-3 text-[10px] sm:text-xs font-black rounded-md flex items-center justify-center gap-1.5 transition-all cursor-pointer truncate ${
+            className={`flex-1 min-w-0 py-2 px-1.5 sm:px-2 text-[10px] sm:text-xs font-black rounded-md flex items-center justify-center gap-1 transition-all cursor-pointer truncate ${
               mobileViewTab === 'logs' ? 'bg-cyan-600 text-white shadow-xs ring-1 ring-cyan-400' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
             }`}
           >
-            <ListFilter className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+            <ListFilter className="w-3.5 h-3.5 shrink-0" />
             <span className="truncate">Logs ({logs.length})</span>
           </button>
         </div>
 
-        {/* LEFT COLUMN: TIMERS & QUICK ACTIONS (50% width on tablet landscape & desktop) */}
-        <div className={`flex-1 lg:w-[50%] xl:w-[52%] flex-col gap-2 sm:gap-2.5 overflow-visible lg:overflow-y-auto h-full ${
-          mobileViewTab === 'cpr' || mobileViewTab === 'meds' ? 'flex' : 'hidden lg:flex'
+        {/* LEFT COLUMN: TIMERS & QUICK ACTIONS (50% width on tablet md & desktop lg) */}
+        <div className={`flex-1 md:w-1/2 flex-col gap-1.5 sm:gap-2 overflow-hidden md:overflow-y-auto h-full w-full ${
+          mobileViewTab === 'cpr' || mobileViewTab === 'meds' ? 'flex' : 'hidden md:flex'
         }`}>
           {/* CPR Timer Card */}
-          <div className={`${mobileViewTab === 'cpr' ? 'block' : 'hidden lg:block'}`}>
+          <div className={`flex-1 flex flex-col h-full w-full ${mobileViewTab === 'cpr' ? 'flex' : 'hidden md:flex'}`}>
             <CprTimerCard
               cprTimeRemaining={cprTimeRemaining}
               cprActive={cprActive}
@@ -1534,7 +1545,7 @@ export default function App() {
           </div>
 
           {/* Quick Meds and Shocks Panel */}
-          <div className={`${mobileViewTab === 'meds' ? 'block' : 'hidden lg:block'}`}>
+          <div className={`flex-1 flex flex-col h-full w-full ${mobileViewTab === 'meds' ? 'flex' : 'hidden md:flex'}`}>
             <QuickMedsShocksPanel
               hasCompletedIvAccess={hasCompletedIvAccess}
               handleAdministerEpinephrine={handleAdministerEpinephrine}
@@ -1562,12 +1573,14 @@ export default function App() {
           </div>
         </div>
 
-        {/* RIGHT COLUMN: GUIDANCE & LOGS FEED (50% width on tablet landscape & desktop) */}
-        <div className={`flex-1 lg:w-[50%] xl:w-[48%] flex-col gap-2 sm:gap-2.5 overflow-visible lg:overflow-y-auto h-full ${
-          mobileViewTab === 'guidelines' || mobileViewTab === 'logs' ? 'flex' : 'hidden lg:flex'
+        {/* RIGHT COLUMN: GUIDANCE & LOGS FEED (50% width on tablet md & desktop lg) */}
+        <div className={`flex-1 md:w-1/2 flex-col gap-1.5 sm:gap-2 overflow-hidden md:overflow-y-auto h-full w-full ${
+          mobileViewTab === 'guidelines' || mobileViewTab === 'logs' ? 'flex' : 'hidden md:flex'
         }`}>
           {/* Interactive Protocol Guidance */}
-          <div className={`flex-1 overflow-hidden ${mobileViewTab === 'guidelines' ? 'block h-full' : 'hidden lg:block lg:h-1/2'}`}>
+          <div className={`flex-1 flex flex-col overflow-hidden h-full w-full ${
+            mobileViewTab === 'guidelines' ? 'flex' : 'hidden md:flex md:h-1/2'
+          }`}>
             <GuidancePanel
               activeTab={activeTab}
               setActiveTab={setActiveTab}
@@ -1633,11 +1646,15 @@ export default function App() {
               etco2AlertActive={etco2AlertActive}
               showStabilityModal={showStabilityModal}
               setShowStabilityModal={setShowStabilityModal}
+              showProceduresModal={showProceduresModal}
+              setShowProceduresModal={setShowProceduresModal}
             />
           </div>
 
           {/* Live Timestamped Flowsheet Log */}
-          <div className={`flex-1 overflow-hidden ${mobileViewTab === 'logs' ? 'block h-full' : 'hidden lg:block lg:h-1/2'}`}>
+          <div className={`flex-1 flex flex-col overflow-hidden h-full w-full ${
+            mobileViewTab === 'logs' ? 'flex' : 'hidden md:flex md:h-1/2'
+          }`}>
             <LogsPanel
               logs={logs}
               logEndRef={logEndRef}

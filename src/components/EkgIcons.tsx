@@ -3,9 +3,9 @@ import React from 'react';
 // Mini EKG Waveform Component for VF (Ventricular Fibrillation)
 export function VfEkgIcon({ className = "w-14 h-8" }: { className?: string }) {
   return (
-    <div className={`${className} bg-slate-950 rounded-lg border border-red-900/80 p-0.5 relative overflow-hidden flex items-center justify-center shrink-0 shadow-inner`}>
+    <div className={`${className} bg-slate-950 rounded-lg border border-red-900/80 p-0.5 relative overflow-hidden isolate flex items-center justify-center shrink-0 shadow-inner`}>
       {/* AHA Red Grid Background */}
-      <svg className="absolute inset-0 w-full h-full opacity-30" viewBox="0 0 60 30">
+      <svg className="absolute inset-0 w-full h-full opacity-30 pointer-events-none" viewBox="0 0 60 30">
         <line x1="0" y1="7.5" x2="60" y2="7.5" stroke="#ef4444" strokeWidth="0.5" strokeDasharray="1,1" />
         <line x1="0" y1="15" x2="60" y2="15" stroke="#ef4444" strokeWidth="0.5" strokeDasharray="1,1" />
         <line x1="0" y1="22.5" x2="60" y2="22.5" stroke="#ef4444" strokeWidth="0.5" strokeDasharray="1,1" />
@@ -15,7 +15,7 @@ export function VfEkgIcon({ className = "w-14 h-8" }: { className?: string }) {
         <line x1="48" y1="0" x2="48" y2="30" stroke="#ef4444" strokeWidth="0.5" strokeDasharray="1,1" />
       </svg>
       {/* High-Contrast Chaotic Coarse VF Waveform */}
-      <svg viewBox="0 0 60 30" className="w-full h-full relative z-10 overflow-visible">
+      <svg viewBox="0 0 60 30" className="w-full h-full relative z-0 overflow-hidden">
         <defs>
           <filter id="vfGlow" x="-20%" y="-20%" width="140%" height="140%">
             <feGaussianBlur stdDeviation="0.8" result="blur" />
@@ -42,8 +42,8 @@ export function VfEkgIcon({ className = "w-14 h-8" }: { className?: string }) {
 // Mini EKG Waveform Component for Pulseless VT (Ventricular Tachycardia)
 export function VtEkgIcon({ className = "w-14 h-8" }: { className?: string }) {
   return (
-    <div className={`${className} bg-slate-950 rounded-lg border border-slate-700/80 p-0.5 relative overflow-hidden flex items-center justify-center shrink-0 shadow-inner`}>
-      <svg className="absolute inset-0 w-full h-full opacity-25" viewBox="0 0 60 30">
+    <div className={`${className} bg-slate-950 rounded-lg border border-slate-700/80 p-0.5 relative overflow-hidden isolate flex items-center justify-center shrink-0 shadow-inner`}>
+      <svg className="absolute inset-0 w-full h-full opacity-25 pointer-events-none" viewBox="0 0 60 30">
         <line x1="0" y1="7.5" x2="60" y2="7.5" stroke="#ef4444" strokeWidth="0.5" strokeDasharray="1,1" />
         <line x1="0" y1="15" x2="60" y2="15" stroke="#ef4444" strokeWidth="0.5" strokeDasharray="1,1" />
         <line x1="0" y1="22.5" x2="60" y2="22.5" stroke="#ef4444" strokeWidth="0.5" strokeDasharray="1,1" />
@@ -51,7 +51,7 @@ export function VtEkgIcon({ className = "w-14 h-8" }: { className?: string }) {
         <line x1="30" y1="0" x2="30" y2="30" stroke="#ef4444" strokeWidth="0.5" strokeDasharray="1,1" />
         <line x1="45" y1="0" x2="45" y2="30" stroke="#ef4444" strokeWidth="0.5" strokeDasharray="1,1" />
       </svg>
-      <svg viewBox="0 0 60 30" className="w-full h-full relative z-10">
+      <svg viewBox="0 0 60 30" className="w-full h-full relative z-0 overflow-hidden">
         <path
           d="M0 15 L3 3 L7 27 L11 3 L15 27 L19 3 L23 27 L27 3 L31 27 L35 3 L39 27 L43 3 L47 27 L51 3 L55 27 L60 15"
           fill="none"
@@ -68,9 +68,9 @@ export function VtEkgIcon({ className = "w-14 h-8" }: { className?: string }) {
 // Mini EKG Waveform Component for Asystole (Flatline)
 export function AsystoleEkgIcon({ className = "w-14 h-8" }: { className?: string }) {
   return (
-    <div className={`${className} bg-slate-950 rounded-lg border border-rose-500/60 p-0.5 relative overflow-hidden flex items-center justify-center shrink-0 shadow-lg shadow-slate-950/50`}>
+    <div className={`${className} bg-slate-950 rounded-lg border border-rose-500/60 p-0.5 relative overflow-hidden isolate flex items-center justify-center shrink-0 shadow-lg shadow-slate-950/50`}>
       {/* Cardiac Monitor Grid Background */}
-      <svg className="absolute inset-0 w-full h-full opacity-30" viewBox="0 0 60 30">
+      <svg className="absolute inset-0 w-full h-full opacity-30 pointer-events-none" viewBox="0 0 60 30">
         <line x1="0" y1="7.5" x2="60" y2="7.5" stroke="#f43f5e" strokeWidth="0.5" strokeDasharray="1,1" />
         <line x1="0" y1="15" x2="60" y2="15" stroke="#f43f5e" strokeWidth="0.5" strokeDasharray="1,1" />
         <line x1="0" y1="22.5" x2="60" y2="22.5" stroke="#f43f5e" strokeWidth="0.5" strokeDasharray="1,1" />
@@ -82,7 +82,7 @@ export function AsystoleEkgIcon({ className = "w-14 h-8" }: { className?: string
       </svg>
       
       {/* High-Definition Asystole Flatline Waveform with Glow */}
-      <svg viewBox="0 0 60 30" className="w-full h-full relative z-10 overflow-visible">
+      <svg viewBox="0 0 60 30" className="w-full h-full relative z-0 overflow-hidden">
         <defs>
           <filter id="asystoleGlow" x="-20%" y="-20%" width="140%" height="140%">
             <feGaussianBlur stdDeviation="0.8" result="blur" />
@@ -109,9 +109,9 @@ export function AsystoleEkgIcon({ className = "w-14 h-8" }: { className?: string
 // Mini EKG Waveform Component for PEA (Pulseless Electrical Activity)
 export function PeaEkgIcon({ className = "w-14 h-8" }: { className?: string }) {
   return (
-    <div className={`${className} bg-slate-950 rounded-lg border border-cyan-500/80 p-0.5 relative overflow-hidden flex items-center justify-center shrink-0 shadow-lg shadow-cyan-950/50`}>
+    <div className={`${className} bg-slate-950 rounded-lg border border-cyan-500/80 p-0.5 relative overflow-hidden isolate flex items-center justify-center shrink-0 shadow-lg shadow-cyan-950/50`}>
       {/* Cardiac Monitor Grid Background */}
-      <svg className="absolute inset-0 w-full h-full opacity-35" viewBox="0 0 60 30">
+      <svg className="absolute inset-0 w-full h-full opacity-35 pointer-events-none" viewBox="0 0 60 30">
         <line x1="0" y1="7.5" x2="60" y2="7.5" stroke="#22d3ee" strokeWidth="0.5" strokeDasharray="1,1" />
         <line x1="0" y1="15" x2="60" y2="15" stroke="#22d3ee" strokeWidth="0.5" strokeDasharray="1,1" />
         <line x1="0" y1="22.5" x2="60" y2="22.5" stroke="#22d3ee" strokeWidth="0.5" strokeDasharray="1,1" />
@@ -123,7 +123,7 @@ export function PeaEkgIcon({ className = "w-14 h-8" }: { className?: string }) {
       </svg>
       
       {/* High Definition 2-Cycle PEA Waveform with Neon Glow */}
-      <svg viewBox="0 0 60 30" className="w-full h-full relative z-10 overflow-visible">
+      <svg viewBox="0 0 60 30" className="w-full h-full relative z-0 overflow-hidden">
         <defs>
           <filter id="peaGlow" x="-20%" y="-20%" width="140%" height="140%">
             <feGaussianBlur stdDeviation="0.8" result="blur" />
@@ -144,8 +144,8 @@ export function PeaEkgIcon({ className = "w-14 h-8" }: { className?: string }) {
         />
       </svg>
       
-      {/* High-visibility NO PULSE badge */}
-      <div className="absolute bottom-0.5 right-0.5 bg-rose-600 text-white font-black text-[7px] px-1 py-0.2 rounded-[3px] leading-none z-20 uppercase tracking-tighter border border-rose-300 shadow-md">
+      {/* High-visibility NO PULSE badge - compact size and position so EKG waveform is clearly visible */}
+      <div className="absolute bottom-[2px] right-[2px] bg-rose-600/90 text-white font-black text-[5px] px-0.5 py-[0.5px] rounded-[2px] leading-none z-10 uppercase tracking-tighter border border-rose-400/80 shadow-xs pointer-events-none">
         NO PULSE
       </div>
     </div>
