@@ -247,7 +247,7 @@ export function ControlBar({
                   : 'bg-gradient-to-r from-purple-950 to-slate-900 hover:from-purple-900 hover:to-slate-800 text-purple-300 hover:text-white border border-purple-500/50 hover:border-purple-400 shadow-[0_0_10px_rgba(168,85,247,0.25)]'
               }`}
             >
-              <Syringe className="w-3.5 h-3.5 text-purple-400 animate-pulse shrink-0" />
+              <Syringe className="w-3.5 h-3.5 text-purple-400 shrink-0" />
               <span className="tracking-tight text-purple-200">
                 {mgSo4AlertActive ? 'Med etc. (MgSO4 ⚠️)' : 'Med etc.'}
               </span>
@@ -405,7 +405,7 @@ export function ControlBar({
                       </div>
                       <div className="text-[11px] text-amber-100/90 space-y-0.5 pl-5">
                         {ivAccessAlertActive && (
-                          <p>• <strong>IV / IO Access:</strong> เปิดเส้นทางให้ยาก่อนบริหารยา Epinephrine</p>
+                          <p>• <strong>IV / IO Access:</strong> เปิดเส้นให้ยาก่อนบริหารยา Epinephrine</p>
                         )}
                         {airwayAlertActive && (
                           <p>• <strong>Advanced Airway:</strong> ใส่ท่อช่วยหายใจขั้นสูง (ET Tube)</p>

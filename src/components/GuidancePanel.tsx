@@ -13,6 +13,7 @@ import {
   Check,
   Sparkles,
   Syringe,
+  Lock,
 } from 'lucide-react';
 import {
   GuidelineTab,
@@ -180,6 +181,47 @@ export function GuidancePanel({
   };
 
   const [tachyBradyFilter, setTachyBradyFilter] = useState<'brady' | 'tachy' | 'all'>('all');
+  const [abcCompletedSteps, setAbcCompletedSteps] = useState<string[]>([]);
+
+  const isAbDone = abcCompletedSteps.includes('A-B');
+  const isCDone = abcCompletedSteps.includes('C');
+  const isIdentDone = abcCompletedSteps.includes('IDENT');
+
+  const handleAbcStepClick = (step: 'A-B' | 'C' | 'IDENT') => {
+    if (step === 'A-B') {
+      if (!isAbDone) {
+        setAbcCompletedSteps(prev => [...prev, 'A-B']);
+        addLog('ABC Step 1 Completed: Airway & Breathing (A-B)', 'system');
+        speakThai?.('ดูแลทางเดินหายใจและการหายใจเรียบร้อยแล้วค่ะ');
+      } else {
+        setAbcCompletedSteps(prev => prev.filter(s => s !== 'A-B' && s !== 'C' && s !== 'IDENT'));
+      }
+    } else if (step === 'C') {
+      if (!isAbDone) {
+        speakThai?.('กรุณาทำขั้นตอน Airway & Breathing (A-B) ก่อนนะคะ');
+        return;
+      }
+      if (!isCDone) {
+        setAbcCompletedSteps(prev => [...prev, 'C']);
+        addLog('ABC Step 2 Completed: Circulation & Monitor (C)', 'system');
+        speakThai?.('ติดเครื่องติดตามสัญญาณชีพ ประเมินคลื่นไฟฟ้าหัวใจ และเปิดเส้นให้ยาเรียบร้อยแล้วค่ะ');
+      } else {
+        setAbcCompletedSteps(prev => prev.filter(s => s !== 'C' && s !== 'IDENT'));
+      }
+    } else if (step === 'IDENT') {
+      if (!isCDone) {
+        speakThai?.('กรุณาทำขั้นตอน Circulation & Monitor (C) ก่อนนะคะ');
+        return;
+      }
+      if (!isIdentDone) {
+        setAbcCompletedSteps(prev => [...prev, 'IDENT']);
+        addLog('ABC Step 3 Completed: Identify & Treat Causes (A-B-C Complete)', 'system');
+      }
+      speakThai?.('ประเมินขั้นตอน เอบีซี ครบถ้วนแล้ว โปรดประเมินสภาวะทางคลินิกค่ะ', () => {
+        setShowStabilityModal?.(true);
+      });
+    }
+  };
 
   // ROSC Vital Signs Input State
   const [sysBpVal, setSysBpVal] = useState<string>('');
@@ -377,7 +419,7 @@ export function GuidancePanel({
                   >
                     <TorsadesEkgIcon className="w-9 h-6 shrink-0" />
                     <div className="min-w-0">
-                      <span className="font-bold text-xs block leading-tight truncate">Torsades de pointes</span>
+                      <span className="font-bold text-xs block leading-tight truncate">TdP</span>
                       <span className="text-[8px] text-slate-400 block leading-tight truncate">Polymorphic VT</span>
                     </div>
                   </button>
@@ -535,8 +577,8 @@ export function GuidancePanel({
                   </div>
                 </div>
 
-                {/* 1. Clinical Stability Display */}
-                <div className="flex items-center justify-between bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 gap-2 h-[60px]">
+                {/* 1. Clinical Stability Display Status (Read-only) */}
+                <div className="flex items-center justify-between bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 gap-2 min-h-[60px]">
                   <div className="flex items-center gap-2">
                     <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
                     <span className="text-xs font-black uppercase text-slate-300">
@@ -556,13 +598,108 @@ export function GuidancePanel({
                       </span>
                     )}
                     {!stabilityStatus && (
-                      <span className="px-3 py-1 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center gap-1.5 shadow-xs">
-                        ยังไม่ได้ประเมิน
+                      <span className="px-3 py-1.5 rounded-lg bg-amber-500/15 border border-amber-500/40 text-amber-300 font-bold text-xs flex items-center gap-1.5 cursor-default animate-pulse">
+                        <Activity className="w-4 h-4 text-amber-400" />
+                        <span>ประเมินสภาวะ(A-B-C)</span>
                       </span>
                     )}
                   </div>
                 </div>
               </div>
+
+              {/* Treat Cause & Ident.(A-B-C) Banner */}
+              <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-cyan-950/80 border-2 border-cyan-500/80 p-3 rounded-xl shadow-lg space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <ShieldAlert className="w-5 h-5 text-cyan-400 shrink-0 animate-pulse" />
+                    <div>
+                      <h4 className="text-xs font-black text-cyan-300 uppercase tracking-tight flex items-center gap-1">
+                        ⚡ Treat Cause &amp; Ident.(A-B-C)
+                      </h4>
+                      <p className="text-[10px] text-slate-300 font-medium">
+                        กดทำขั้นตอนเรียงตามลำดับ 1 → 2 → 3 เมื่อทำครบระบบจะแสดง Pop-up ให้ประเมิน Stable / Unstable
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 text-[10px]">
+                  {/* Step 1: A-B */}
+                  <button
+                    onClick={() => handleAbcStepClick('A-B')}
+                    className={`p-2.5 rounded-lg border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                      isAbDone
+                        ? 'bg-amber-950/60 border-amber-400 text-amber-200'
+                        : 'bg-slate-900 hover:bg-slate-850 border-amber-500/60 text-slate-200 animate-pulse active:scale-95'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between w-full mb-1">
+                      <span className="font-bold text-amber-300 flex items-center gap-1 text-[11px]">
+                        {isAbDone ? (
+                          <Check className="w-4 h-4 text-amber-400 shrink-0" />
+                        ) : (
+                          <span className="w-4 h-4 rounded-full bg-amber-500/30 text-amber-300 flex items-center justify-center text-[9px] font-black shrink-0">1</span>
+                        )}
+                        Airway &amp; Breathing (A-B)
+                      </span>
+                    </div>
+                    <span className="text-[9px] text-slate-300 leading-tight">ดูแลทางเดินหายใจ ให้ O2 (ถ้า SpO2 &lt; 94%)</span>
+                  </button>
+
+                  {/* Step 2: C */}
+                  <button
+                    onClick={() => handleAbcStepClick('C')}
+                    className={`p-2.5 rounded-lg border text-left transition-all flex flex-col justify-between ${
+                      isCDone
+                        ? 'bg-cyan-950/60 border-cyan-400 text-cyan-200 cursor-pointer'
+                        : isAbDone
+                        ? 'bg-slate-900 hover:bg-slate-850 border-cyan-500/60 text-slate-200 animate-pulse cursor-pointer active:scale-95'
+                        : 'bg-slate-950/40 border-slate-800 text-slate-500 opacity-60 cursor-not-allowed'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between w-full mb-1">
+                      <span className={`font-bold flex items-center gap-1 text-[11px] ${isCDone ? 'text-cyan-300' : isAbDone ? 'text-cyan-400' : 'text-slate-500'}`}>
+                        {isCDone ? (
+                          <Check className="w-4 h-4 text-cyan-400 shrink-0" />
+                        ) : isAbDone ? (
+                          <span className="w-4 h-4 rounded-full bg-cyan-500/30 text-cyan-300 flex items-center justify-center text-[9px] font-black shrink-0">2</span>
+                        ) : (
+                          <Lock className="w-3.5 h-3.5 text-slate-600 shrink-0" />
+                        )}
+                        Circulation &amp; Monitor (C)
+                      </span>
+                    </div>
+                    <span className="text-[9px] text-slate-400 leading-tight">ติดเครื่องติดตาม V/S, BP, EKG &amp; เปิดเส้น IV/IO</span>
+                  </button>
+
+                  {/* Step 3: Identify & Treat Causes */}
+                  <button
+                    onClick={() => handleAbcStepClick('IDENT')}
+                    className={`p-2.5 rounded-lg border text-left transition-all flex flex-col justify-between ${
+                      isIdentDone
+                        ? 'bg-emerald-950/60 border-emerald-400 text-emerald-200 cursor-pointer'
+                        : isCDone
+                        ? 'bg-slate-900 hover:bg-slate-850 border-emerald-500/60 text-slate-200 animate-pulse cursor-pointer active:scale-95'
+                        : 'bg-slate-950/40 border-slate-800 text-slate-500 opacity-60 cursor-not-allowed'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between w-full mb-1">
+                      <span className={`font-bold flex items-center gap-1 text-[11px] ${isIdentDone ? 'text-emerald-300' : isCDone ? 'text-emerald-400' : 'text-slate-500'}`}>
+                        {isIdentDone ? (
+                          <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                        ) : isCDone ? (
+                          <span className="w-4 h-4 rounded-full bg-emerald-500/30 text-emerald-300 flex items-center justify-center text-[9px] font-black shrink-0">3</span>
+                        ) : (
+                          <Lock className="w-3.5 h-3.5 text-slate-600 shrink-0" />
+                        )}
+                        Identify &amp; Treat Causes
+                      </span>
+                    </div>
+                    <span className="text-[9px] text-slate-400 leading-tight">หาสาเหตุและแก้ไข (Ischemia, Electrolytes, Drugs)</span>
+                  </button>
+                </div>
+              </div>
+
               <div className="text-[8.5px] text-slate-400 px-1 leading-tight">
                 * สัญญาณวิกฤต: Hypotension, AMS (สับสน/ซึม), Signs of Shock, Ischemic Chest Pain, Acute Heart Failure
               </div>

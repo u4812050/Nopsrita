@@ -887,7 +887,7 @@ export default function App() {
     setGuidanceMessage(
       "พบคลื่นไฟฟ้าหัวใจ SHOCKABLE! โปรดเลือกชนิดคลื่น (VF, Pulseless VT หรือ Torsades de pointes) แล้วกดปุ่มปล่อยช็อกหัวใจตรงกลางหน้าจอค่ะ"
     );
-    speakThai("คลื่นไฟฟ้าหัวใจต้องการการช๊อก โปรดเลือกชนิดคลื่นไฟฟ้าหัวใจ วีเอฟ, วีที หรือ ทอสาด และกดปุ่มปล่อยช๊อกตรงกลางนะคะ");
+    speakThai("คลื่นไฟฟ้าหัวใจต้องการการช๊อก เลือกชนิดคลื่นไฟฟ้าหัวใจ วีเอฟ วีที หรือทอสาด และกดปุ่มปล่อยช๊อกตรงกลางค่ะ");
     setActiveTab('trc_cardiac');
     setMobileViewTab('guidelines');
   };
@@ -1007,7 +1007,7 @@ export default function App() {
       "พบคลื่นไฟฟ้าหัวใจ NON-SHOCKABLE! โปรดเลือกชนิดคลื่น (Asystole/PEA) และทำ IV Access เพื่อเปิดเส้นทางบริหารยา"
     );
 
-    speakThai("คลื่นไฟฟ้าหัวใจช็อกไม่ได้ โปรดเลือกชนิดคลื่นไฟฟ้าหัวใจ อะซิสโทลี หรือ พีอีเอ และเปิดเส้นทางให้ยานะคะ");
+    speakThai("คลื่นไฟฟ้าหัวใจช็อกไม่ได้ โปรดเลือกชนิดคลื่นไฟฟ้าหัวใจ อะซิสโทลี หรือ พีอีเอ และเปิดเส้นให้ยานะคะ");
     setActiveTab('trc_cardiac');
     setMobileViewTab('guidelines');
   };
@@ -1032,13 +1032,11 @@ export default function App() {
     }
 
     setGuidanceMessage(
-      "BRADYCARDIA WITH PULSE (HR < 50 bpm)! Assess clinical stability - stable or unstable."
+      "BRADYCARDIA WITH PULSE (HR < 50 bpm)! Maintain airway, support breathing & O2, monitor V/S, ECG & IV access. Treat underlying cause & Identify causes (ABC principles)."
     );
 
-    addLog("Rhythm Checked: Bradycardia", "rhythm");
-    speakThai("ชีพจรช้าผิดปกติค่ะ", () => {
-      setShowStabilityModal(true);
-    });
+    addLog("Rhythm Checked: Bradycardia - Treat underlying cause (ABC principles)", "rhythm");
+    speakThai("ชีพจรช้าผิดปกติ ดูแลทางเดินหายใจ การหายใจ ระบบไหลเวียน และหาสาเหตุนะคะ");
     setActiveTab('trc_tachy_brady');
     setMobileViewTab('guidelines');
   };
@@ -1063,13 +1061,11 @@ export default function App() {
     }
 
     setGuidanceMessage(
-      "TACHYCARDIA WITH PULSE (HR >= 150 bpm)! Assess clinical stability - stable or unstable."
+      "TACHYCARDIA WITH PULSE (HR >= 150 bpm)! Maintain airway, support breathing & O2, monitor V/S, ECG & IV access. Treat underlying cause & Identify causes (ABC principles)."
     );
 
-    addLog("Rhythm Checked: Tachycardia", "rhythm");
-    speakThai("ชีพจรเร็วผิดปกติค่ะ", () => {
-      setShowStabilityModal(true);
-    });
+    addLog("Rhythm Checked: Tachycardia - Treat underlying cause (ABC principles)", "rhythm");
+    speakThai("ชีพจรเร็วผิดปกติ ดูแลทางเดินหายใจ การหายใจ ระบบไหลเวียน และหาสาเหตุนะคะ");
     setActiveTab('trc_tachy_brady');
     setMobileViewTab('guidelines');
   };
@@ -1119,8 +1115,8 @@ export default function App() {
 
     if (!hasCompletedIvAccess) {
       setIvAccessAlertActive(true);
-      setGuidanceMessage("โปรดเปิดเส้นทางให้ยาก่อน (IV/IO Access) จึงจะสามารถบริหารยา EPINEPHRINE ได้!");
-      speakThai("กรุณาเปิดเส้นทางให้ยา IV หรือ IO ก่อนบริหารยาเอพิเนฟรินนะคะ");
+      setGuidanceMessage("โปรดเปิดเส้นให้ยาก่อน (IV/IO Access) จึงจะสามารถบริหารยา EPINEPHRINE ได้!");
+      speakThai("กรุณาเปิดเส้นให้ยา IV หรือ IO ก่อนบริหารยาเอพิเนฟรินนะคะ");
       return;
     }
 
@@ -1246,7 +1242,7 @@ export default function App() {
     if (procName.includes('IV / IO') || procName.includes('IV Access') || procName.includes('IV Line')) {
       setIvAccessAlertActive(false);
       setEpiAlertActive(true);
-      speakThai("เปิดเส้นทางให้ยาเรียบร้อยแล้วค่ะ โปรดเตรียมบริหารยาเอพิเนฟริน");
+      speakThai("เปิดเส้นให้ยาเรียบร้อยแล้ว เตรียมให้ยาเอพิเนฟรินค่ะ");
       setGuidanceMessage("เปิดเส้นทาง IV/IO Access สำเร็จ! โปรดกดบริหารยา EPINEPHRINE 1mg IV/IO");
     }
 
