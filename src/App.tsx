@@ -112,6 +112,8 @@ export default function App() {
   const [showResetConfirm, setShowResetConfirm] = useState<boolean>(false);
   const [showPalsModal, setShowPalsModal] = useState<boolean>(false);
   const [showStabilityModal, setShowStabilityModal] = useState<boolean>(false);
+  const [showAltMedsModal, setShowAltMedsModal] = useState<boolean>(false);
+  const [mgSo4AlertActive, setMgSo4AlertActive] = useState<boolean>(false);
 
   // 10-Second Pulse & EKG assessment timer states
   const [pulseCheckActive, setPulseCheckActive] = useState<boolean>(false);
@@ -883,9 +885,9 @@ export default function App() {
     addLog("Rhythm Checked: Shockable", "rhythm");
 
     setGuidanceMessage(
-      "พบคลื่นไฟฟ้าหัวใจ SHOCKABLE! โปรดเลือกชนิดคลื่น (VF หรือ Pulseless VT) แล้วกดปุ่มปล่อยช็อกหัวใจตรงกลางหน้าจอค่ะ"
+      "พบคลื่นไฟฟ้าหัวใจ SHOCKABLE! โปรดเลือกชนิดคลื่น (VF, Pulseless VT หรือ Torsades de pointes) แล้วกดปุ่มปล่อยช็อกหัวใจตรงกลางหน้าจอค่ะ"
     );
-    speakThai("คลื่นไฟฟ้าหัวใจต้องการการช๊อกโปรดเลือกชนิดคลื่นไฟฟ้าหัวใจ วีเอฟ หรือ วีที และกดปุ่มปล่อยช๊อกตรงกลางนะคะ");
+    speakThai("คลื่นไฟฟ้าหัวใจต้องการการช๊อก โปรดเลือกชนิดคลื่นไฟฟ้าหัวใจ วีเอฟ, วีที หรือ ทอสาด และกดปุ่มปล่อยช๊อกตรงกลางนะคะ");
     setActiveTab('trc_cardiac');
     setMobileViewTab('guidelines');
   };
@@ -914,7 +916,25 @@ export default function App() {
     const nextShock = shockCount + 1;
     setShockCount(nextShock);
 
-    if (nextShock === 1) {
+    const currentRhythm = selectedShockableRhythm;
+
+    if (currentRhythm === 'Torsades') {
+      setMgSo4AlertActive(true);
+      setShowAltMedsModal(true);
+      if (nextShock === 1) {
+        setGuidanceMessage(
+          "SHOCK DELIVERED! Defibrillation #1 complete (Torsades de pointes). IMMEDIATELY ADMINISTER MAGNESIUM SULFATE (50% MgSO4 2g IV/IO) in Med etc.!"
+        );
+        addLog(`Defibrillation #1 Delivered (200J) [Torsades de pointes]`, "shock");
+        speakThai("ปล่อยช็อกครั้งที่หนึ่ง สำหรับ ทอสาด เดอ ปัว เรียบร้อยแล้วค่ะ แนะนำให้ยา ห้าสิบเปอเซ็นแมกนีเซียมซัลเฟ็ต สองกรัม นะคะ");
+      } else {
+        setGuidanceMessage(
+          `SHOCK DELIVERED! Defibrillation #${nextShock} complete (Torsades de pointes). Resume CPR for 2 min. ADMINISTER MAGNESIUM SULFATE (50% MgSO4 2g IV/IO)!`
+        );
+        addLog(`Defibrillation #${nextShock} Delivered (200J) [Torsades de pointes]`, "shock");
+        speakThai(`ปล่อยช็อกครั้งที่ ${nextShock} สำหรับ ทอสาด เรียบร้อยแล้วค่ะ แนะนำให้ยา ห้าสิบเปอเซ็นแมกนีเซียมซัลเฟ็ต สองกรัม ค่ะ`);
+      }
+    } else if (nextShock === 1) {
       if (!hasCompletedIvAccess) {
         setIvAccessAlertActive(true);
         setGuidanceMessage(
@@ -1164,7 +1184,7 @@ export default function App() {
     speakThai(`ให้ยาลิโดเคน เข็มที่ ${nextLido} เรียบร้อยแล้วค่ะ`);
   };
 
-  const handleLogPresetMed = (medName: string, skipSpeech?: boolean) => {
+  const handleLogPresetMed = (medName: string, skipSpeech?: boolean, onSpeechEnd?: () => void) => {
     if (!caseActive) {
       setCaseActive(true);
       setCaseStartTime(Date.now());
@@ -1190,24 +1210,26 @@ export default function App() {
 
     if (!skipSpeech) {
       if (lower.includes('atropine')) {
-        speakThai('ให้ยาอะโทพีน หนึ่งมิลลิกำค่ะ');
+        speakThai('ให้ยาอะโทพีน หนึ่งมิลลิกำค่ะ', onSpeechEnd);
       } else if (lower.includes('dopamine')) {
-        speakThai('ให้ยาโดพามีน ดิบค่ะ');
+        speakThai('ให้ยาโดพามีน ดิบค่ะ', onSpeechEnd);
       } else if (lower.includes('epinephrine') && lower.includes('drip')) {
-        speakThai('ให้ยาอีพิเน๊ฟริน ดิบค่ะ');
+        speakThai('ให้ยาอีพิเน๊ฟริน ดิบค่ะ', onSpeechEnd);
       } else if (lower.includes('adenosine') && lower.includes('6mg')) {
-        speakThai('ให้ยาอะดีโนซีน หกมิลลิกำ doubleไซริ๊งค่ะ');
+        speakThai('ให้ยาอะดีโนซีน หกมิลลิกำ doubleไซริ๊งค่ะ', onSpeechEnd);
       } else if (lower.includes('adenosine') && lower.includes('12mg')) {
-        speakThai('ให้ยาอะดีโนซีน สิบสองมิลลิกำ doubleไซริ๊งค่ะ');
+        speakThai('ให้ยาอะดีโนซีน สิบสองมิลลิกำ doubleไซริ๊งค่ะ', onSpeechEnd);
       } else if (lower.includes('amiodarone') && lower.includes('150')) {
-        speakThai('ให้ยาอะมิโอดาโรน หนึ่งร้อยห้าสิบมิลลิกำ ค่ะ');
+        speakThai('ให้ยาอะมิโอดาโรน หนึ่งร้อยห้าสิบมิลลิกำ ค่ะ', onSpeechEnd);
       } else if (lower.includes('diltiazem') || lower.includes('metoprolol') || lower.includes('rate control')) {
-        speakThai('ให้ยาควบคุมการเต้นของหัวใจค่ะ');
+        speakThai('ให้ยาควบคุมการเต้นของหัวใจค่ะ', onSpeechEnd);
       } else if (lower.includes('midazolam') || lower.includes('sedation')) {
-        speakThai('ให้ยาก่อมประสาดค่ะ');
+        speakThai('ให้ยาก่อมประสาดค่ะ', onSpeechEnd);
       } else {
-        speakThai(`ให้ยา ${medName.split(' ')[0]} เรียบร้อยแล้วค่ะ`);
+        speakThai(`ให้ยา ${medName.split(' ')[0]} เรียบร้อยแล้วค่ะ`, onSpeechEnd);
       }
+    } else if (onSpeechEnd) {
+      onSpeechEnd();
     }
   };
 
@@ -1468,6 +1490,10 @@ export default function App() {
         etco2AlertActive={etco2AlertActive}
         showProceduresModal={showProceduresModal}
         setShowProceduresModal={setShowProceduresModal}
+        showAltMedsPopover={showAltMedsModal}
+        setShowAltMedsPopover={setShowAltMedsModal}
+        mgSo4AlertActive={mgSo4AlertActive}
+        setMgSo4AlertActive={setMgSo4AlertActive}
       />
 
       {/* 3. MAIN WORKSPACE (Side-by-side on Tablet/Desktop md+, Tabbed full screen on Mobile) */}
@@ -1520,7 +1546,7 @@ export default function App() {
           mobileViewTab === 'cpr' || mobileViewTab === 'meds' ? 'flex' : 'hidden md:flex'
         }`}>
           {/* CPR Timer Card */}
-          <div className={`flex-1 flex flex-col h-full w-full ${mobileViewTab === 'cpr' ? 'flex' : 'hidden md:flex'}`}>
+          <div className={`flex flex-col h-[418px] w-full shrink-0 ${mobileViewTab === 'cpr' ? 'flex' : 'hidden md:flex'}`}>
             <CprTimerCard
               cprTimeRemaining={cprTimeRemaining}
               cprActive={cprActive}
@@ -1545,7 +1571,7 @@ export default function App() {
           </div>
 
           {/* Quick Meds and Shocks Panel */}
-          <div className={`flex-1 flex flex-col h-full w-full ${mobileViewTab === 'meds' ? 'flex' : 'hidden md:flex'}`}>
+          <div className={`flex flex-col h-[185px] w-full shrink-0 ${mobileViewTab === 'meds' ? 'flex' : 'hidden md:flex'}`}>
             <QuickMedsShocksPanel
               hasCompletedIvAccess={hasCompletedIvAccess}
               handleAdministerEpinephrine={handleAdministerEpinephrine}
@@ -1648,6 +1674,8 @@ export default function App() {
               setShowStabilityModal={setShowStabilityModal}
               showProceduresModal={showProceduresModal}
               setShowProceduresModal={setShowProceduresModal}
+              setShowAltMedsModal={setShowAltMedsModal}
+              mgSo4AlertActive={mgSo4AlertActive}
             />
           </div>
 

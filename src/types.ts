@@ -25,7 +25,7 @@ export type GuidelineTab = 'hsts' | 'trc_cardiac' | 'trc_tachy_brady' | 'trc_ros
 
 export type RhythmDecision = 'shockable' | 'non-shockable' | 'bradycardia' | 'tachycardia' | 'rosc' | null;
 
-export type ShockableRhythmType = 'VF' | 'Pulseless VT' | null;
+export type ShockableRhythmType = 'VF' | 'Pulseless VT' | 'Torsades' | null;
 
 export type NonShockableRhythmType = 'Asystole' | 'PEA' | null;
 
@@ -50,7 +50,7 @@ export const PROCEDURE_PRESETS: ProcedurePreset[] = [
   { name: 'IV / IO Line Established', short: 'IV Access' },
   { name: 'Arterial Blood Gas (ABG) Drawn', short: 'ABG Drawn' },
   { name: 'Mechanical Chest Compressor Applied', short: 'Mechanical CPR' },
-  { name: 'ROSC Achieved (Return of Spontaneous Circulation)', short: 'ROSC' },
+  { name: 'Needle Decompression & Chest Drain (ICD)', short: 'Needle Decompress+ICD' },
 ];
 
 export const FIVE_HS = [

@@ -50,18 +50,9 @@ export function CprTimerCard({
 }: CprTimerCardProps) {
   return (
     <div
-      className="bg-slate-900 rounded-xl border border-slate-800 p-2 sm:p-3 md:p-4 flex flex-col items-center justify-between relative overflow-hidden shadow-xl flex-1 w-full max-w-full h-full min-h-[350px]"
+      className="bg-slate-900 rounded-xl border border-slate-800 p-2 sm:p-3 md:p-4 flex flex-col items-center justify-between relative overflow-hidden shadow-xl w-full max-w-full h-[418px]"
     >
-      {/* Top Countdown Progress Bar */}
-      <div className="absolute top-0 left-0 w-full h-1 bg-slate-800">
-        <div
-          id="timer-progress"
-          className={`h-full transition-all duration-1000 ${
-            cprTimeRemaining <= 30 ? 'bg-rose-500 animate-pulse' : 'bg-cyan-500'
-          }`}
-          style={{ width: `${(cprTimeRemaining / 120) * 100}%` }}
-        />
-      </div>
+
 
       {/* METRONOME CPR MODE SWITCHER TABS */}
       <div className="w-full mb-1.5 sm:mb-3">
@@ -171,8 +162,11 @@ export function CprTimerCard({
           {cprActive && metronomeOn ? (
             metronomeMode === '30:2' ? (
               metronomeBeat >= 1 && metronomeBeat <= 30 ? (
-                <span className="text-[10px] xs:text-[11px] font-mono font-bold text-emerald-400 flex items-center gap-1 truncate">
-                  <Heart className="w-3.5 h-3.5 fill-emerald-400 animate-ping shrink-0" />
+                <span className="text-[10px] xs:text-[11px] font-mono font-bold text-emerald-400 flex items-center gap-1.5 truncate">
+                  <span className="relative flex h-3 w-3 items-center justify-center shrink-0">
+                    <Heart className="absolute h-2.5 w-2.5 fill-rose-500 text-rose-500 animate-ping opacity-75" />
+                    <Heart className="relative h-2.5 w-2.5 fill-rose-500 text-rose-500 drop-shadow-[0_0_4px_rgba(244,63,94,0.8)]" />
+                  </span>
                   กดหน้าอก: {metronomeBeat} / 30
                 </span>
               ) : (
@@ -181,8 +175,11 @@ export function CprTimerCard({
                 </span>
               )
             ) : (
-              <span className="text-[10px] xs:text-[11px] font-mono font-bold text-cyan-400 flex items-center gap-1 truncate">
-                <Heart className="w-3.5 h-3.5 fill-cyan-400 animate-ping shrink-0" />
+              <span className="text-[10px] xs:text-[11px] font-mono font-bold text-cyan-400 flex items-center gap-1.5 truncate">
+                <span className="relative flex h-3 w-3 items-center justify-center shrink-0">
+                  <Heart className="absolute h-2.5 w-2.5 fill-rose-500 text-rose-500 animate-ping opacity-75" />
+                  <Heart className="relative h-2.5 w-2.5 fill-rose-500 text-rose-500 drop-shadow-[0_0_4px_rgba(244,63,94,0.8)]" />
+                </span>
                 จังหวะ CPR: {metronomeBeat}
               </span>
             )

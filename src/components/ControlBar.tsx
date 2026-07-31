@@ -28,6 +28,10 @@ interface ControlBarProps {
   etco2AlertActive?: boolean;
   showProceduresModal?: boolean;
   setShowProceduresModal?: (val: boolean) => void;
+  showAltMedsPopover?: boolean;
+  setShowAltMedsPopover?: (val: boolean) => void;
+  mgSo4AlertActive?: boolean;
+  setMgSo4AlertActive?: (val: boolean) => void;
 }
 
 export function ControlBar({
@@ -55,8 +59,15 @@ export function ControlBar({
   etco2AlertActive = false,
   showProceduresModal = false,
   setShowProceduresModal,
+  showAltMedsPopover: showAltMedsProp,
+  setShowAltMedsPopover: setShowAltMedsProp,
+  mgSo4AlertActive = false,
+  setMgSo4AlertActive,
 }: ControlBarProps) {
-  const [showAltMedsPopover, setShowAltMedsPopover] = useState<boolean>(false);
+  const [localShowAltMeds, setLocalShowAltMeds] = useState<boolean>(false);
+  const showAltMedsPopover = showAltMedsProp !== undefined ? showAltMedsProp : localShowAltMeds;
+  const setShowAltMedsPopover = setShowAltMedsProp || setLocalShowAltMeds;
+
   const [lastLoggedMed, setLastLoggedMed] = useState<string | null>(null);
   const [selectedMedDetail, setSelectedMedDetail] = useState<AltMedItem | null>(null);
 
@@ -75,6 +86,10 @@ export function ControlBar({
       } else {
         speakThai(`ให้ยา ${med.speechText} เรียบร้อยแล้วค่ะ`);
       }
+    }
+
+    if (med.id === 'mgso4' && setMgSo4AlertActive) {
+      setMgSo4AlertActive(false);
     }
 
     setLastLoggedMed(med.shortName);
@@ -211,7 +226,7 @@ export function ControlBar({
           >
             <Baby className="w-3.5 h-3.5 text-cyan-400 group-hover:scale-110 transition-transform" />
             <span className="text-[11px] font-black font-mono tracking-tight text-cyan-200">
-              PALS Calc
+              PALS Calc.
             </span>
             <span className="hidden xl:inline-block px-1 py-0.2 rounded text-[8px] font-mono bg-cyan-900 text-cyan-300 border border-cyan-700">
               Pediatric
@@ -225,13 +240,17 @@ export function ControlBar({
               onClick={() => setShowAltMedsPopover(!showAltMedsPopover)}
               title="Med etc. ACLS/PALS (50%MgSO4, 7.5%NaHCO3, 10%Ca Gluconate, Naloxone, RI+50%Dext.)"
               className={`px-2.5 py-1 rounded-md font-mono text-[11px] font-black transition-all cursor-pointer flex items-center gap-1.5 border shadow-md active:scale-95 shrink-0 ${
-                showAltMedsPopover
+                mgSo4AlertActive
+                  ? 'bg-gradient-to-r from-purple-800 to-pink-900 text-amber-200 border-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.6)] animate-pulse ring-2 ring-amber-400'
+                  : showAltMedsPopover
                   ? 'bg-gradient-to-r from-purple-900 to-indigo-900 text-purple-200 border-purple-400 shadow-[0_0_12px_rgba(168,85,247,0.4)]'
                   : 'bg-gradient-to-r from-purple-950 to-slate-900 hover:from-purple-900 hover:to-slate-800 text-purple-300 hover:text-white border border-purple-500/50 hover:border-purple-400 shadow-[0_0_10px_rgba(168,85,247,0.25)]'
               }`}
             >
               <Syringe className="w-3.5 h-3.5 text-purple-400 animate-pulse shrink-0" />
-              <span className="tracking-tight text-purple-200">Med etc.</span>
+              <span className="tracking-tight text-purple-200">
+                {mgSo4AlertActive ? 'Med etc. (MgSO4 ⚠️)' : 'Med etc.'}
+              </span>
               <ChevronDown className={`w-3 h-3 text-purple-300 transition-transform ${showAltMedsPopover ? 'rotate-180' : ''}`} />
             </button>
 
@@ -277,32 +296,44 @@ export function ControlBar({
 
                   {/* 6 Alternative Drug Cards Grid */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[60vh] sm:max-h-[380px] overflow-y-auto pr-1">
-                    {ALT_RESUSCITATION_MEDS.map((med) => (
-                      <div
-                        key={med.id}
-                        className="flex items-center gap-1.5 bg-slate-950/90 border border-purple-900/60 hover:border-purple-500/80 rounded-xl p-1.5 transition-all shadow-md group"
-                      >
-                        <button
-                          id={`btn_alt_med_${med.id}`}
-                          onClick={() => handleAdministerAltMed(med)}
-                          title={`คลิกเพื่อเลือกใช้ยา ${med.name} (${med.dose})`}
-                          className={`flex-1 py-2 px-2.5 rounded-lg text-xs font-black font-mono transition-all cursor-pointer flex items-center justify-between gap-1 active:scale-95 text-left ${med.colorClass}`}
+                    {ALT_RESUSCITATION_MEDS.map((med) => {
+                      const isMgHighlight = med.id === 'mgso4' && mgSo4AlertActive;
+                      return (
+                        <div
+                          key={med.id}
+                          className={`flex items-center gap-1.5 bg-slate-950/90 border rounded-xl p-1.5 transition-all shadow-md group ${
+                            isMgHighlight
+                              ? 'border-amber-400 ring-2 ring-amber-400/80 bg-purple-950/90 animate-pulse'
+                              : 'border-purple-900/60 hover:border-purple-500/80'
+                          }`}
                         >
-                          <span className="truncate">{med.shortName}</span>
-                        </button>
+                          <button
+                            id={`btn_alt_med_${med.id}`}
+                            onClick={() => handleAdministerAltMed(med)}
+                            title={`คลิกเพื่อเลือกใช้ยา ${med.name} (${med.dose})`}
+                            className={`flex-1 py-2 px-2.5 rounded-lg text-xs font-black font-mono transition-all cursor-pointer flex items-center justify-between gap-1 active:scale-95 text-left ${med.colorClass}`}
+                          >
+                            <span className="truncate">{med.shortName}</span>
+                            {isMgHighlight && (
+                              <span className="text-[9px] font-black bg-amber-400 text-slate-950 px-1.5 py-0.5 rounded font-mono flex items-center gap-0.5 shrink-0 animate-bounce">
+                                ⭐ Recommended
+                              </span>
+                            )}
+                          </button>
 
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedMedDetail(med);
-                          }}
-                          title="ดูรายละเอียดขนาดยาและข้อบ่งชี้ทางคลินิก"
-                          className="p-2 rounded-lg text-purple-300 hover:text-white hover:bg-purple-900/60 bg-slate-800/80 border border-purple-800/50 shrink-0 cursor-pointer active:scale-95 transition-all"
-                        >
-                          <Info className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ))}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedMedDetail(med);
+                            }}
+                            title="ดูรายละเอียดขนาดยาและข้อบ่งชี้ทางคลินิก"
+                            className="p-2 rounded-lg text-purple-300 hover:text-white hover:bg-purple-900/60 bg-slate-800/80 border border-purple-800/50 shrink-0 cursor-pointer active:scale-95 transition-all"
+                          >
+                            <Info className="w-4 h-4" />
+                          </button>
+                        </div>
+                      );
+                    })}
                   </div>
 
                   <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-[10px] sm:text-xs font-mono text-slate-400">

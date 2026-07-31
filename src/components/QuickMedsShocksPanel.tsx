@@ -52,7 +52,7 @@ export function QuickMedsShocksPanel({
   shockButtonFlashing,
 }: QuickMedsShocksPanelProps) {
   return (
-    <div className="bg-slate-900 rounded-xl border border-slate-800 p-2 sm:p-2.5 flex flex-col gap-1.5 sm:gap-2 shadow-xl flex-1 w-full max-w-full h-full min-h-0 overflow-y-auto">
+    <div className="bg-slate-900 rounded-xl border border-slate-800 p-2 sm:p-2.5 flex flex-col gap-1.5 sm:gap-2 shadow-xl w-full max-w-full h-[185px] min-h-0 overflow-y-auto">
       {/* Section Title */}
       <div className="flex items-center justify-between border-b border-slate-800 pb-1">
         <span className="text-[10px] sm:text-[11px] font-black uppercase text-cyan-400 tracking-wider flex items-center gap-1.5">
@@ -76,7 +76,7 @@ export function QuickMedsShocksPanel({
           }`}
         >
           <span className="text-[8px] xs:text-[9px] sm:text-[10px] uppercase font-mono block leading-none truncate w-full">SHOCKABLE</span>
-          <span className="text-[7.5px] xs:text-[8.5px] opacity-80 mt-0.5 truncate w-full">VF / pVT</span>
+          <span className="text-[7.5px] xs:text-[8.5px] opacity-80 mt-0.5 truncate w-full">VF/pVT/Torsades</span>
         </button>
 
         {/* NON-SHOCKABLE Button */}

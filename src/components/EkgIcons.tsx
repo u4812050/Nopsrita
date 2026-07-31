@@ -151,3 +151,39 @@ export function PeaEkgIcon({ className = "w-14 h-8" }: { className?: string }) {
     </div>
   );
 }
+
+// Mini EKG Waveform Component for Torsades de pointes (Polymorphic VT)
+export function TorsadesEkgIcon({ className = "w-14 h-8" }: { className?: string }) {
+  return (
+    <div className={`${className} bg-slate-950 rounded-lg border border-purple-900/80 p-0.5 relative overflow-hidden isolate flex items-center justify-center shrink-0 shadow-inner`}>
+      <svg className="absolute inset-0 w-full h-full opacity-30 pointer-events-none" viewBox="0 0 60 30">
+        <line x1="0" y1="7.5" x2="60" y2="7.5" stroke="#c084fc" strokeWidth="0.5" strokeDasharray="1,1" />
+        <line x1="0" y1="15" x2="60" y2="15" stroke="#c084fc" strokeWidth="0.5" strokeDasharray="1,1" />
+        <line x1="0" y1="22.5" x2="60" y2="22.5" stroke="#c084fc" strokeWidth="0.5" strokeDasharray="1,1" />
+        <line x1="15" y1="0" x2="15" y2="30" stroke="#c084fc" strokeWidth="0.5" strokeDasharray="1,1" />
+        <line x1="30" y1="0" x2="30" y2="30" stroke="#c084fc" strokeWidth="0.5" strokeDasharray="1,1" />
+        <line x1="45" y1="0" x2="45" y2="30" stroke="#c084fc" strokeWidth="0.5" strokeDasharray="1,1" />
+      </svg>
+      <svg viewBox="0 0 60 30" className="w-full h-full relative z-0 overflow-hidden">
+        <defs>
+          <filter id="torsadesGlow" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="0.8" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+        <path
+          d="M 0 15 Q 3 2, 6 28 T 12 15 Q 15 9, 18 21 T 24 15 Q 27 13, 30 17 T 36 15 Q 39 5, 42 25 T 48 15 Q 51 2, 54 28 T 60 15"
+          fill="none"
+          stroke="#e879f9"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          filter="url(#torsadesGlow)"
+        />
+      </svg>
+    </div>
+  );
+}

@@ -34,7 +34,7 @@ export function LogsPanel({
         <div className="flex items-center gap-2">
           <ListFilter className="w-4 h-4 text-cyan-400" />
           <h3 className="text-xs font-black uppercase text-slate-200 tracking-wider">
-            Live Resuscitation Flowsheet Log
+            Live Resus. Flowsheet Log
           </h3>
           <span className="text-[10px] font-mono font-bold bg-slate-800 text-cyan-300 px-1.5 py-0.5 rounded border border-slate-700">
             {logs.length} Entries

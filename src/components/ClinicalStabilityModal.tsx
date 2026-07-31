@@ -118,7 +118,7 @@ export function ClinicalStabilityModal({
                 <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0 mt-1"></span>
                 <div>
                   <span className="font-bold text-rose-300">Signs of Shock</span>
-                  <span className="block text-[10px] text-slate-400 font-normal">ภาวะช็อก (ปลายมือปลายเท้าเย็น)</span>
+                  <span className="block text-[10px] text-slate-400 font-normal">ภาวะช็อก (ปลายมือเท้าเย็น, CRT&gt;2s)</span>
                 </div>
               </li>
 
@@ -134,7 +134,7 @@ export function ClinicalStabilityModal({
                 <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0 mt-1"></span>
                 <div>
                   <span className="font-bold text-rose-300">Acute Heart Failure</span>
-                  <span className="block text-[10px] text-slate-400 font-normal">ภาวะหัวใจล้มเหลวเฉียบพลัน</span>
+                  <span className="block text-[10px] text-slate-400 font-normal">ภาวะหัวใจล้มเหลวเฉียบพลัน (หายใจเหนื่อย ฟังปอดพบเสียง Crepitation, เส้นเลือดดำคอโป่งพอง)</span>
                 </div>
               </li>
             </ul>

@@ -71,7 +71,7 @@ export function PalsCalcModal({ isOpen, onClose, addLog, speakThai }: PalsCalcMo
 
   // Handle logging calculated doses to patient case log
   const handleLogDoses = () => {
-    const summaryLog = `PALS Calc (${weightKg} kg, ${ageYears} y/o): Epi ${epiMg}mg (${epiMl}mL 1:10k) | Defib 1st ${defib1st}J / 2nd ${defib2nd}J | Amio ${amioMg}mg | Lido ${lidoMg}mg | Fluid ${fluidMl}mL | ETT Cuffed ${ettCuffed}mm (Depth ${ettDepth}cm)`;
+    const summaryLog = `PALS Calc. (${weightKg} kg, ${ageYears} y/o): Epi ${epiMg}mg (${epiMl}mL 1:10k) | Defib 1st ${defib1st}J / 2nd ${defib2nd}J | Amio ${amioMg}mg | Lido ${lidoMg}mg | Fluid ${fluidMl}mL | ETT Cuffed ${ettCuffed}mm (Depth ${ettDepth}cm)`;
     
     addLog(summaryLog, 'system');
     speakThai(`บันทึกคำนวณขนาดยาเด็ก น้ำหนัก ${weightKg} กิโลกรัม เรียบร้อยแล้วค่ะ`);
