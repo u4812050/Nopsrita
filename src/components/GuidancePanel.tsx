@@ -367,7 +367,7 @@ export function GuidancePanel({
                       setSelectedShockableRhythm('Torsades');
                       setShockButtonFlashing(true);
                       addLog('Selected Rhythm Type: Torsades de pointes (Polymorphic VT)', 'rhythm');
-                      speakThai('เลือกทอสาด เดอ ปัว เตรียมช็อคนะคะ');
+                      speakThai('เลือกทอสาดเดอปัว เตรียมช็อคนะคะ');
                     }}
                     className={`p-1.5 rounded-lg border text-left flex items-center gap-1.5 cursor-pointer transition-all ${
                       selectedShockableRhythm === 'Torsades'

@@ -926,7 +926,7 @@ export default function App() {
           "SHOCK DELIVERED! Defibrillation #1 complete (Torsades de pointes). IMMEDIATELY ADMINISTER MAGNESIUM SULFATE (50% MgSO4 2g IV/IO) in Med etc.!"
         );
         addLog(`Defibrillation #1 Delivered (200J) [Torsades de pointes]`, "shock");
-        speakThai("ปล่อยช็อกครั้งที่หนึ่ง สำหรับ ทอสาด เดอ ปัว เรียบร้อยแล้วค่ะ แนะนำให้ยา ห้าสิบเปอเซ็นแมกนีเซียมซัลเฟ็ต สองกรัม นะคะ");
+        speakThai("ปล่อยช็อกครั้งที่หนึ่ง สำหรับ ทอสาดเดอปัว เรียบร้อยแล้วค่ะ แนะนำให้ยา ห้าสิบเปอเซ็นแมกนีเซียมซัลเฟ็ต สองกรัม นะคะ");
       } else {
         setGuidanceMessage(
           `SHOCK DELIVERED! Defibrillation #${nextShock} complete (Torsades de pointes). Resume CPR for 2 min. ADMINISTER MAGNESIUM SULFATE (50% MgSO4 2g IV/IO)!`
