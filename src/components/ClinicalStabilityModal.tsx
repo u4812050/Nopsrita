@@ -8,6 +8,10 @@ interface ClinicalStabilityModalProps {
   onSelectStability: (status: 'stable' | 'unstable') => void;
   addLog: (text: string, type?: 'cpr' | 'med' | 'shock' | 'rhythm' | 'note' | 'system') => void;
   speakThai: (text: string, onEnd?: () => void, customRate?: number) => void;
+  onOpenUnstableBradyModal?: () => void;
+  onOpenStableBradyModal?: () => void;
+  onOpenStableTachyModal?: () => void;
+  onOpenUnstableTachyModal?: () => void;
 }
 
 export function ClinicalStabilityModal({
@@ -17,6 +21,10 @@ export function ClinicalStabilityModal({
   onSelectStability,
   addLog,
   speakThai,
+  onOpenUnstableBradyModal,
+  onOpenStableBradyModal,
+  onOpenStableTachyModal,
+  onOpenUnstableTachyModal,
 }: ClinicalStabilityModalProps) {
   useEffect(() => {
     if (isOpen) {
@@ -31,9 +39,19 @@ export function ClinicalStabilityModal({
     if (status === 'stable') {
       addLog('Clinical Assessment: STABLE Patient (ประเมินแล้ว อาการคงที่)', 'system');
       speakThai('ประเมินแล้ว อาการคงที่ค่ะ');
+      if (rhythmType === 'brady' || rhythmType === 'bradycardia') {
+        onOpenStableBradyModal?.();
+      } else if (rhythmType === 'tachy' || rhythmType === 'tachycardia') {
+        onOpenStableTachyModal?.();
+      }
     } else {
       addLog('Clinical Assessment: UNSTABLE Patient (ประเมินแล้ว อาการไม่คงที่)', 'system');
       speakThai('ประเมินแล้ว อาการไม่คงที่ค่ะ');
+      if (rhythmType === 'brady' || rhythmType === 'bradycardia') {
+        onOpenUnstableBradyModal?.();
+      } else if (rhythmType === 'tachy' || rhythmType === 'tachycardia') {
+        onOpenUnstableTachyModal?.();
+      }
     }
     onClose();
   };

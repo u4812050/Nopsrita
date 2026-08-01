@@ -16,6 +16,10 @@ import { PulseCheckModal } from './components/PulseCheckModal';
 import { ResetConfirmModal } from './components/ResetConfirmModal';
 import { PalsCalcModal } from './components/PalsCalcModal';
 import { ClinicalStabilityModal } from './components/ClinicalStabilityModal';
+import { UnstableBradycardiaModal } from './components/UnstableBradycardiaModal';
+import { StableBradycardiaModal } from './components/StableBradycardiaModal';
+import { StableTachycardiaModal } from './components/StableTachycardiaModal';
+import { UnstableTachycardiaModal } from './components/UnstableTachycardiaModal';
 import { Clock, Zap, Activity, ListFilter, Heart } from 'lucide-react';
 
 const SAVE_KEY = 'smart_acls_copilot_state_v2';
@@ -112,6 +116,10 @@ export default function App() {
   const [showResetConfirm, setShowResetConfirm] = useState<boolean>(false);
   const [showPalsModal, setShowPalsModal] = useState<boolean>(false);
   const [showStabilityModal, setShowStabilityModal] = useState<boolean>(false);
+  const [showUnstableBradyModal, setShowUnstableBradyModal] = useState<boolean>(false);
+  const [showStableBradyModal, setShowStableBradyModal] = useState<boolean>(false);
+  const [showStableTachyModal, setShowStableTachyModal] = useState<boolean>(false);
+  const [showUnstableTachyModal, setShowUnstableTachyModal] = useState<boolean>(false);
   const [showAltMedsModal, setShowAltMedsModal] = useState<boolean>(false);
   const [mgSo4AlertActive, setMgSo4AlertActive] = useState<boolean>(false);
 
@@ -535,6 +543,9 @@ export default function App() {
     if (activeTab === 'trc_tachy_brady' && lastRhythmDecision !== 'shockable' && lastRhythmDecision !== 'non-shockable' && lastRhythmDecision !== 'rosc') {
       return true;
     }
+    if (showStableTachyModal || showUnstableTachyModal || showStableBradyModal || showUnstableBradyModal) {
+      return true;
+    }
     return false;
   };
 
@@ -550,11 +561,19 @@ export default function App() {
     if (speechText) {
       speakThai(speechText, () => {
         if (shouldShowPopup) {
+          setShowStableTachyModal(false);
+          setShowUnstableTachyModal(false);
+          setShowStableBradyModal(false);
+          setShowUnstableBradyModal(false);
           setShowStabilityModal(true);
         }
       });
     } else {
       if (shouldShowPopup) {
+        setShowStableTachyModal(false);
+        setShowUnstableTachyModal(false);
+        setShowStableBradyModal(false);
+        setShowUnstableBradyModal(false);
         setShowStabilityModal(true);
       }
     }
@@ -1672,6 +1691,10 @@ export default function App() {
               setShowProceduresModal={setShowProceduresModal}
               setShowAltMedsModal={setShowAltMedsModal}
               mgSo4AlertActive={mgSo4AlertActive}
+              onOpenUnstableBradyModal={() => setShowUnstableBradyModal(true)}
+              onOpenStableBradyModal={() => setShowStableBradyModal(true)}
+              onOpenStableTachyModal={() => setShowStableTachyModal(true)}
+              onOpenUnstableTachyModal={() => setShowUnstableTachyModal(true)}
             />
           </div>
 
@@ -1724,6 +1747,59 @@ export default function App() {
         onSelectStability={(status) => setStabilityStatus(status)}
         addLog={addLog}
         speakThai={speakThai}
+        onOpenUnstableBradyModal={() => setShowUnstableBradyModal(true)}
+        onOpenStableBradyModal={() => setShowStableBradyModal(true)}
+        onOpenStableTachyModal={() => setShowStableTachyModal(true)}
+        onOpenUnstableTachyModal={() => setShowUnstableTachyModal(true)}
+      />
+
+      <UnstableBradycardiaModal
+        isOpen={showUnstableBradyModal}
+        onClose={() => setShowUnstableBradyModal(false)}
+        atropineCount={atropineCount}
+        handleLogPresetMed={handleLogPresetMed}
+        handleLogProcedure={handleLogProcedure}
+        triggerReassessmentAlert={triggerReassessmentAlert}
+        speakThai={speakThai}
+        addLog={addLog}
+      />
+
+      <StableBradycardiaModal
+        isOpen={showStableBradyModal}
+        onClose={() => setShowStableBradyModal(false)}
+        completedProcedures={completedProcedures}
+        atropineCount={atropineCount}
+        handleLogProcedure={handleLogProcedure}
+        handleLogPresetMed={handleLogPresetMed}
+        triggerReassessmentAlert={triggerReassessmentAlert}
+        speakThai={speakThai}
+        addLog={addLog}
+      />
+
+      <StableTachycardiaModal
+        isOpen={showStableTachyModal}
+        onClose={() => setShowStableTachyModal(false)}
+        completedProcedures={completedProcedures}
+        adenosineCount={adenosineCount}
+        amioCount={amioCount}
+        handleLogProcedure={handleLogProcedure}
+        handleLogPresetMed={handleLogPresetMed}
+        triggerReassessmentAlert={triggerReassessmentAlert}
+        speakThai={speakThai}
+        addLog={addLog}
+      />
+
+      <UnstableTachycardiaModal
+        isOpen={showUnstableTachyModal}
+        onClose={() => setShowUnstableTachyModal(false)}
+        completedProcedures={completedProcedures}
+        amioCount={amioCount}
+        handleLogProcedure={handleLogProcedure}
+        handleLogPresetMed={handleLogPresetMed}
+        handleDeliverShock={handleDeliverShock}
+        triggerReassessmentAlert={triggerReassessmentAlert}
+        speakThai={speakThai}
+        addLog={addLog}
       />
     </div>
   );

@@ -29,7 +29,7 @@ import {
   FIVE_HS,
   FIVE_TS,
 } from '../types';
-import { VfEkgIcon, VtEkgIcon, AsystoleEkgIcon, PeaEkgIcon, TorsadesEkgIcon } from './EkgIcons';
+import { VfEkgIcon, VtEkgIcon, AsystoleEkgIcon, PeaEkgIcon, TorsadesEkgIcon, FirstDegreeAvBlockIcon, MobitzTwoEkgIcon, CompleteHeartBlockEkgIcon } from './EkgIcons';
 
 interface GuidancePanelProps {
   activeTab: GuidelineTab;
@@ -100,6 +100,10 @@ interface GuidancePanelProps {
   setShowProceduresModal?: (val: boolean) => void;
   setShowAltMedsModal?: (val: boolean) => void;
   mgSo4AlertActive?: boolean;
+  onOpenUnstableBradyModal?: () => void;
+  onOpenStableBradyModal?: () => void;
+  onOpenStableTachyModal?: () => void;
+  onOpenUnstableTachyModal?: () => void;
 }
 
 export function GuidancePanel({
@@ -169,6 +173,10 @@ export function GuidancePanel({
   setShowProceduresModal,
   setShowAltMedsModal,
   mgSo4AlertActive = false,
+  onOpenUnstableBradyModal,
+  onOpenStableBradyModal,
+  onOpenStableTachyModal,
+  onOpenUnstableTachyModal,
 }: GuidancePanelProps) {
   const isProceduresFlashing = ivAccessAlertActive || airwayAlertActive || etco2AlertActive;
 
@@ -217,7 +225,7 @@ export function GuidancePanel({
         setAbcCompletedSteps(prev => [...prev, 'IDENT']);
         addLog('ABC Step 3 Completed: Identify & Treat Causes (A-B-C Complete)', 'system');
       }
-      speakThai?.('ประเมินขั้นตอน เอบีซี ครบถ้วนแล้ว โปรดประเมินสภาวะทางคลินิกค่ะ', () => {
+      speakThai?.('ประเมินตามหลักเอบีซีแล้ว ค้นหาสาเหตุอื่นเพิ่มเติมด้วยค่ะ', () => {
         setShowStabilityModal?.(true);
       });
     }
@@ -720,320 +728,10 @@ export function GuidancePanel({
                 </div>
 
                 {/* Stable Bradycardia */}
-                {(tachyBradyFilter === 'brady' || tachyBradyFilter === 'all') && (
-                  <div className="bg-slate-950 p-2 rounded-xl border border-slate-800 space-y-1.5">
-                    <span className="text-[10px] font-black text-amber-400 uppercase tracking-wider flex items-center gap-1">
-                      <Activity className="w-3.5 h-3.5 text-amber-400" />
-                      Bradycardia (Stable, HR &lt; 50 bpm)
-                    </span>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5">
-                      <button
-                        onClick={() => {
-                          handleLogProcedure('Monitor V/S & Support ABCs');
-                          speakThai('เฝ้าระวังอาการ และประเมินสัญญาณชีพค่ะ');
-                        }}
-                        className={`p-1.5 hover:bg-slate-800 border rounded-lg text-left text-[10px] font-bold transition-all cursor-pointer flex justify-between items-center ${
-                          completedProcedures?.includes('Monitor V/S & Support ABCs')
-                            ? 'bg-emerald-950/20 border-emerald-800/80'
-                            : 'bg-slate-900 border-slate-800'
-                        }`}
-                      >
-                        <div>
-                          <span className={`font-mono font-black block text-[10px] ${
-                            completedProcedures?.includes('Monitor V/S & Support ABCs')
-                              ? 'text-emerald-400'
-                              : 'text-white'
-                          }`}>
-                            Monitor V/S &amp; Support ABCs
-                          </span>
-                        </div>
-                        {completedProcedures?.includes('Monitor V/S & Support ABCs') && (
-                          <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0 ml-1" />
-                        )}
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          handleLogProcedure('Obtain 12-lead EKG');
-                          speakThai('ทำการตรวจคลื่นไฟฟ้าหัวใจ 12 หลีดค่ะ');
-                        }}
-                        className={`p-1.5 hover:bg-slate-800 border rounded-lg text-left text-[10px] font-bold transition-all cursor-pointer flex justify-between items-center ${
-                          completedProcedures?.includes('Obtain 12-lead EKG')
-                            ? 'bg-emerald-950/20 border-emerald-800/80'
-                            : 'bg-slate-900 border-slate-800'
-                        }`}
-                      >
-                        <div>
-                          <span className={`font-mono font-black block text-[10px] ${
-                            completedProcedures?.includes('Obtain 12-lead EKG')
-                              ? 'text-emerald-400'
-                              : 'text-white'
-                          }`}>
-                            Obtain 12-lead EKG
-                          </span>
-                        </div>
-                        {completedProcedures?.includes('Obtain 12-lead EKG') && (
-                          <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0 ml-1" />
-                        )}
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          handleLogProcedure('Observe & Expert Consult');
-                          speakThai('เฝ้าระวังอาการ และปรึกษาแพทย์ผู้เชี่ยวชาญค่ะ');
-                        }}
-                        className={`p-1.5 hover:bg-slate-800 border rounded-lg text-left text-[10px] font-bold transition-all cursor-pointer flex justify-between items-center ${
-                          completedProcedures?.includes('Observe & Expert Consult')
-                            ? 'bg-emerald-950/20 border-emerald-800/80'
-                            : 'bg-slate-900 border-slate-800'
-                        }`}
-                      >
-                        <div>
-                          <span className={`font-mono font-black block text-[10px] ${
-                            completedProcedures?.includes('Observe & Expert Consult')
-                              ? 'text-emerald-400'
-                              : 'text-white'
-                          }`}>
-                            Observe &amp; Expert Consult
-                          </span>
-                        </div>
-                        {completedProcedures?.includes('Observe & Expert Consult') && (
-                          <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0 ml-1" />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                )}
 
                 {/* Stable Tachycardia */}
-                {(tachyBradyFilter === 'tachy' || tachyBradyFilter === 'all') && (
-                  <div className="bg-slate-950 p-2 rounded-xl border border-slate-800 space-y-1.5">
-                    <span className="text-[10px] font-black text-indigo-400 uppercase tracking-wider flex items-center gap-1">
-                      <Zap className="w-3.5 h-3.5 text-indigo-400" />
-                      Tachycardia (Stable, HR &ge; 150 bpm)
-                    </span>
 
-                    <div className="grid grid-cols-2 gap-1.5">
-                      <button
-                        onClick={() => {
-                          handleLogProcedure('Vagal Maneuvers Performed');
-                          speakThai('ทำวาก้อมานูเว่อ เรียบร้อยค่ะ', () => {
-                            setShowStabilityModal?.(true);
-                          });
-                        }}
-                        className={`p-1.5 hover:bg-slate-800 border rounded-lg text-left text-[10px] font-bold transition-all cursor-pointer flex justify-between items-center ${
-                          completedProcedures?.includes('Vagal Maneuvers Performed')
-                            ? 'bg-indigo-950/20 border-indigo-800/80'
-                            : 'bg-slate-900 border-slate-800'
-                        }`}
-                      >
-                        <div>
-                          <span className={`font-mono font-black block text-[10px] ${
-                            completedProcedures?.includes('Vagal Maneuvers Performed')
-                              ? 'text-indigo-400'
-                              : 'text-indigo-300'
-                          }`}>Vagal Maneuvers</span>
-                          <span className="text-[8px] text-slate-400 block">Modified Valsalva / Carotid Massage</span>
-                        </div>
-                        {completedProcedures?.includes('Vagal Maneuvers Performed') ? (
-                          <Check className="w-3.5 h-3.5 text-indigo-400 shrink-0 ml-1" />
-                        ) : (
-                          <ChevronRight className="w-3.5 h-3.5 text-indigo-400 shrink-0 ml-1" />
-                        )}
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          handleLogProcedure('Adenosine 6mg IV rapid push');
-                          handleLogPresetMed('Adenosine 6mg IV rapid push', false, () => {
-                            setShowStabilityModal?.(true);
-                          });
-                        }}
-                        disabled={adenosineCount >= 1}
-                        className={`p-1.5 border rounded-lg text-left text-[10px] font-bold transition-all flex justify-between items-center ${
-                          adenosineCount >= 1 || completedProcedures?.includes('Adenosine 6mg IV rapid push')
-                            ? 'bg-indigo-950/20 border-indigo-800/80 opacity-90 cursor-not-allowed'
-                            : 'bg-slate-900 hover:bg-slate-800 border-slate-800 cursor-pointer'
-                        }`}
-                      >
-                        <div>
-                          <span className={`font-mono font-black block text-[10px] ${
-                            adenosineCount >= 1 || completedProcedures?.includes('Adenosine 6mg IV rapid push')
-                              ? 'text-indigo-400'
-                              : 'text-indigo-300'
-                          }`}>Adenosine 6mg IV</span>
-                          <span className="text-[8px] text-slate-400 block">1st dose rapid IV push (Narrow Reg)</span>
-                        </div>
-                        <div className="flex items-center gap-1 shrink-0 ml-1">
-                          <span className="text-[8px] font-mono text-indigo-300">1st Dose</span>
-                          {(adenosineCount >= 1 || completedProcedures?.includes('Adenosine 6mg IV rapid push')) && (
-                            <Check className="w-3.5 h-3.5 text-indigo-400 shrink-0 ml-0.5" />
-                          )}
-                        </div>
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          handleLogProcedure('Adenosine 12mg IV rapid push');
-                          handleLogPresetMed('Adenosine 12mg IV rapid push', false, () => {
-                            setShowStabilityModal?.(true);
-                          });
-                        }}
-                        disabled={adenosineCount >= 2}
-                        className={`p-1.5 border rounded-lg text-left text-[10px] font-bold transition-all flex justify-between items-center ${
-                          adenosineCount >= 2 || completedProcedures?.includes('Adenosine 12mg IV rapid push')
-                            ? 'bg-indigo-950/20 border-indigo-800/80 opacity-90 cursor-not-allowed'
-                            : 'bg-slate-900 hover:bg-slate-800 border-slate-800 cursor-pointer'
-                        }`}
-                      >
-                        <div>
-                          <span className={`font-mono font-black block text-[10px] ${
-                            adenosineCount >= 2 || completedProcedures?.includes('Adenosine 12mg IV rapid push')
-                              ? 'text-indigo-400'
-                              : 'text-indigo-300'
-                          }`}>Adenosine 12mg IV</span>
-                          <span className="text-[8px] text-slate-400 block">2nd dose if 6mg fails</span>
-                        </div>
-                        <div className="flex items-center gap-1 shrink-0 ml-1">
-                          <span className="text-[8px] font-mono text-indigo-300">2nd Dose</span>
-                          {(adenosineCount >= 2 || completedProcedures?.includes('Adenosine 12mg IV rapid push')) && (
-                            <Check className="w-3.5 h-3.5 text-indigo-400 shrink-0 ml-0.5" />
-                          )}
-                        </div>
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          handleLogProcedure('Amiodarone 150mg IV over 10 min');
-                          handleLogPresetMed('Amiodarone 150mg IV over 10 min', false, () => {
-                            setShowStabilityModal?.(true);
-                          });
-                        }}
-                        className={`p-1.5 border rounded-lg text-left text-[10px] font-bold transition-all cursor-pointer flex justify-between items-center ${
-                          amioCount > 0 || completedProcedures?.includes('Amiodarone 150mg IV over 10 min')
-                            ? 'bg-cyan-950/20 border-cyan-800/80'
-                            : 'bg-slate-900 border-slate-800 hover:bg-slate-800'
-                        }`}
-                      >
-                        <div>
-                          <span className={`font-mono font-black block text-[10px] ${
-                            amioCount > 0 || completedProcedures?.includes('Amiodarone 150mg IV over 10 min')
-                              ? 'text-cyan-400'
-                              : 'text-cyan-300'
-                          }`}>Amiodarone 150mg IV</span>
-                          <span className="text-[8px] text-slate-400 block">Stable Wide QRS (Monomorphic VT)</span>
-                        </div>
-                        <div className="flex items-center gap-1 shrink-0 ml-1">
-                          <span className="text-[9px] font-mono text-cyan-300 bg-cyan-950 px-1 rounded border border-cyan-800">#{amioCount}</span>
-                          {(amioCount > 0 || completedProcedures?.includes('Amiodarone 150mg IV over 10 min')) && (
-                            <Check className="w-3.5 h-3.5 text-cyan-400 shrink-0 ml-0.5" />
-                          )}
-                        </div>
-                      </button>
-
-                      {/* Cardioversion 100J */}
-                      <button
-                        onClick={() => {
-                          handleLogProcedure('Synchronized Cardioversion 100J Delivered');
-                          triggerReassessmentAlert('Synchronized Cardioversion 100J', 'ทำคาดิโอเวอชั่น 100 จูน ค่ะ', true);
-                        }}
-                        className={`p-1.5 border rounded-lg text-left font-bold transition-all cursor-pointer flex justify-between items-center ${
-                          completedProcedures?.includes('Synchronized Cardioversion 100J Delivered') || completedProcedures?.includes('Synchronized Cardioversion 100J')
-                            ? 'bg-gradient-to-r from-indigo-950 to-indigo-900 border-indigo-500 text-white'
-                            : 'bg-gradient-to-r from-indigo-900 to-indigo-800 hover:from-indigo-800 hover:to-indigo-700 border-indigo-500 text-white'
-                        }`}
-                      >
-                        <div>
-                          <span className="font-black text-[10px] block">Cardioversion 100J</span>
-                          <span className="text-[8px] text-indigo-200 block">QRSกว้าง &ge; 120msec Reg</span>
-                        </div>
-                        <div className="flex items-center gap-1 shrink-0 ml-1">
-                          <Zap className="w-3.5 h-3.5 text-yellow-300 shrink-0" />
-                          {(completedProcedures?.includes('Synchronized Cardioversion 100J Delivered') || completedProcedures?.includes('Synchronized Cardioversion 100J')) && (
-                            <Check className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
-                          )}
-                        </div>
-                      </button>
-
-                      {/* Cardioversion 200J */}
-                      <button
-                        onClick={() => {
-                          handleLogProcedure('Synchronized Cardioversion 200J Delivered');
-                          triggerReassessmentAlert('Synchronized Cardioversion 200J', 'ทำคาดิโอเวอชั่น 200 จูน ค่ะ', true);
-                        }}
-                        className={`p-1.5 border rounded-lg text-left font-bold transition-all cursor-pointer flex justify-between items-center ${
-                          completedProcedures?.includes('Synchronized Cardioversion 200J Delivered') || completedProcedures?.includes('Synchronized Cardioversion 200J')
-                            ? 'bg-gradient-to-r from-indigo-950 to-indigo-900 border-indigo-500 text-white'
-                            : 'bg-gradient-to-r from-indigo-900 to-indigo-800 hover:from-indigo-800 hover:to-indigo-700 border-indigo-500 text-white'
-                        }`}
-                      >
-                        <div>
-                          <span className="font-black text-[10px] block">Cardioversion 200J</span>
-                          <span className="text-[8px] text-indigo-200 block">QRSกว้าง &ge; 120msec Irreg</span>
-                        </div>
-                        <div className="flex items-center gap-1 shrink-0 ml-1">
-                          <Zap className="w-3.5 h-3.5 text-yellow-300 shrink-0" />
-                          {(completedProcedures?.includes('Synchronized Cardioversion 200J Delivered') || completedProcedures?.includes('Synchronized Cardioversion 200J')) && (
-                            <Check className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
-                          )}
-                        </div>
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          handleLogProcedure('Rate Control (CCB / Beta Blocker)');
-                          handleLogPresetMed('Diltiazem / Metoprolol IV', false, () => {
-                            setShowStabilityModal?.(true);
-                          });
-                        }}
-                        className={`p-1.5 border rounded-lg text-left text-[10px] font-bold transition-all cursor-pointer flex justify-between items-center col-span-2 ${
-                          completedProcedures?.includes('Rate Control (CCB / Beta Blocker)') || completedProcedures?.includes('Diltiazem / Metoprolol IV')
-                            ? 'bg-indigo-950/20 border-indigo-800/80'
-                            : 'bg-slate-900 border-slate-800 hover:bg-slate-800'
-                        }`}
-                      >
-                        <div>
-                          <span className={`font-mono font-black block text-[10px] ${
-                            completedProcedures?.includes('Rate Control (CCB / Beta Blocker)') || completedProcedures?.includes('Diltiazem / Metoprolol IV')
-                              ? 'text-indigo-400'
-                              : 'text-slate-300'
-                          }`}>Rate Control (CCB / Beta Blocker)</span>
-                          <span className="text-[8px] text-slate-400 block">Diltiazem 15-20mg IV / Metoprolol 5mg IV for AFib/Flutter</span>
-                        </div>
-                        {completedProcedures?.includes('Rate Control (CCB / Beta Blocker)') || completedProcedures?.includes('Diltiazem / Metoprolol IV') ? (
-                          <Check className="w-3.5 h-3.5 text-indigo-400 shrink-0 ml-1" />
-                        ) : (
-                          <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0 ml-1" />
-                        )}
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          handleLogProcedure('Observe & Expert Consult');
-                          speakThai('เฝ้าระวังอาการ และปรึกษาแพทย์ผู้เชี่ยวชาญค่ะ', () => {
-                            setShowStabilityModal?.(true);
-                          });
-                        }}
-                        className={`p-1.5 hover:bg-slate-800 border rounded-lg text-left text-[10px] font-bold transition-all cursor-pointer flex justify-between items-center col-span-2 ${
-                          completedProcedures?.includes('Observe & Expert Consult')
-                            ? 'bg-indigo-950/20 border-indigo-800/80'
-                            : 'bg-slate-900 border-slate-800'
-                        }`}
-                      >
-                        <div>
-                          <span className="text-indigo-300 font-mono font-black block text-[10px]">Observe &amp; Expert Consult</span>
-                          <span className="text-[8px] text-slate-400 block">Consult Cardiology / Specialist</span>
-                        </div>
-                        {completedProcedures?.includes('Observe & Expert Consult') ? (
-                          <Check className="w-3.5 h-3.5 text-indigo-400 shrink-0 ml-1" />
-                        ) : (
-                          <ChevronRight className="w-3.5 h-3.5 text-indigo-400 shrink-0 ml-1" />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                )}
               </div>
             )}
 
@@ -1051,227 +749,9 @@ export function GuidancePanel({
                   </span>
                 </div>
 
-                {/* Unstable Bradycardia */}
-                {(tachyBradyFilter === 'brady' || tachyBradyFilter === 'all') && (
-                  <div className="bg-slate-950 p-2 rounded-xl border border-slate-800 space-y-1.5">
-                    <span className="text-[10px] font-black text-amber-400 uppercase tracking-wider flex items-center gap-1">
-                      <Activity className="w-3.5 h-3.5 text-amber-400" />
-                      Unstable Bradycardia (HR &lt; 50 bpm + Unstable)
-                    </span>
 
-                    <div className="grid grid-cols-2 gap-1.5">
-                      <button
-                        onClick={() => {
-                          handleLogPresetMed('Atropine 1mg IV', false, () => {
-                            setShowStabilityModal?.(true);
-                          });
-                        }}
-                        disabled={atropineCount >= 3}
-                        className={`p-1.5 border rounded-lg text-left text-[10px] font-bold transition-all flex justify-between items-center ${
-                          atropineCount >= 3
-                            ? 'bg-slate-900/60 border-slate-800 text-slate-500 cursor-not-allowed opacity-60'
-                            : 'bg-amber-950/80 hover:bg-amber-900 border-amber-700 cursor-pointer'
-                        }`}
-                      >
-                        <div>
-                          <span className="text-amber-200 font-mono font-black block text-[10px]">Atropine 1mg IV</span>
-                          <span className="text-[8px] text-amber-300/80 block">
-                            {atropineCount >= 3 ? 'Max 3mg Reached' : '1st dose (Max 3mg)'}
-                          </span>
-                        </div>
-                        <span className={`text-[9px] font-mono px-1 rounded border shrink-0 ml-1 ${
-                          atropineCount >= 3
-                            ? 'text-rose-400 bg-rose-950 border-rose-800'
-                            : 'text-amber-200 bg-amber-900 border-amber-700'
-                        }`}>
-                          {atropineCount >= 3 ? 'MAX 3mg' : `#${atropineCount}`}
-                        </span>
-                      </button>
 
-                      <button
-                        onClick={() => {
-                          handleLogProcedure('Transcutaneous Pacing (TCP) Started');
-                          speakThai('เริ่มทำเพ๊สซิ่งผ่านผิวหนัง เรียบร้อยค่ะ', () => {
-                            setShowStabilityModal?.(true);
-                          });
-                        }}
-                        className="p-1.5 bg-gradient-to-r from-amber-900 to-amber-800 hover:from-amber-800 hover:to-amber-700 border border-amber-500 text-amber-100 rounded-lg text-left text-[10px] font-bold transition-all cursor-pointer flex justify-between items-center shadow-xs"
-                      >
-                        <div>
-                          <span className="text-amber-100 font-mono font-black block text-[10px]">Transcutaneous Pacing (TCP)</span>
-                          <span className="text-[8px] text-amber-200 block">Immediate Pacing if Atropine fails</span>
-                        </div>
-                        <Zap className="w-3.5 h-3.5 text-yellow-300 shrink-0 ml-1" />
-                      </button>
 
-                      <button
-                        onClick={() => {
-                          handleLogPresetMed('Dopamine Drip 5-20 mcg/kg/min', false, () => {
-                            setShowStabilityModal?.(true);
-                          });
-                        }}
-                        className="p-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-lg text-left text-[10px] font-bold transition-all cursor-pointer flex justify-between items-center"
-                      >
-                        <div>
-                          <span className="text-slate-200 font-mono font-black block text-[10px]">Dopamine Drip</span>
-                          <span className="text-[8px] text-slate-400 block">5-20 mcg/kg/min infusion</span>
-                        </div>
-                        <span className="text-[8px] font-mono text-slate-400">Infusion</span>
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          handleLogPresetMed('Epinephrine Drip 2-10 mcg/min', false, () => {
-                            setShowStabilityModal?.(true);
-                          });
-                        }}
-                        className="p-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-lg text-left text-[10px] font-bold transition-all cursor-pointer flex justify-between items-center"
-                      >
-                        <div>
-                          <span className="text-slate-200 font-mono font-black block text-[10px]">Epinephrine Drip</span>
-                          <span className="text-[8px] text-slate-400 block">2-10 mcg/min infusion</span>
-                        </div>
-                        <span className="text-[8px] font-mono text-slate-400">Infusion</span>
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Unstable Tachycardia */}
-                {(tachyBradyFilter === 'tachy' || tachyBradyFilter === 'all') && (
-                  <div className="bg-slate-950 p-2 rounded-xl border border-slate-800 space-y-1.5">
-                    <span className="text-[10px] font-black text-indigo-400 uppercase tracking-wider flex items-center gap-1">
-                      <Zap className="w-3.5 h-3.5 text-indigo-400" />
-                      Unstable Tachycardia (HR &ge; 150 bpm + Unstable)
-                    </span>
-
-                    <div className="grid grid-cols-2 gap-1.5">
-                      {/* 1. Sedation */}
-                      <button
-                        onClick={() => {
-                          handleLogProcedure('Sedation (Midazolam 2.5mg)');
-                          handleLogPresetMed('Midazolam 2.5mg IV (Sedation)');
-                        }}
-                        className={`p-1.5 border rounded-lg text-left text-[10px] font-bold transition-all cursor-pointer flex justify-between items-center ${
-                          completedProcedures?.includes('Sedation (Midazolam 2.5mg)') || completedProcedures?.includes('Midazolam 2.5mg IV (Sedation)')
-                            ? 'bg-purple-950/20 border-purple-800/80'
-                            : 'bg-slate-900 border-slate-800 hover:bg-slate-800'
-                        }`}
-                      >
-                        <div>
-                          <span className={`font-mono font-black block text-[10px] ${
-                            completedProcedures?.includes('Sedation (Midazolam 2.5mg)') || completedProcedures?.includes('Midazolam 2.5mg IV (Sedation)')
-                              ? 'text-purple-400'
-                              : 'text-purple-300'
-                          }`}>Sedation (Midazolam 2.5mg)</span>
-                          <span className="text-[8px] text-slate-400 block">Prior to cardioversion if conscious</span>
-                        </div>
-                        {completedProcedures?.includes('Sedation (Midazolam 2.5mg)') || completedProcedures?.includes('Midazolam 2.5mg IV (Sedation)') ? (
-                          <Check className="w-3.5 h-3.5 text-purple-400 shrink-0 ml-1" />
-                        ) : (
-                          <ChevronRight className="w-3.5 h-3.5 text-purple-400 shrink-0 ml-1" />
-                        )}
-                      </button>
-
-                      {/* 2. Amiodarone */}
-                      <button
-                        onClick={() => {
-                          handleLogProcedure('Amiodarone 150mg IV over 10 min');
-                          handleLogPresetMed('Amiodarone 150mg IV over 10 min', false, () => {
-                            setShowStabilityModal?.(true);
-                          });
-                        }}
-                        className={`p-1.5 border rounded-lg text-left text-[10px] font-bold transition-all cursor-pointer flex justify-between items-center ${
-                          amioCount > 0 || completedProcedures?.includes('Amiodarone 150mg IV over 10 min')
-                            ? 'bg-indigo-950/20 border-indigo-800/80'
-                            : 'bg-slate-900 border-slate-800 hover:bg-slate-800'
-                        }`}
-                      >
-                        <div>
-                          <span className={`font-mono font-black block text-[10px] ${
-                            amioCount > 0 || completedProcedures?.includes('Amiodarone 150mg IV over 10 min')
-                              ? 'text-indigo-400'
-                              : 'text-indigo-300'
-                          }`}>Amiodarone 150mg IV</span>
-                          <span className="text-[8px] text-slate-400 block">Infusion over 10 min</span>
-                        </div>
-                        {amioCount > 0 || completedProcedures?.includes('Amiodarone 150mg IV over 10 min') ? (
-                          <Check className="w-3.5 h-3.5 text-indigo-400 shrink-0 ml-1" />
-                        ) : (
-                          <ChevronRight className="w-3.5 h-3.5 text-indigo-400 shrink-0 ml-1" />
-                        )}
-                      </button>
-
-                      {/* 3. Cardioversion 100J */}
-                      <button
-                        onClick={() => {
-                          handleLogProcedure('Synchronized Cardioversion 100J Delivered');
-                          triggerReassessmentAlert('Synchronized Cardioversion 100J', 'ทำคาดิโอเวอชั่น 100 จูน ค่ะ', true);
-                        }}
-                        className="p-1.5 bg-gradient-to-r from-indigo-900 to-indigo-800 hover:from-indigo-800 hover:to-indigo-700 border border-indigo-500 text-white rounded-lg text-left font-bold transition-all cursor-pointer flex justify-between items-center"
-                      >
-                        <div>
-                          <span className="font-black text-[10px] block">Cardioversion 100J</span>
-                          <span className="text-[8px] text-indigo-200 block">Narrow/Wide Reg.(SVT, MonomorphicVT)</span>
-                        </div>
-                        <Zap className="w-3.5 h-3.5 text-yellow-300 shrink-0 ml-1" />
-                      </button>
-
-                      {/* 4. Cardioversion 200J */}
-                      <button
-                        onClick={() => {
-                          handleLogProcedure('Synchronized Cardioversion 200J Delivered');
-                          triggerReassessmentAlert('Synchronized Cardioversion 200J', 'ทำคาดิโอเวอชั่น 200 จูน ค่ะ', true);
-                        }}
-                        className="p-1.5 bg-gradient-to-r from-indigo-900 to-indigo-800 hover:from-indigo-800 hover:to-indigo-700 border border-indigo-500 text-white rounded-lg text-left font-bold transition-all cursor-pointer flex justify-between items-center"
-                      >
-                        <div>
-                          <span className="font-black text-[10px] block">Cardioversion 200J</span>
-                          <span className="text-[8px] text-indigo-200 block">Narrow Irregular (AFib)</span>
-                        </div>
-                        <Zap className="w-3.5 h-3.5 text-yellow-300 shrink-0 ml-1" />
-                      </button>
-
-                      {/* 5. Defibrillation 200J */}
-                      <button
-                        onClick={() => {
-                          handleDeliverShock();
-                          triggerReassessmentAlert('Defibrillation 200J', 'ช็อคเดฟิบบริลเลชั่น 200 จูน เรียบร้อยค่ะ');
-                        }}
-                        className="p-1.5 bg-gradient-to-r from-rose-900 to-rose-800 hover:from-rose-800 hover:to-rose-700 border border-rose-500 text-white rounded-lg text-left font-bold transition-all cursor-pointer flex justify-between items-center"
-                      >
-                        <div>
-                          <span className="font-black text-[10px] block text-rose-100">Defibrillation 200J</span>
-                          <span className="text-[8px] text-rose-200 block">Polymorphic VT / Unsychronized</span>
-                        </div>
-                        <Zap className="w-3.5 h-3.5 text-yellow-300 shrink-0 ml-1" />
-                      </button>
-
-                      {/* 6. Expert Consult */}
-                      <button
-                        onClick={() => {
-                          handleLogProcedure('Expert Consult');
-                          speakThai('ปรึกษาแพทย์ผู้เชี่ยวชาญค่ะ');
-                        }}
-                        className={`p-1.5 hover:bg-slate-800 border rounded-lg text-left text-[10px] font-bold transition-all cursor-pointer flex justify-between items-center ${
-                          completedProcedures?.includes('Expert Consult') || completedProcedures?.includes('Observe & Expert Consult')
-                            ? 'bg-indigo-950/20 border-indigo-800/80'
-                            : 'bg-slate-900 border-slate-800'
-                        }`}
-                      >
-                        <div>
-                          <span className="text-indigo-300 font-mono font-black block text-[10px]">Expert Consult</span>
-                          <span className="text-[8px] text-slate-400 block">Consult Cardiology / Specialist</span>
-                        </div>
-                        {completedProcedures?.includes('Expert Consult') || completedProcedures?.includes('Observe & Expert Consult') ? (
-                          <Check className="w-3.5 h-3.5 text-indigo-400 shrink-0 ml-1" />
-                        ) : (
-                          <ChevronRight className="w-3.5 h-3.5 text-indigo-400 shrink-0 ml-1" />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                )}
               </div>
             )}
           </div>
