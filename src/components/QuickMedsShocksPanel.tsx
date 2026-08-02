@@ -78,35 +78,7 @@ export function QuickMedsShocksPanel({
       </div>
 
       {/* Rhythm Trigger Buttons */}
-      <div className="grid grid-cols-5 gap-1 xs:gap-1.5 -mt-0.5">
-        {/* SHOCKABLE Button */}
-        <button
-          onClick={handleRhythmShockable}
-          className={`py-1 sm:py-1.5 px-0.5 sm:px-1 rounded-lg text-center font-black transition-all cursor-pointer flex flex-col items-center justify-center border min-w-0 -mt-1 sm:mt-0 ${
-            lastRhythmDecision === 'shockable'
-              ? shockButtonFlashing
-                ? 'bg-rose-600 text-white border-rose-300 ring-4 ring-rose-500/80 animate-pulse shadow-md'
-                : 'bg-rose-600 text-white border-rose-400 ring-2 ring-rose-400 shadow-md'
-              : 'bg-rose-950/60 hover:bg-rose-900 text-rose-300 border-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.5)] hover:border-rose-400 hover:shadow-[0_0_14px_rgba(244,63,94,0.8)]'
-          }`}
-        >
-          <span className="text-[8px] xs:text-[9px] sm:text-[10px] uppercase font-mono block leading-none truncate w-full">SHOCKABLE</span>
-          <span className="text-[7.5px] xs:text-[8.5px] opacity-80 mt-0.5 truncate w-full">VF/pVT/Torsades</span>
-        </button>
-
-        {/* NON-SHOCKABLE Button */}
-        <button
-          onClick={handleRhythmNonShockable}
-          className={`py-1 sm:py-1.5 px-0.5 sm:px-1 rounded-lg text-center font-black transition-all cursor-pointer flex flex-col items-center justify-center border min-w-0 -mt-1 sm:mt-0 ${
-            lastRhythmDecision === 'non-shockable'
-              ? 'bg-slate-700 text-white border-white ring-2 ring-white/90 shadow-[0_0_16px_rgba(255,255,255,0.85)] animate-pulse'
-              : 'bg-slate-950 hover:bg-slate-800 text-slate-200 border-white/60 shadow-[0_0_10px_rgba(255,255,255,0.3)] hover:border-white hover:shadow-[0_0_14px_rgba(255,255,255,0.6)]'
-          }`}
-        >
-          <span className="text-[6.5px] xs:text-[7.5px] sm:text-[9px] uppercase font-mono block leading-none tracking-tighter truncate w-full">NON-SHOCKABLE</span>
-          <span className="text-[7.5px] xs:text-[8.5px] opacity-80 mt-0.5 truncate w-full">Asystole/PEA</span>
-        </button>
-
+      <div className="grid grid-cols-3 gap-1 xs:gap-1.5 -mt-0.5">
         {/* BRADYCARDIA Button */}
         <button
           onClick={handleRhythmBradycardia}
