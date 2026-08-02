@@ -107,7 +107,6 @@ export function StableTachycardiaModal({
               <button
                 onClick={() => {
                   handleLogProcedure('Vagal Maneuvers Performed');
-                  addLog?.('Performed Vagal Maneuvers for Stable SVT', 'system');
                   triggerReassessmentAlert?.('Vagal Maneuvers', 'ทำวาก้อมานูเว่อ เรียบร้อยค่ะ', true);
                 }}
                 className={`p-3 border rounded-xl text-left transition-all flex justify-between items-center gap-2.5 shadow-md cursor-pointer group ${
@@ -142,7 +141,6 @@ export function StableTachycardiaModal({
                   onClick={() => {
                     handleLogProcedure('Adenosine 6mg IV rapid push');
                     handleLogPresetMed('Adenosine 6mg IV rapid push', false, () => {
-                      addLog?.('Administered Adenosine 6mg IV rapid push (1st Dose)', 'med');
                       triggerReassessmentAlert?.('Adenosine 6mg IV rapid push', undefined, true);
                     });
                   }}
@@ -187,7 +185,6 @@ export function StableTachycardiaModal({
                   onClick={() => {
                     handleLogProcedure('Adenosine 12mg IV rapid push');
                     handleLogPresetMed('Adenosine 12mg IV rapid push', false, () => {
-                      addLog?.('Administered Adenosine 12mg IV rapid push (2nd Dose)', 'med');
                       triggerReassessmentAlert?.('Adenosine 12mg IV rapid push', undefined, true);
                     });
                   }}
@@ -232,7 +229,6 @@ export function StableTachycardiaModal({
                   onClick={() => {
                     handleLogProcedure('Amiodarone 150mg IV over 10 min');
                     handleLogPresetMed('Amiodarone 150mg IV over 10 min', false, () => {
-                      addLog?.('Administered Amiodarone 150mg IV infusion over 10 min', 'med');
                       triggerReassessmentAlert?.('Amiodarone 150mg IV over 10 min', undefined, true);
                     });
                   }}
@@ -271,7 +267,6 @@ export function StableTachycardiaModal({
                 onClick={() => {
                   handleLogProcedure('Synchronized Cardioversion 100J Delivered');
                   triggerReassessmentAlert?.('Synchronized Cardioversion 100J', 'ทำคาดิโอเวอชั่น 100 จูน ค่ะ', true);
-                  addLog?.('Delivered Synchronized Cardioversion 100J for Stable Wide QRS Regular', 'shock');
                 }}
                 className={`p-3 border rounded-xl text-left transition-all flex justify-between items-center gap-2.5 shadow-md cursor-pointer group ${
                   completedProcedures.includes('Synchronized Cardioversion 100J Delivered') || completedProcedures.includes('Synchronized Cardioversion 100J')
@@ -302,7 +297,6 @@ export function StableTachycardiaModal({
                 onClick={() => {
                   handleLogProcedure('Synchronized Cardioversion 200J Delivered');
                   triggerReassessmentAlert?.('Synchronized Cardioversion 200J', 'ทำคาดิโอเวอชั่น 200 จูน ค่ะ', true);
-                  addLog?.('Delivered Synchronized Cardioversion 200J for Stable Wide QRS Irregular', 'shock');
                 }}
                 className={`p-3 border rounded-xl text-left transition-all flex justify-between items-center gap-2.5 shadow-md cursor-pointer group ${
                   completedProcedures.includes('Synchronized Cardioversion 200J Delivered') || completedProcedures.includes('Synchronized Cardioversion 200J')
@@ -334,7 +328,6 @@ export function StableTachycardiaModal({
                   onClick={() => {
                     handleLogProcedure('Rate Control (CCB / Beta Blocker)');
                     handleLogPresetMed('Diltiazem / Metoprolol IV', false, () => {
-                      addLog?.('Administered Rate Control (Diltiazem/Metoprolol IV) for AFib/Flutter', 'med');
                       triggerReassessmentAlert?.('Diltiazem / Metoprolol IV', undefined, true);
                     });
                   }}

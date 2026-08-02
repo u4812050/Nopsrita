@@ -106,7 +106,6 @@ export function StableBradycardiaModal({
                 onClick={() => {
                   handleLogProcedure('Monitor V/S & Support ABCs');
                   speakThai('เฝ้าระวังอาการ และประเมินสัญญาณชีพเรียบร้อยค่ะ');
-                  addLog?.('Monitored V/S & Supported ABCs for Stable Bradycardia', 'system');
                 }}
                 className={`p-3 border rounded-xl text-left transition-all flex justify-between items-center gap-2.5 shadow-md cursor-pointer group ${
                   completedProcedures.includes('Monitor V/S & Support ABCs')
@@ -139,7 +138,6 @@ export function StableBradycardiaModal({
                 onClick={() => {
                   handleLogProcedure('Obtain 12-lead EKG');
                   speakThai('ทำการตรวจคลื่นไฟฟ้าหัวใจ 12 หลีด เรียบร้อยค่ะ');
-                  addLog?.('Obtained 12-lead EKG for Bradycardia assessment', 'system');
                 }}
                 className={`p-3 border rounded-xl text-left transition-all flex justify-between items-center gap-2.5 shadow-md cursor-pointer group ${
                   completedProcedures.includes('Obtain 12-lead EKG')
@@ -172,7 +170,6 @@ export function StableBradycardiaModal({
                 onClick={() => {
                   handleLogProcedure('Identify & Treat Reversible Causes');
                   speakThai('ค้นหาและแก้ไขสาเหตุที่ย้อนกลับได้ เรียบร้อยค่ะ');
-                  addLog?.('Identify & Treat Reversible Causes for Bradycardia', 'system');
                 }}
                 className={`p-3 border rounded-xl text-left transition-all flex justify-between items-center gap-2.5 shadow-md cursor-pointer group ${
                   completedProcedures.includes('Identify & Treat Reversible Causes')
@@ -204,9 +201,7 @@ export function StableBradycardiaModal({
               {handleLogPresetMed && (
                 <button
                   onClick={() => {
-                    handleLogPresetMed('Atropine 1mg IV', false, () => {
-                      addLog?.('Administered Atropine 1mg IV trial for Bradycardia', 'med');
-                    });
+                    handleLogPresetMed('Atropine 1mg IV', false);
                   }}
                   disabled={atropineCount >= 3}
                   className={`p-3 border rounded-xl text-left transition-all flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2.5 shadow-md ${
@@ -245,7 +240,6 @@ export function StableBradycardiaModal({
                 onClick={() => {
                   handleLogProcedure('Observe & Expert Consult');
                   speakThai('เฝ้าระวังอาการ และปรึกษาแพทย์ผู้เชี่ยวชาญ เรียบร้อยค่ะ');
-                  addLog?.('Observe & Expert Consult for Stable Bradycardia', 'system');
                 }}
                 className={`p-3 border rounded-xl text-left transition-all flex justify-between items-center gap-2.5 shadow-md cursor-pointer group ${
                   completedProcedures.includes('Observe & Expert Consult')

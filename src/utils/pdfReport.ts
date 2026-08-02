@@ -299,17 +299,17 @@ function parseLogRow(entry: LogEntry) {
   let nurseNote = translateLogTextToEnglish(text);
 
   if (textLower.includes('alteplase') || textLower.includes('rtpa') || textLower.includes('อัลเตเพลส')) {
-    nurseNote = `[X] Administered Alteplase (rtPA) 50mg IV bolus`;
+    nurseNote = `Administered Alteplase (rtPA) 50mg IV bolus`;
   } else if (textLower.includes('naloxone') || textLower.includes('นาล็อกโซน')) {
-    nurseNote = `[X] Administered Naloxone 0.4mg IV`;
+    nurseNote = `Administered Naloxone 0.4mg IV`;
   } else if (textLower.includes('d50') || textLower.includes('insulin') || textLower.includes('อินซูลิน')) {
-    nurseNote = `[X] Administered Regular Insulin 10U + D50W IV`;
+    nurseNote = `Administered Regular Insulin 10U + 50%Dextose IV`;
   } else if (textLower.includes('mgso4') || textLower.includes('magnesium') || textLower.includes('แมกนีเซียม')) {
-    nurseNote = `[X] Administered MgSO4 2g IV`;
+    nurseNote = `Administered 50%MgSO4 2g IV`;
   } else if (textLower.includes('gluconate') || textLower.includes('calcium') || textLower.includes('แคลเซียม')) {
-    nurseNote = `[X] Administered Ca Gluconate 10% IV`;
+    nurseNote = `Administered 10%Ca Gluconate IV`;
   } else if (textLower.includes('nahco3') || textLower.includes('bicarbonate') || textLower.includes('ไบคาบ') || textLower.includes('ไบคาร์บอเนต')) {
-    nurseNote = `[X] Administered NaHCO3 50mEq IV`;
+    nurseNote = `Administered 7.5%NaHCO3 50mEq`;
   } else if (textLower.includes('noradrenaline') || textLower.includes('norepinephrine') || textLower.includes('นอร์อดรีนาลีน') || textLower.includes('นอร์เอพิเนฟริน')) {
     if (!nurseNote.toLowerCase().includes('norepinephrine') && !nurseNote.toLowerCase().includes('noradrenaline')) {
       nurseNote = `Norepinephrine Infusion (${nurseNote})`;

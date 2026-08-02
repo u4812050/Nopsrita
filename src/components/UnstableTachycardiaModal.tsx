@@ -109,9 +109,7 @@ export function UnstableTachycardiaModal({
                 <button
                   onClick={() => {
                     handleLogProcedure('Sedation (Midazolam 2.5mg)');
-                    handleLogPresetMed('Midazolam 2.5mg IV (Sedation)', false, () => {
-                      addLog?.('Administered Sedation (Midazolam 2.5mg IV) prior to cardioversion', 'med');
-                    });
+                    handleLogPresetMed('Midazolam 2.5mg IV (Sedation)', false);
                   }}
                   className={`p-3 border rounded-xl text-left transition-all flex justify-between items-center gap-2.5 shadow-md cursor-pointer group ${
                     completedProcedures.includes('Sedation (Midazolam 2.5mg)') || completedProcedures.includes('Midazolam 2.5mg IV (Sedation)')
@@ -145,7 +143,6 @@ export function UnstableTachycardiaModal({
                 onClick={() => {
                   handleLogProcedure('Synchronized Cardioversion 100J Delivered');
                   triggerReassessmentAlert?.('Synchronized Cardioversion 100J', 'ทำคาดิโอเวอชั่น 100 จูน เรียบร้อยค่ะ', true);
-                  addLog?.('Delivered Synchronized Cardioversion 100J for Unstable Tachycardia', 'shock');
                 }}
                 className={`p-3 border rounded-xl text-left transition-all flex justify-between items-center gap-2.5 shadow-md cursor-pointer group ${
                   completedProcedures.includes('Synchronized Cardioversion 100J Delivered') || completedProcedures.includes('Synchronized Cardioversion 100J')
@@ -177,7 +174,6 @@ export function UnstableTachycardiaModal({
                 onClick={() => {
                   handleLogProcedure('Synchronized Cardioversion 200J Delivered');
                   triggerReassessmentAlert?.('Synchronized Cardioversion 200J', 'ทำคาดิโอเวอชั่น 200 จูน เรียบร้อยค่ะ', true);
-                  addLog?.('Delivered Synchronized Cardioversion 200J for Unstable Tachycardia', 'shock');
                 }}
                 className={`p-3 border rounded-xl text-left transition-all flex justify-between items-center gap-2.5 shadow-md cursor-pointer group ${
                   completedProcedures.includes('Synchronized Cardioversion 200J Delivered') || completedProcedures.includes('Synchronized Cardioversion 200J')
@@ -242,7 +238,6 @@ export function UnstableTachycardiaModal({
                   onClick={() => {
                     handleLogProcedure('Amiodarone 150mg IV over 10 min');
                     handleLogPresetMed('Amiodarone 150mg IV over 10 min', false, () => {
-                      addLog?.('Administered Amiodarone 150mg IV infusion over 10 min', 'med');
                       triggerReassessmentAlert?.('Amiodarone 150mg IV over 10 min', undefined, true);
                     });
                   }}
@@ -281,7 +276,6 @@ export function UnstableTachycardiaModal({
                 onClick={() => {
                   handleLogProcedure('Expert Consult');
                   speakThai('ปรึกษาแพทย์ผู้เชี่ยวชาญ เรียบร้อยค่ะ');
-                  addLog?.('Expert Consult requested for Unstable Tachycardia', 'system');
                 }}
                 className={`p-3 border rounded-xl text-left transition-all flex justify-between items-center gap-2.5 shadow-md cursor-pointer group ${
                   completedProcedures.includes('Expert Consult') || completedProcedures.includes('Observe & Expert Consult')

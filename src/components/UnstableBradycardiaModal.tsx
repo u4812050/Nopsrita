@@ -104,7 +104,6 @@ export function UnstableBradycardiaModal({
               <button
                 onClick={() => {
                   handleLogPresetMed('Atropine 1mg IV', false, () => {
-                    addLog?.('Administered Atropine 1mg IV for Unstable Bradycardia', 'med');
                     triggerReassessmentAlert?.('Atropine 1mg IV', undefined, true);
                   });
                 }}
@@ -144,7 +143,6 @@ export function UnstableBradycardiaModal({
               <button
                 onClick={() => {
                   handleLogProcedure('Transcutaneous Pacing (TCP) Started');
-                  addLog?.('Started Transcutaneous Pacing (TCP)', 'cpr');
                   triggerReassessmentAlert?.('Transcutaneous Pacing (TCP)', 'เริ่มทำเพ๊สซิ่งผ่านผิวหนัง เรียบร้อยค่ะ', true);
                 }}
                 className="p-3 bg-gradient-to-r from-amber-950 via-amber-900/90 to-amber-950 hover:from-amber-900 hover:to-amber-800 border-2 border-amber-500 hover:border-amber-400 text-amber-100 rounded-xl text-left transition-all cursor-pointer flex flex-col gap-2 shadow-lg group relative overflow-hidden"
@@ -180,7 +178,6 @@ export function UnstableBradycardiaModal({
                 <button
                   onClick={() => {
                     handleLogPresetMed('Dopamine Drip 5-20 mcg/kg/min', false, () => {
-                      addLog?.('Administered Dopamine Drip 5-20 mcg/kg/min', 'med');
                       triggerReassessmentAlert?.('Dopamine Drip', undefined, true);
                     });
                   }}
@@ -203,7 +200,6 @@ export function UnstableBradycardiaModal({
                 <button
                   onClick={() => {
                     handleLogPresetMed('Epinephrine Drip 2-10 mcg/min', false, () => {
-                      addLog?.('Administered Epinephrine Drip 2-10 mcg/min', 'med');
                       triggerReassessmentAlert?.('Epinephrine Drip', undefined, true);
                     });
                   }}
@@ -228,7 +224,6 @@ export function UnstableBradycardiaModal({
                 onClick={() => {
                   handleLogProcedure('Expert Consultation & Transvenous Pacing Prep Requested');
                   speakThai('ปรึกษาผู้เชี่ยวชาญ และเตรียมทำ ทรานส์เวนัส เพ๊สซิ่ง เรียบร้อยค่ะ');
-                  addLog?.('Expert Consultation & Transvenous Pacing Prep Requested', 'system');
                 }}
                 className="p-2.5 bg-slate-950 hover:bg-slate-900 border border-slate-700 hover:border-slate-500 text-slate-200 rounded-xl text-left transition-all cursor-pointer flex items-center justify-between gap-2 shadow-sm"
               >

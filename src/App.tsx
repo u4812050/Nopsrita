@@ -13,6 +13,7 @@ import { QuickMedsShocksPanel } from './components/QuickMedsShocksPanel';
 import { GuidancePanel } from './components/GuidancePanel';
 import { LogsPanel } from './components/LogsPanel';
 import { PulseCheckModal } from './components/PulseCheckModal';
+import { QuickActionPromptModal } from './components/QuickActionPromptModal';
 import { ResetConfirmModal } from './components/ResetConfirmModal';
 import { PalsCalcModal } from './components/PalsCalcModal';
 import { ClinicalStabilityModal } from './components/ClinicalStabilityModal';
@@ -121,6 +122,7 @@ export default function App() {
   const [showStableTachyModal, setShowStableTachyModal] = useState<boolean>(false);
   const [showUnstableTachyModal, setShowUnstableTachyModal] = useState<boolean>(false);
   const [showAltMedsModal, setShowAltMedsModal] = useState<boolean>(false);
+  const [showQuickActionModal, setShowQuickActionModal] = useState<boolean>(false);
   const [mgSo4AlertActive, setMgSo4AlertActive] = useState<boolean>(false);
 
   // 10-Second Pulse & EKG assessment timer states
@@ -786,6 +788,7 @@ export default function App() {
       setPulseCheckActive(false);
       setPulseCheckTime(10);
       setCprButtonFlash(true);
+      setShowQuickActionModal(true);
 
       playAlertChime('pulse_check');
       speakThai("หมดเวลาประเมินชีพจรและอีเคจีรีบซีพีอาต่อค่ะ", () => {
@@ -1306,7 +1309,17 @@ export default function App() {
       setMetronomeMode('continuous');
     }
 
-    addLog(`Procedure: ${procName}`, "system");
+    const excludedProcedures = [
+      'Adenosine 6mg IV rapid push',
+      'Adenosine 12mg IV rapid push',
+      'Amiodarone 150mg IV over 10 min',
+      'Sedation (Midazolam 2.5mg)',
+      'Expert Consultation & Transvenous Pacing Prep Requested',
+    ];
+
+    if (!excludedProcedures.includes(procName)) {
+      addLog(`Procedure: ${procName}`, procName.includes('Cardioversion') ? "shock" : "system");
+    }
   };
 
   const handleLogCustomNote = (e: React.FormEvent) => {
@@ -1608,6 +1621,13 @@ export default function App() {
               handleRhythmTachycardia={handleRhythmTachycardia}
               handleRhythmROSC={handleRhythmROSC}
               lastRhythmDecision={lastRhythmDecision}
+              selectedShockableRhythm={selectedShockableRhythm}
+              setSelectedShockableRhythm={setSelectedShockableRhythm}
+              selectedNonShockableRhythm={selectedNonShockableRhythm}
+              setSelectedNonShockableRhythm={setSelectedNonShockableRhythm}
+              setShockButtonFlashing={setShockButtonFlashing}
+              addLog={addLog}
+              speakThai={speakThai}
               formatMMSS={formatMMSS}
               shockButtonFlashing={shockButtonFlashing}
             />
@@ -1725,6 +1745,36 @@ export default function App() {
         cancelPulseCheck={cancelPulseCheck}
         toggleCPR={toggleCPR}
         cprActive={cprActive}
+        onCompletePulseCheck={() => setShowQuickActionModal(true)}
+      />
+
+      <QuickActionPromptModal
+        isOpen={showQuickActionModal}
+        onClose={() => setShowQuickActionModal(false)}
+        lastRhythmDecision={lastRhythmDecision}
+        selectedShockableRhythm={selectedShockableRhythm}
+        setSelectedShockableRhythm={setSelectedShockableRhythm}
+        selectedNonShockableRhythm={selectedNonShockableRhythm}
+        setSelectedNonShockableRhythm={setSelectedNonShockableRhythm}
+        handleRhythmShockable={handleRhythmShockable}
+        handleRhythmNonShockable={handleRhythmNonShockable}
+        handleRhythmBradycardia={handleRhythmBradycardia}
+        handleRhythmTachycardia={handleRhythmTachycardia}
+        handleRhythmROSC={handleRhythmROSC}
+        handleDeliverShock={handleDeliverShock}
+        shockCount={shockCount}
+        shockButtonFlashing={shockButtonFlashing}
+        setShockButtonFlashing={setShockButtonFlashing}
+        handleAdministerEpinephrine={handleAdministerEpinephrine}
+        epiCount={epiCount}
+        handleAdministerAmiodarone={handleAdministerAmiodarone}
+        amioCount={amioCount}
+        handleAdministerLidocaine={handleAdministerLidocaine}
+        lidoCount={lidoCount}
+        addLog={addLog}
+        speakThai={speakThai}
+        cprActive={cprActive}
+        toggleCPR={toggleCPR}
       />
 
       <ResetConfirmModal

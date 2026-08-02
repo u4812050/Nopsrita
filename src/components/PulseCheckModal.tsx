@@ -7,6 +7,7 @@ interface PulseCheckModalProps {
   cancelPulseCheck: () => void;
   toggleCPR: () => void;
   cprActive: boolean;
+  onCompletePulseCheck?: () => void;
 }
 
 export function PulseCheckModal({
@@ -15,6 +16,7 @@ export function PulseCheckModal({
   cancelPulseCheck,
   toggleCPR,
   cprActive,
+  onCompletePulseCheck,
 }: PulseCheckModalProps) {
   if (!pulseCheckActive) return null;
 
@@ -41,6 +43,7 @@ export function PulseCheckModal({
           <button
             onClick={() => {
               if (!cprActive) toggleCPR();
+              onCompletePulseCheck?.();
             }}
             className="flex-1 py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-black text-sm flex items-center justify-center gap-2 cursor-pointer shadow-lg active:scale-95"
           >

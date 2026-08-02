@@ -1,6 +1,7 @@
 import React from 'react';
 import { Zap, ShieldAlert, Heart, Check, Plus, AlertCircle, Clock } from 'lucide-react';
 import { VfEkgIcon, VtEkgIcon, AsystoleEkgIcon, PeaEkgIcon } from './EkgIcons';
+import { ShockableRhythmType, NonShockableRhythmType } from '../types';
 
 interface QuickMedsShocksPanelProps {
   hasCompletedIvAccess?: boolean;
@@ -23,6 +24,13 @@ interface QuickMedsShocksPanelProps {
   handleRhythmTachycardia: () => void;
   handleRhythmROSC: () => void;
   lastRhythmDecision: 'shockable' | 'non-shockable' | 'bradycardia' | 'tachycardia' | 'rosc' | null;
+  selectedShockableRhythm?: ShockableRhythmType;
+  setSelectedShockableRhythm?: (val: ShockableRhythmType) => void;
+  selectedNonShockableRhythm?: NonShockableRhythmType;
+  setSelectedNonShockableRhythm?: (val: NonShockableRhythmType) => void;
+  setShockButtonFlashing?: (val: boolean) => void;
+  addLog?: (text: string, type?: any) => void;
+  speakThai?: (text: string, onEnd?: () => void, rate?: number) => void;
   formatMMSS: (sec: number) => string;
   shockButtonFlashing?: boolean;
 }
@@ -48,6 +56,13 @@ export function QuickMedsShocksPanel({
   handleRhythmTachycardia,
   handleRhythmROSC,
   lastRhythmDecision,
+  selectedShockableRhythm,
+  setSelectedShockableRhythm,
+  selectedNonShockableRhythm,
+  setSelectedNonShockableRhythm,
+  setShockButtonFlashing,
+  addLog,
+  speakThai,
   formatMMSS,
   shockButtonFlashing,
 }: QuickMedsShocksPanelProps) {
@@ -131,6 +146,8 @@ export function QuickMedsShocksPanel({
           <span className="text-[7.5px] xs:text-[8.5px] opacity-80 mt-0.5 truncate w-full">Pulse Back</span>
         </button>
       </div>
+
+
 
       {/* SHOCK Action Banner when Shockable */}
       {lastRhythmDecision === 'shockable' && (
