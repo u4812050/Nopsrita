@@ -30,6 +30,9 @@ interface QuickActionPromptModalProps {
   speakThai: (text: string, onEnd?: () => void, rate?: number) => void;
   cprActive: boolean;
   toggleCPR: () => void;
+  setShowProceduresModal?: (val: boolean) => void;
+  setIvAccessAlertActive?: (val: boolean) => void;
+  hasCompletedIvAccess?: boolean;
 }
 
 export function QuickActionPromptModal({
@@ -59,6 +62,9 @@ export function QuickActionPromptModal({
   speakThai,
   cprActive,
   toggleCPR,
+  setShowProceduresModal,
+  setIvAccessAlertActive,
+  hasCompletedIvAccess = false,
 }: QuickActionPromptModalProps) {
   if (!isOpen) return null;
 
@@ -276,6 +282,12 @@ export function QuickActionPromptModal({
                     setSelectedNonShockableRhythm('Asystole');
                     addLog('Selected Rhythm Type: Asystole', 'rhythm');
                     speakThai('เลือก คลื่นไฟฟ้าหัวใจ อะซิสโทลี');
+                    if (setIvAccessAlertActive && !hasCompletedIvAccess) {
+                      setIvAccessAlertActive(true);
+                    }
+                    if (setShowProceduresModal) {
+                      setShowProceduresModal(true);
+                    }
                   }}
                   className={`p-1.5 rounded-lg border text-left flex items-center gap-2 cursor-pointer transition-all ${
                     selectedNonShockableRhythm === 'Asystole'
@@ -295,6 +307,12 @@ export function QuickActionPromptModal({
                     setSelectedNonShockableRhythm('PEA');
                     addLog('Selected Rhythm Type: PEA', 'rhythm');
                     speakThai('เลือก คลื่นไฟฟ้าหัวใจ พีอีเอ');
+                    if (setIvAccessAlertActive && !hasCompletedIvAccess) {
+                      setIvAccessAlertActive(true);
+                    }
+                    if (setShowProceduresModal) {
+                      setShowProceduresModal(true);
+                    }
                   }}
                   className={`p-1.5 rounded-lg border text-left flex items-center gap-2 cursor-pointer transition-all ${
                     selectedNonShockableRhythm === 'PEA'
