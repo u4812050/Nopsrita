@@ -1023,18 +1023,13 @@ export default function App() {
     setCprActive(true);
     setCprTimeRemaining(120);
 
-    addLog("Rhythm Checked: Non-Shockable (Asystole/PEA)", "rhythm");
-
-    if (!hasCompletedIvAccess) {
-      setIvAccessAlertActive(true);
-    }
-    setShowProceduresModal(true);
+    addLog("Rhythm Checked: Non-Shockable", "rhythm");
 
     setGuidanceMessage(
-      "พบคลื่นไฟฟ้าหัวใจ NON-SHOCKABLE (Asystole / PEA)! โปรดเลือกบันทึกการเปิดเส้นให้ยา (IV/IO Access) ในหน้าต่างป๊อปอัปเพื่อเตรียมบริหารยา Epinephrine"
+      "พบคลื่นไฟฟ้าหัวใจ NON-SHOCKABLE! โปรดเลือกชนิดคลื่น (Asystole/PEA) และทำ IV Access เพื่อเปิดเส้นทางบริหารยา"
     );
 
-    speakThai("คลื่นไฟฟ้าหัวใจช็อกไม่ได้ อะซิสโทลี หรือ พีอีเอ โปรดบันทึกการเปิดเส้นให้ยานะคะ");
+    speakThai("คลื่นไฟฟ้าหัวใจช็อกไม่ได้ โปรดเลือกชนิดคลื่นไฟฟ้าหัวใจ อะซิสโทลี หรือ พีอีเอ และเปิดเส้นให้ยานะคะ");
     setActiveTab('trc_cardiac');
     setMobileViewTab('guidelines');
   };
@@ -1780,9 +1775,8 @@ export default function App() {
         speakThai={speakThai}
         cprActive={cprActive}
         toggleCPR={toggleCPR}
-        setShowProceduresModal={setShowProceduresModal}
-        setIvAccessAlertActive={setIvAccessAlertActive}
         hasCompletedIvAccess={hasCompletedIvAccess}
+        handleLogProcedure={handleLogProcedure}
       />
 
       <ResetConfirmModal

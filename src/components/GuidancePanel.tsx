@@ -421,11 +421,9 @@ export function GuidancePanel({
                       setSelectedNonShockableRhythm('Asystole');
                       addLog('Selected Rhythm Type: Asystole', 'rhythm');
                       speakThai('เลือก คลื่นไฟฟ้าหัวใจ อะซิสโทลี');
-                      if (setIvAccessAlertActive && !hasCompletedIvAccess) {
-                        setIvAccessAlertActive(true);
-                      }
-                      if (setShowProceduresModal) {
-                        setShowProceduresModal(true);
+                      if (!hasCompletedIvAccess) {
+                        if (setIvAccessAlertActive) setIvAccessAlertActive(true);
+                        if (setShowProceduresModal) setShowProceduresModal(true);
                       }
                     }}
                     className={`p-1.5 rounded-lg border text-left flex items-center gap-2 cursor-pointer transition-all ${
@@ -446,11 +444,9 @@ export function GuidancePanel({
                       setSelectedNonShockableRhythm('PEA');
                       addLog('Selected Rhythm Type: PEA', 'rhythm');
                       speakThai('เลือก คลื่นไฟฟ้าหัวใจ พีอีเอ');
-                      if (setIvAccessAlertActive && !hasCompletedIvAccess) {
-                        setIvAccessAlertActive(true);
-                      }
-                      if (setShowProceduresModal) {
-                        setShowProceduresModal(true);
+                      if (!hasCompletedIvAccess) {
+                        if (setIvAccessAlertActive) setIvAccessAlertActive(true);
+                        if (setShowProceduresModal) setShowProceduresModal(true);
                       }
                     }}
                     className={`p-1.5 rounded-lg border text-left flex items-center gap-2 cursor-pointer transition-all ${

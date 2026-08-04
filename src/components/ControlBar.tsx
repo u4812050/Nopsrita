@@ -374,16 +374,16 @@ export function ControlBar({
             {/* PROCEDURES MODAL POP-UP */}
             {showProceduresModal && (
               <div
-                className="fixed inset-0 z-[100000] bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-fadeIn"
+                className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-fadeIn"
                 onClick={() => setShowProceduresModal && setShowProceduresModal(false)}
               >
                 <div
-                  className="bg-slate-900 border-2 border-amber-500/80 rounded-2xl w-full max-w-lg sm:max-w-xl p-3.5 sm:p-5 shadow-2xl space-y-3 sm:space-y-4 text-left relative z-10 my-auto animate-in fade-in zoom-in duration-200"
+                  className="bg-slate-900 border border-amber-500/60 rounded-2xl w-full max-w-lg sm:max-w-xl p-3.5 sm:p-5 shadow-2xl space-y-3 sm:space-y-4 text-left relative z-10 my-auto"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="flex items-center justify-between border-b border-amber-900/60 pb-2.5">
                     <div className="flex items-center gap-2">
-                      <Stethoscope className="w-5 h-5 text-amber-400 shrink-0" />
+                      <Stethoscope className="w-4 h-4 text-amber-400 shrink-0" />
                       <h3 className="text-sm sm:text-base font-black font-mono text-amber-200">
                         Procedures & Interventions (บันทึกหัตถการ)
                       </h3>
@@ -405,7 +405,7 @@ export function ControlBar({
                       </div>
                       <div className="text-[11px] text-amber-100/90 space-y-0.5 pl-5">
                         {ivAccessAlertActive && (
-                          <p>• <strong>IV / IO Access:</strong> บันทึกการเปิดเส้นให้ยา (IV/IO Access) เพื่อเตรียมพร้อมสำหรับบริหารยา Epinephrine 1mg</p>
+                          <p>• <strong>IV / IO Access:</strong> เปิดเส้นให้ยาก่อนบริหารยา Epinephrine</p>
                         )}
                         {airwayAlertActive && (
                           <p>• <strong>Advanced Airway:</strong> ใส่ท่อช่วยหายใจขั้นสูง (ET Tube)</p>
