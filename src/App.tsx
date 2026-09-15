@@ -474,7 +474,9 @@ export default function App() {
           "Non-Shockable": "ช็อคไม่ได้",
           "VF/pVT": "วีเอฟ หรือ พีวีที",
           "PEA/Asystole": "พีอีเอ หรือ อะซิสโทลี",
-          "Cycle": "ไซเคิล"
+          "Cycle": "ไซเคิล",
+          "Blood": "บลัด",
+          "ICD": "ไอซีดี"
         };
 
         Object.keys(phoneticMap).forEach(key => {
@@ -640,11 +642,13 @@ export default function App() {
           let nextDelayMs = intervalMs;
           if (currentBeat <= 30) {
             playSynthesizedTick(currentBeat === 30);
-            nextDelayMs = currentBeat === 30 ? 1000 : intervalMs;
+            nextDelayMs = currentBeat === 30 ? 1200 : intervalMs;
           } else if (currentBeat === 31) {
-            nextDelayMs = 1000;
+            playAlertChime('vent_cue');
+            nextDelayMs = 1500;
           } else if (currentBeat === 32) {
-            nextDelayMs = 1000;
+            playAlertChime('vent_cue');
+            nextDelayMs = 1500;
 
             const completedCycle = cprSubCycleRef.current;
             if (completedCycle === 5) {
@@ -1291,6 +1295,30 @@ export default function App() {
       });
     }
 
+    if (
+      procName.includes('ABG') ||
+      procName.includes('Blood Gas') ||
+      procName.includes('Arterial Blood Gas')
+    ) {
+      speakThai("เจาะ Blood แก๊ส");
+    }
+
+    if (
+      procName.includes('Mechanical') ||
+      procName.includes('Chest Compressor')
+    ) {
+      speakThai("ใส่เครื่องช่วยซีพีอา");
+    }
+
+    if (
+      procName.includes('Needle Decompress') ||
+      procName.includes('Needle Decompression') ||
+      procName.includes('Chest Drain') ||
+      procName.includes('ICD')
+    ) {
+      speakThai("ใส่ไอซีดี");
+    }
+
     const isLoggingAirway =
       procName.includes('Advanced Airway') ||
       procName.includes('ET Tube') ||
@@ -1578,6 +1606,7 @@ export default function App() {
             <CprTimerCard
               cprTimeRemaining={cprTimeRemaining}
               cprActive={cprActive}
+              metronomeTempo={metronomeTempo}
               metronomeMode={metronomeMode}
               setMetronomeMode={setMetronomeMode}
               cprSubCycle302={cprSubCycle302}

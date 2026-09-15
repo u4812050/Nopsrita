@@ -8,6 +8,7 @@ export type { AltMedItem };
 interface CprTimerCardProps {
   cprTimeRemaining: number;
   cprActive: boolean;
+  metronomeTempo?: number;
   metronomeMode: '30:2' | 'continuous';
   setMetronomeMode: (mode: '30:2' | 'continuous') => void;
   cprSubCycle302: number;
@@ -30,6 +31,7 @@ interface CprTimerCardProps {
 export function CprTimerCard({
   cprTimeRemaining,
   cprActive,
+  metronomeTempo = 100,
   metronomeMode,
   setMetronomeMode,
   cprSubCycle302,
@@ -48,6 +50,15 @@ export function CprTimerCard({
   metronomeBeat,
   handleLogPresetMed,
 }: CprTimerCardProps) {
+  const beatIntervalMs = (60 / Math.max(60, metronomeTempo)) * 1000;
+  const is302Ventilation = metronomeMode === '30:2' && (metronomeBeat === 31 || metronomeBeat === 32);
+  const is302Pause = metronomeMode === '30:2' && metronomeBeat === 30;
+  const currentBeatDurationMs = is302Ventilation
+    ? 1500
+    : is302Pause
+      ? 1200
+      : beatIntervalMs;
+
   return (
     <div
       className="bg-slate-900 rounded-xl border border-slate-800 p-2 sm:p-3 md:p-4 flex flex-col items-center justify-between relative overflow-hidden shadow-xl w-full max-w-full h-[418px]"
@@ -94,7 +105,7 @@ export function CprTimerCard({
 
       {/* Timer Digits Display with Circular Progress Gauge */}
       <div className="flex flex-col items-center justify-center my-0.5 w-full max-w-full overflow-hidden flex-1">
-        <div className="relative flex items-center justify-center w-36 h-36 xs:w-44 xs:h-44 sm:w-56 sm:h-56 my-1 sm:my-2 max-w-full">
+        <div className="relative flex items-center justify-center w-36 h-36 xs:w-40 xs:h-40 sm:w-48 sm:h-48 my-0.5 sm:my-1 max-w-full">
           {/* SVG Circular Ring Gauge */}
           <svg className="w-full h-full transform -rotate-90 drop-shadow-[0_0_20px_rgba(6,182,212,0.25)]" viewBox="0 0 160 160">
             {/* Ambient Outer Track Glow/Background Circle (12px outer shadow ring) */}
@@ -133,18 +144,46 @@ export function CprTimerCard({
             />
           </svg>
 
-          {/* Centered Timer Content inside the Ring */}
+          {/* Centered Timer Content inside the Ring with Dynamic Shrinking Heart Guide */}
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-2">
+            {/* Dynamic Shrinking Heart Guide (Syncs with Chest Compressions) */}
+            {cprActive && metronomeOn ? (
+              <div
+                key={`cadence-heart-${metronomeBeat}`}
+                className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-visible"
+                style={{
+                  animation: is302Ventilation
+                    ? `cprVentPulse ${currentBeatDurationMs}ms ease-in-out forwards`
+                    : `cprShrinkBeat ${currentBeatDurationMs}ms cubic-bezier(0.2, 0.0, 0.2, 1) forwards`
+                }}
+              >
+                <Heart
+                  className={`w-24 h-24 xs:w-28 xs:h-28 sm:w-36 sm:h-36 transition-none ${
+                    is302Ventilation
+                      ? 'text-amber-400/90 fill-amber-400/20 drop-shadow-[0_0_24px_rgba(251,191,36,0.65)]'
+                      : metronomeBeat === 30
+                        ? 'text-rose-400 fill-rose-500/35 drop-shadow-[0_0_26px_rgba(244,63,94,0.85)]'
+                        : 'text-rose-500 fill-rose-500/20 drop-shadow-[0_0_22px_rgba(244,63,94,0.7)]'
+                  }`}
+                  strokeWidth={2.2}
+                />
+              </div>
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 opacity-20">
+                <Heart className="w-24 h-24 xs:w-28 xs:h-28 sm:w-36 sm:h-36 text-slate-600 fill-slate-800" strokeWidth={1.5} />
+              </div>
+            )}
+
             <div
               id="timer-display"
-              className={`text-2xl xs:text-4xl sm:text-5xl font-mono font-black leading-none tracking-tight tabular-nums ${
+              className={`text-2xl xs:text-4xl sm:text-5xl font-mono font-black leading-none tracking-tight tabular-nums relative z-10 ${
                 cprTimeRemaining <= 30 ? 'text-rose-400 animate-pulse glow-red' : 'text-amber-300 drop-shadow-[0_0_12px_rgba(251,191,36,0.4)]'
               }`}
             >
               {formatMMSS(cprTimeRemaining)}
             </div>
             <span
-              className={`text-[8.5px] xs:text-[9.5px] font-bold tracking-wider uppercase mt-1 xs:mt-1.5 px-2 py-0.5 rounded-full border transition-all ${
+              className={`text-[8.5px] xs:text-[9.5px] font-bold tracking-wider uppercase mt-1 xs:mt-1.5 px-2 py-0.5 rounded-full border transition-all relative z-10 ${
                 cprActive
                   ? cprTimeRemaining <= 30
                     ? 'text-rose-300 bg-rose-950/80 border-rose-800/80 animate-pulse'
@@ -154,6 +193,45 @@ export function CprTimerCard({
             >
               {cprActive ? (cprTimeRemaining <= 30 ? 'TIME CRITICAL' : 'CPR ACTIVE') : 'CPR PAUSED'}
             </span>
+          </div>
+        </div>
+
+        {/* Visual Metronome Tempo Progress Bar */}
+        <div className="w-full max-w-[240px] xs:max-w-[260px] px-1.5 my-0.5">
+          <div className="flex items-center justify-between text-[8px] xs:text-[9px] font-mono font-bold mb-0.5 leading-none">
+            <span className="text-slate-400 flex items-center gap-1">
+              <Activity className={`w-2.5 h-2.5 ${cprActive && metronomeOn ? (is302Ventilation ? 'text-amber-400 animate-pulse' : 'text-emerald-400 animate-pulse') : 'text-slate-500'}`} />
+              <span className="tracking-wider">
+                {is302Ventilation ? 'VENTILATION CADENCE' : 'COMPRESSION CADENCE'}
+              </span>
+            </span>
+            <span className={`font-black ${cprActive && metronomeOn ? (is302Ventilation ? 'text-amber-300' : 'text-emerald-300') : 'text-slate-500'}`}>
+              {cprActive && metronomeOn
+                ? is302Ventilation
+                  ? '1.5s / ครั้ง'
+                  : `${metronomeTempo} BPM (${Math.round(beatIntervalMs)}ms)`
+                : `${metronomeTempo} BPM`}
+            </span>
+          </div>
+
+          <div className="h-1.5 xs:h-2 w-full bg-slate-950 rounded-full overflow-hidden border border-slate-800/90 relative shadow-inner p-[1px]">
+            {cprActive && metronomeOn ? (
+              <div
+                key={`cpr-cadence-progress-${metronomeBeat}`}
+                className={`h-full rounded-full transition-none ${
+                  is302Ventilation
+                    ? 'bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-300 shadow-[0_0_8px_rgba(251,191,36,0.8)]'
+                    : metronomeBeat === 30
+                      ? 'bg-gradient-to-r from-rose-500 via-pink-400 to-cyan-300 shadow-[0_0_8px_rgba(244,63,94,0.8)]'
+                      : 'bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]'
+                }`}
+                style={{
+                  animation: `cprProgressSweep ${currentBeatDurationMs}ms linear forwards`
+                }}
+              />
+            ) : (
+              <div className="h-full w-full bg-slate-800/40 rounded-full" />
+            )}
           </div>
         </div>
 
@@ -171,7 +249,7 @@ export function CprTimerCard({
                 </span>
               ) : (
                 <span className="text-[10px] xs:text-[11px] font-bold text-amber-400 animate-pulse flex items-center gap-1 truncate">
-                  🌬️ ช่วยหายใจ {metronomeBeat === 31 ? 'ครั้งที่ 1/2' : 'ครั้งที่ 2/2'}
+                  🌬️ ช่วยหายใจ {metronomeBeat === 31 ? 'ครั้งที่ 1/2' : 'ครั้งที่ 2/2'} (1.5 วิ)
                 </span>
               )
             ) : (
