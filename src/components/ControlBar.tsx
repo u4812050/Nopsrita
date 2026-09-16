@@ -97,7 +97,7 @@ export function ControlBar({
   };
 
   return (
-    <section className="bg-slate-900/90 border-b border-slate-800 py-1.5 px-1.5 sm:px-4 text-xs font-semibold text-slate-300 shrink-0 z-10 w-full max-w-full overflow-x-auto no-scrollbar">
+    <section className="bg-slate-900/90 border-b border-slate-800 py-1.5 px-1.5 sm:px-4 text-xs font-semibold text-slate-300 shrink-0 z-10 w-full max-w-full overflow-x-auto no-scrollbar pl-safe pr-safe">
       <div className="flex flex-wrap items-center justify-between gap-1.5 sm:gap-2 min-w-0">
         {/* Left Side Toggles */}
         <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 max-w-full">

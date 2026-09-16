@@ -1511,7 +1511,14 @@ export default function App() {
   };
 
   return (
-    <div id="smart_acls_root" className="min-h-[100dvh] h-[100dvh] w-screen max-w-full overflow-hidden bg-slate-950 text-slate-100 flex flex-col font-sans select-none antialiased">
+    <div 
+      id="smart_acls_root" 
+      className="min-h-[100dvh] h-[100dvh] w-screen max-w-full overflow-hidden bg-slate-950 text-slate-100 flex flex-col font-sans select-none antialiased pb-safe pl-safe pr-safe"
+      style={{
+        height: '100dvh',
+        minHeight: '-webkit-fill-available'
+      }}
+    >
       {/* 1. HEADER BAR */}
       <HeaderBar
         systemTime={systemTime}
