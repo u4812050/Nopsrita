@@ -1296,22 +1296,20 @@ export default function App() {
     }
 
     if (
-      procName.includes('ABG') ||
-      procName.includes('Blood Gas') ||
-      procName.includes('Arterial Blood Gas')
+      procName.includes('Arterial Blood Gas') ||
+      procName.includes('ABG')
     ) {
       speakThai("เจาะ Blood แก๊ส");
     }
 
     if (
-      procName.includes('Mechanical') ||
-      procName.includes('Chest Compressor')
+      procName.includes('Mechanical Chest Compressor') ||
+      procName.includes('Mechanical CPR')
     ) {
       speakThai("ใส่เครื่องช่วยซีพีอา");
     }
 
     if (
-      procName.includes('Needle Decompress') ||
       procName.includes('Needle Decompression') ||
       procName.includes('Chest Drain') ||
       procName.includes('ICD')
@@ -1606,7 +1604,6 @@ export default function App() {
             <CprTimerCard
               cprTimeRemaining={cprTimeRemaining}
               cprActive={cprActive}
-              metronomeTempo={metronomeTempo}
               metronomeMode={metronomeMode}
               setMetronomeMode={setMetronomeMode}
               cprSubCycle302={cprSubCycle302}
