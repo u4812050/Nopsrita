@@ -21,6 +21,8 @@ import { UnstableBradycardiaModal } from './components/UnstableBradycardiaModal'
 import { StableBradycardiaModal } from './components/StableBradycardiaModal';
 import { StableTachycardiaModal } from './components/StableTachycardiaModal';
 import { UnstableTachycardiaModal } from './components/UnstableTachycardiaModal';
+import { LogoModal } from './components/LogoModal';
+import { InstallPromptModal } from './components/InstallPromptModal';
 import { Clock, Zap, Activity, ListFilter, Heart } from 'lucide-react';
 
 const SAVE_KEY = 'smart_acls_copilot_state_v2';
@@ -62,6 +64,8 @@ export default function App() {
   const [etco2AlertActive, setEtco2AlertActive] = useState<boolean>(false);
   const [showProceduresModal, setShowProceduresModal] = useState<boolean>(false);
   const [completedProcedures, setCompletedProcedures] = useState<string[]>([]);
+  const [showLogoModal, setShowLogoModal] = useState<boolean>(false);
+  const [showInstallModal, setShowInstallModal] = useState<boolean>(false);
 
   // Auto-open procedures pop-up modal when a procedure alert is triggered according to ACLS protocol
   useEffect(() => {
@@ -1516,6 +1520,8 @@ export default function App() {
         cprCycle={cprCycle}
         cprSubCycle302={cprSubCycle302}
         formatMMSS={formatMMSS}
+        onOpenLogoModal={() => setShowLogoModal(true)}
+        onOpenInstallModal={() => setShowInstallModal(true)}
       />
 
       {/* 2. CONTROL BAR */}
@@ -1878,6 +1884,17 @@ export default function App() {
         triggerReassessmentAlert={triggerReassessmentAlert}
         speakThai={speakThai}
         addLog={addLog}
+      />
+
+      <LogoModal
+        isOpen={showLogoModal}
+        onClose={() => setShowLogoModal(false)}
+        onOpenInstallModal={() => setShowInstallModal(true)}
+      />
+
+      <InstallPromptModal
+        isOpen={showInstallModal}
+        onClose={() => setShowInstallModal(false)}
       />
     </div>
   );
