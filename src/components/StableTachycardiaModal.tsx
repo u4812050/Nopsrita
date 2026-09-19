@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { Zap, CheckCircle2, X, Activity, PhoneCall, Stethoscope, Syringe, Heart, Shield, AlertCircle } from 'lucide-react';
 
 interface StableTachycardiaModalProps {
@@ -28,8 +29,8 @@ export function StableTachycardiaModal({
 }: StableTachycardiaModalProps) {
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-md animate-fade-in overflow-y-auto">
+  const modalContent = (
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-4 bg-slate-950/95 backdrop-blur-md animate-fade-in overflow-y-auto">
       <div className="bg-slate-900 border-2 border-indigo-500/80 rounded-2xl max-w-2xl w-full shadow-[0_0_50px_rgba(99,102,241,0.25)] overflow-hidden relative text-white transform transition-all duration-200 my-auto">
         
         {/* Header */}
@@ -249,7 +250,7 @@ export function StableTachycardiaModal({
                       </span>
                     </div>
                     <p className="text-[11px] text-slate-300 font-normal">
-                      ยาปฏิชีวนะหัวใจสำหรับ Wide QRS Tachycardia (Monomorphic VT) ที่อาการคงที่ หยดนาน 10 นาที
+                      ยาต้านหัวใจเต้นผิดจังหวะสำหรับ Wide QRS Tachycardia (Monomorphic VT) ที่อาการคงที่ หยดนาน 10 นาที
                     </p>
                   </div>
                   {amioCount > 0 || completedProcedures.includes('Amiodarone 150mg IV over 10 min') ? (
@@ -405,4 +406,6 @@ export function StableTachycardiaModal({
       </div>
     </div>
   );
+
+  return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : modalContent;
 }

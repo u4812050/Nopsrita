@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Copy, Check, Sparkles, Heart, Activity, Shield, Smartphone } from 'lucide-react';
 import { AppLogo } from './AppLogo';
 
@@ -32,8 +33,8 @@ export const LogoModal: React.FC<LogoModalProps> = ({ isOpen, onClose, onOpenIns
     setTimeout(() => setCopied(false), 2000);
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200 pt-safe pb-safe pl-safe pr-safe">
+  const modalContent = (
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-4 bg-slate-950/95 backdrop-blur-md animate-in fade-in duration-200 pt-safe pb-safe pl-safe pr-safe">
       <div 
         className="relative w-full max-w-lg bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
@@ -198,4 +199,6 @@ export const LogoModal: React.FC<LogoModalProps> = ({ isOpen, onClose, onOpenIns
       </div>
     </div>
   );
+
+  return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : modalContent;
 };

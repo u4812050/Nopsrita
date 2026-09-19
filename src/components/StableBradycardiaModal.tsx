@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { Activity, CheckCircle2, X, Shield, PhoneCall, Stethoscope, Syringe, HeartPulse, Search, FileText } from 'lucide-react';
 import { FirstDegreeAvBlockIcon } from './EkgIcons';
 
@@ -26,8 +27,8 @@ export function StableBradycardiaModal({
 }: StableBradycardiaModalProps) {
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-md animate-fade-in overflow-y-auto">
+  const modalContent = (
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-4 bg-slate-950/95 backdrop-blur-md animate-fade-in overflow-y-auto">
       <div className="bg-slate-900 border-2 border-emerald-500/80 rounded-2xl max-w-2xl w-full shadow-[0_0_50px_rgba(16,185,129,0.25)] overflow-hidden relative text-white transform transition-all duration-200 my-auto">
         
         {/* Header */}
@@ -281,4 +282,6 @@ export function StableBradycardiaModal({
       </div>
     </div>
   );
+
+  return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : modalContent;
 }

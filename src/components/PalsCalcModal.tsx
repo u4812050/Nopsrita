@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Baby, X, Zap, Syringe, Droplets, Heart, FileText, Check, ShieldAlert, Sparkles } from 'lucide-react';
 
 interface PalsCalcModalProps {
@@ -79,8 +80,8 @@ export function PalsCalcModal({ isOpen, onClose, addLog, speakThai }: PalsCalcMo
     setTimeout(() => setLoggedSuccess(false), 3000);
   };
 
-  return (
-    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-3 bg-slate-950/80 backdrop-blur-md animate-fadeIn">
+  const modalContent = (
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-3 bg-slate-950/95 backdrop-blur-md animate-fadeIn">
       <div className="bg-slate-900 border border-cyan-500/40 rounded-2xl max-w-2xl w-full max-h-[92vh] flex flex-col shadow-[0_0_40px_rgba(6,182,212,0.25)] overflow-hidden">
         
         {/* Modal Header */}
@@ -390,4 +391,6 @@ export function PalsCalcModal({ isOpen, onClose, addLog, speakThai }: PalsCalcMo
       </div>
     </div>
   );
+
+  return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : modalContent;
 }

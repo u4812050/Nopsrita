@@ -101,6 +101,21 @@ body {
   animation: pulse-red-glow 1s infinite ease-in-out;
 }
 
+@keyframes pulse-gold-glow {
+  0%, 100% {
+    box-shadow: 0 0 16px rgba(245, 158, 11, 0.75), inset 0 0 10px rgba(251, 191, 36, 0.3);
+    border-color: rgba(251, 191, 36, 0.9);
+  }
+  50% {
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.4), inset 0 0 4px rgba(251, 191, 36, 0.15);
+    border-color: rgba(245, 158, 11, 0.6);
+  }
+}
+
+.glow-gold {
+  animation: pulse-gold-glow 1.8s infinite ease-in-out;
+}
+
 /* Custom scrollbar styling for high-contrast logs */
 ::-webkit-scrollbar {
   width: 6px;

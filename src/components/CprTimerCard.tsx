@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Clock, RotateCcw, Heart, Activity, Check } from 'lucide-react';
 import { ALT_RESUSCITATION_MEDS, AltMedItem } from '../data/altMeds';
+import { LogEntry } from '../types';
 
 export { ALT_RESUSCITATION_MEDS };
 export type { AltMedItem };
@@ -25,6 +26,7 @@ interface CprTimerCardProps {
   metronomeOn: boolean;
   metronomeBeat: number;
   handleLogPresetMed?: (medName: string, skipSpeech?: boolean) => void;
+  logs?: LogEntry[];
 }
 
 export function CprTimerCard({
@@ -47,15 +49,37 @@ export function CprTimerCard({
   metronomeOn,
   metronomeBeat,
   handleLogPresetMed,
+  logs = [],
 }: CprTimerCardProps) {
+  // Real-time latest 2 logs for the mini LiveResus Log (newest first)
+  const latestTwoLogs = useMemo(() => {
+    if (!logs || logs.length === 0) return [];
+    return logs.slice(-2).reverse();
+  }, [logs]);
+
+  const getTypeBadge = (type?: LogEntry['type']) => {
+    switch (type) {
+      case 'shock':
+        return 'bg-amber-500/20 text-amber-300 border border-amber-500/40';
+      case 'med':
+        return 'bg-purple-500/20 text-purple-300 border border-purple-500/40';
+      case 'cpr':
+        return 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40';
+      case 'rhythm':
+        return 'bg-rose-500/20 text-rose-300 border border-rose-500/40';
+      default:
+        return 'bg-slate-800 text-slate-300 border border-slate-700';
+    }
+  };
+
   return (
     <div
-      className="bg-slate-900 rounded-xl border border-slate-800 p-2 sm:p-3 md:p-4 flex flex-col items-center justify-between relative overflow-hidden shadow-xl w-full max-w-full h-[418px]"
+      className="bg-slate-900 rounded-xl border border-slate-800 p-2 sm:p-3 md:p-4 flex flex-col items-center justify-between relative overflow-hidden shadow-xl w-full max-w-full min-h-[418px] h-full"
     >
 
 
       {/* METRONOME CPR MODE SWITCHER TABS */}
-      <div className="w-full mb-1.5 sm:mb-3">
+      <div className="w-full mb-1">
         <div className="flex items-center justify-center p-1 bg-slate-950 rounded-xl border border-slate-800 w-full shadow-inner gap-1">
           <button
             id="tab_cpr_continuous"
@@ -92,9 +116,70 @@ export function CprTimerCard({
         </div>
       </div>
 
+      {/* LIVERESUS LOG ขนาดย่อ 2 บรรทัด (REAL-TIME) */}
+      <div
+        id="mini_liveresus_log"
+        className="w-full bg-slate-950/90 border border-slate-800 rounded-xl px-2.5 py-1.5 shadow-inner flex flex-col justify-center gap-0.5 my-0.5 shrink-0"
+      >
+        <div className="flex items-center justify-between text-[9px] font-mono leading-none border-b border-slate-800/80 pb-1 mb-0.5">
+          <span className="flex items-center gap-1.5 font-bold text-cyan-400 uppercase tracking-wider">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+            </span>
+            LiveResus Log
+          </span>
+          <span className="text-[8px] text-slate-500 font-normal">ล่าสุด 2 รายการ • Real-time</span>
+        </div>
+
+        {/* 2 Lines of most recent actions */}
+        <div className="flex flex-col gap-0.5 text-[9px] xs:text-[9.5px] font-mono leading-tight overflow-hidden">
+          {latestTwoLogs.length === 0 ? (
+            <>
+              <div className="flex items-center gap-1 text-slate-400 truncate">
+                <span className="text-cyan-500 font-bold shrink-0">▸ 00:00</span>
+                <span className="truncate">รอเริ่มการกู้ชีพ — ระบบพร้อมบันทึก Real-time</span>
+              </div>
+              <div className="flex items-center gap-1 text-slate-500 truncate text-[8.5px]">
+                <span className="text-slate-600 shrink-0">&nbsp;&nbsp;--:--</span>
+                <span className="truncate">กด START CPR หรือบันทึกยา/ช็อกเพื่อเริ่มรายการ</span>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Line 1: Latest action */}
+              <div className="flex items-center gap-1 text-white font-medium truncate">
+                <span className="text-emerald-400 font-bold shrink-0">▸ {latestTwoLogs[0]?.elapsed || '--:--'}</span>
+                {latestTwoLogs[0] && (
+                  <span className={`px-1 py-0.2 rounded text-[7.5px] font-bold uppercase shrink-0 ${getTypeBadge(latestTwoLogs[0].type)}`}>
+                    {latestTwoLogs[0].type}
+                  </span>
+                )}
+                <span className="truncate text-slate-100">{latestTwoLogs[0]?.text || '—'}</span>
+              </div>
+
+              {/* Line 2: Second latest action */}
+              <div className="flex items-center gap-1 text-slate-400 truncate text-[8.5px] xs:text-[9px]">
+                <span className="text-slate-500 font-normal shrink-0">&nbsp;&nbsp;{latestTwoLogs[1]?.elapsed || '--:--'}</span>
+                {latestTwoLogs[1] ? (
+                  <>
+                    <span className={`px-1 py-0.2 rounded text-[7.5px] font-medium uppercase shrink-0 opacity-80 ${getTypeBadge(latestTwoLogs[1].type)}`}>
+                      {latestTwoLogs[1].type}
+                    </span>
+                    <span className="truncate text-slate-400">{latestTwoLogs[1].text}</span>
+                  </>
+                ) : (
+                  <span className="truncate text-slate-600">— รอรายการถัดไป —</span>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+
       {/* Timer Digits Display with Circular Progress Gauge */}
       <div className="flex flex-col items-center justify-center my-0.5 w-full max-w-full overflow-hidden flex-1">
-        <div className="relative flex items-center justify-center w-36 h-36 xs:w-44 xs:h-44 sm:w-56 sm:h-56 my-1 sm:my-2 max-w-full">
+        <div className="relative flex items-center justify-center w-32 h-32 xs:w-40 xs:h-40 sm:w-48 sm:h-48 my-0.5 max-w-full">
           {/* SVG Circular Ring Gauge */}
           <svg className="w-full h-full transform -rotate-90 drop-shadow-[0_0_20px_rgba(6,182,212,0.25)]" viewBox="0 0 160 160">
             {/* Ambient Outer Track Glow/Background Circle (12px outer shadow ring) */}
@@ -184,8 +269,17 @@ export function CprTimerCard({
               </span>
             )
           ) : (
-            <span className="text-[9px] xs:text-[10px] text-slate-500 font-bold uppercase tracking-wider text-center truncate">
-              Target: 100-120 BPM • Depth: 5-6 cm
+            <span
+              id="cpr_guideline_specs"
+              className="text-[7.5px] xs:text-[9px] sm:text-[10px] text-slate-300 font-mono font-bold uppercase tracking-tight text-center truncate px-2 py-0.5 rounded-full bg-slate-950/70 border border-slate-800/90 shadow-inner flex items-center justify-center gap-1 sm:gap-1.5 max-w-full"
+            >
+              <span className="text-cyan-400 font-black">TARGET:</span>
+              <span className="text-slate-200 font-bold">100-120BPM</span>
+              <span className="text-slate-600 font-normal">/</span>
+              <span className="text-amber-400 font-black">DEPTH:</span>
+              <span className="text-slate-200 font-bold">5-6CM</span>
+              <span className="text-slate-600 font-normal">/</span>
+              <span className="text-emerald-400 font-black">FULLY RECOIL</span>
             </span>
           )}
         </div>
@@ -263,15 +357,15 @@ export function CprTimerCard({
           title="Start 10-Second Pulse & EKG Check Timer"
           className={`col-span-3 xs:col-span-3 sm:col-span-2 h-11 xs:h-12 rounded-xl flex flex-col items-center justify-center transition-all duration-200 active:scale-[0.95] cursor-pointer border backdrop-blur-md shadow-md group relative overflow-hidden ${
             pulseCheckActive
-              ? 'bg-gradient-to-b from-amber-400 via-amber-500 to-amber-600 text-slate-950 font-black border-amber-300 shadow-amber-500/30 animate-pulse ring-2 ring-amber-300/80'
-              : 'bg-gradient-to-b from-slate-800/90 to-slate-900/90 hover:from-slate-750 hover:to-slate-800 text-cyan-300 border-cyan-500/30 hover:border-cyan-400/70 shadow-cyan-950/20 hover:shadow-cyan-500/10'
+              ? 'bg-gradient-to-b from-amber-300 via-amber-400 to-yellow-500 text-slate-950 font-black border-amber-200 shadow-[0_0_25px_rgba(245,158,11,0.95)] animate-pulse ring-4 ring-amber-300/90'
+              : 'bg-gradient-to-b from-amber-950/70 via-slate-900/90 to-amber-950/50 hover:from-amber-900/80 hover:to-slate-900 text-amber-300 border-amber-400/80 hover:border-amber-300 shadow-[0_0_16px_rgba(245,158,11,0.65)] hover:shadow-[0_0_24px_rgba(251,191,36,0.85)] glow-gold ring-1 ring-amber-400/50'
           }`}
         >
           <div className="flex items-center justify-center gap-0.5">
-            <Clock className={`w-3 h-3 xs:w-3.5 xs:h-3.5 transition-transform duration-200 ${pulseCheckActive ? 'text-slate-950 stroke-[2.5]' : 'text-cyan-400 drop-shadow-[0_0_6px_rgba(34,211,238,0.6)] group-hover:scale-110'}`} />
-            <Activity className={`w-2.5 h-2.5 xs:w-3 xs:h-3 transition-transform duration-200 ${pulseCheckActive ? 'text-slate-950 stroke-[2.5]' : 'text-amber-400 drop-shadow-[0_0_6px_rgba(251,191,36,0.6)] group-hover:scale-110'}`} />
+            <Clock className={`w-3 h-3 xs:w-3.5 xs:h-3.5 transition-transform duration-200 ${pulseCheckActive ? 'text-slate-950 stroke-[2.5]' : 'text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.85)] group-hover:scale-110'}`} />
+            <Activity className={`w-2.5 h-2.5 xs:w-3 xs:h-3 transition-transform duration-200 ${pulseCheckActive ? 'text-slate-950 stroke-[2.5]' : 'text-yellow-300 drop-shadow-[0_0_8px_rgba(253,224,71,0.9)] group-hover:scale-110'}`} />
           </div>
-          <span className={`text-[8px] xs:text-[9px] font-mono tracking-tight mt-0.5 ${pulseCheckActive ? 'text-slate-950 font-black' : 'text-cyan-200/90 font-bold group-hover:text-cyan-100'}`}>
+          <span className={`text-[8px] xs:text-[9px] font-mono tracking-tight mt-0.5 ${pulseCheckActive ? 'text-slate-950 font-black' : 'text-amber-200 font-bold drop-shadow-[0_0_6px_rgba(245,158,11,0.7)] group-hover:text-amber-100'}`}>
             10s Check
           </span>
         </button>

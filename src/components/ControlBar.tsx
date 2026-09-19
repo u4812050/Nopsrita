@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Volume2, RotateCcw, Heart, Baby, Syringe, ChevronDown, Sparkles, Check, Info, Stethoscope, Plus, AlertTriangle } from 'lucide-react';
 import { ALT_RESUSCITATION_MEDS, AltMedItem } from '../data/altMeds';
 import { PROCEDURE_PRESETS } from '../types';
@@ -255,9 +256,9 @@ export function ControlBar({
             </button>
 
             {/* MODAL DIALOG FOR ALTERNATIVE RESUSCITATION MEDS (Rendered in foreground) */}
-            {showAltMedsPopover && (
+            {showAltMedsPopover && typeof document !== 'undefined' && createPortal(
               <div
-                className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-fadeIn"
+                className="fixed inset-0 z-[99999] bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-fadeIn"
                 onClick={() => setShowAltMedsPopover(false)}
               >
                 <div
@@ -346,7 +347,8 @@ export function ControlBar({
                     </button>
                   </div>
                 </div>
-              </div>
+              </div>,
+              document.body
             )}
           </div>
 
@@ -372,9 +374,9 @@ export function ControlBar({
             </button>
 
             {/* PROCEDURES MODAL POP-UP */}
-            {showProceduresModal && (
+            {showProceduresModal && typeof document !== 'undefined' && createPortal(
               <div
-                className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-fadeIn"
+                className="fixed inset-0 z-[99999] bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-fadeIn"
                 onClick={() => setShowProceduresModal && setShowProceduresModal(false)}
               >
                 <div
@@ -408,10 +410,10 @@ export function ControlBar({
                           <p>• <strong>IV / IO Access:</strong> เปิดเส้นให้ยาก่อนบริหารยา Epinephrine</p>
                         )}
                         {airwayAlertActive && (
-                          <p>• <strong>Advanced Airway:</strong> ใส่ท่อช่วยหายใจขั้นสูง (ET Tube)</p>
+                          <p>• <strong>ขั้นที่ 1 (ใส่ท่อช่วยหายใจ):</strong> Advanced Airway Secured (ET Tube)</p>
                         )}
                         {etco2AlertActive && (
-                          <p>• <strong>ETCO2 Capnography:</strong> ติดตามตำแหน่งท่อช่วยหายใจ (ปรับ CPR แบบต่อเนื่อง)</p>
+                          <p>• <strong>ขั้นที่ 2 (ยืนยันตำแหน่ง):</strong> Intubation Confirmed by ETCO2 {airwayAlertActive ? '(ต้องทำทั้ง 2 ขั้นตอน กล่องจะปิดอัตโนมัติ)' : '(กดยืนยันแล้วกล่องจะปิดอัตโนมัติ)'}</p>
                         )}
                       </div>
                     </div>
@@ -482,7 +484,8 @@ export function ControlBar({
                     </button>
                   </div>
                 </div>
-              </div>
+              </div>,
+              document.body
             )}
           </div>
         </div>
@@ -512,8 +515,8 @@ export function ControlBar({
       </div>
 
       {/* Drug Info Modal */}
-      {selectedMedDetail && (
-        <div className="fixed inset-0 z-[99999] bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn">
+      {selectedMedDetail && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[99999] bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn">
           <div className="bg-slate-900 border border-purple-500/50 rounded-2xl max-w-sm w-full p-5 shadow-2xl space-y-4 text-left">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <div className="flex items-center gap-2">
@@ -564,7 +567,8 @@ export function ControlBar({
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </section>
   );

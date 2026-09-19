@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { Zap, ShieldAlert, Heart, Activity, X, Play, Check, AlertCircle, Syringe, Lock } from 'lucide-react';
 import { RhythmDecision, ShockableRhythmType, NonShockableRhythmType } from '../types';
 import { VfEkgIcon, VtEkgIcon, AsystoleEkgIcon, PeaEkgIcon } from './EkgIcons';
@@ -66,8 +67,8 @@ export function QuickActionPromptModal({
 }: QuickActionPromptModalProps) {
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-[99999] flex items-center justify-center p-3 sm:p-4">
+  const modalContent = (
+    <div className="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-[99999] flex items-center justify-center p-3 sm:p-4 animate-fadeIn">
       <div className="bg-slate-900 border-2 border-cyan-500/80 rounded-2xl max-w-xl w-full p-4 sm:p-5 text-left shadow-2xl relative overflow-hidden animate-in fade-in zoom-in duration-200 max-h-[90vh] flex flex-col justify-between">
         
         {/* Header */}
@@ -188,7 +189,7 @@ export function QuickActionPromptModal({
           {lastRhythmDecision === 'shockable' && (
             <div className="bg-rose-950/40 border border-rose-800/80 rounded-xl p-2.5 space-y-2 animate-in fade-in duration-150">
               <span className="text-[10px] font-bold text-rose-300 uppercase tracking-wider block">
-                ระบุชนิดคลื่นหัวใจ Shockable (VF / Pulseless VT / Torsades)
+                เลือก EKG Shockable (VF / Pulseless VT / Torsades)
               </span>
               <div className="grid grid-cols-3 gap-1.5">
                 <button
@@ -264,7 +265,7 @@ export function QuickActionPromptModal({
                 }`}
               >
                 <Zap className="w-4 h-4 fill-yellow-200 text-yellow-200 animate-bounce" />
-                <span>ปล่อยช็อกหัวใจ (DEFIBRILLATE 200J) • Shock #{shockCount + 1}</span>
+                <span>DEFIBRILLATION (200J) Shock#{shockCount + 1}</span>
               </button>
             </div>
           )}
@@ -323,7 +324,9 @@ export function QuickActionPromptModal({
                       handleLogProcedure('IV / IO Access Established');
                     } else {
                       addLog('Procedure: IV / IO Access Established', 'system');
-                      speakThai('เปิดเส้นให้ยาเรียบร้อยแล้ว เตรียมให้ยาเอพิเนฟรินค่ะ');
+                      speakThai('เปิดเส้นให้ยาเรียบร้อยแล้ว เตรียมให้ยาเอพิเนฟรินค่ะ', () => {
+                        onClose();
+                      });
                     }
                   }}
                   className={`py-2 px-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer transition-all border ${
@@ -346,6 +349,7 @@ export function QuickActionPromptModal({
                     if (!hasCompletedIvAccess) {
                       speakThai('กรุณากดเปิดเส้น IV Access ก่อนให้ยาเอพิเนฟรินนะคะ');
                     } else {
+                      onClose();
                       handleAdministerEpinephrine();
                     }
                   }}
@@ -374,76 +378,6 @@ export function QuickActionPromptModal({
               )}
             </div>
           )}
-
-          {/* Direct Medication Quick Actions Grid */}
-          <div>
-            <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider mb-1.5 block">
-              2. ทางลัดสั่งการยาหลัก (Quick Medication Admin)
-            </span>
-            <div className="grid grid-cols-3 gap-1.5">
-              <button
-                onClick={() => {
-                  if (!hasCompletedIvAccess) {
-                    speakThai('กรุณากดเปิดเส้น IV Access ก่อนให้ยาเอพิเนฟรินนะคะ');
-                  } else {
-                    handleAdministerEpinephrine();
-                  }
-                }}
-                className={`p-2 bg-slate-950 hover:bg-slate-800 border rounded-xl text-left transition-all cursor-pointer flex flex-col justify-between ${
-                  !hasCompletedIvAccess
-                    ? 'border-slate-800 text-slate-400'
-                    : 'border-slate-800 hover:border-cyan-500'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className={`text-xs font-black font-mono ${!hasCompletedIvAccess ? 'text-slate-400' : 'text-cyan-300'}`}>
-                    EPINEPHRINE
-                  </span>
-                  <span className="text-[9px] font-mono font-bold bg-cyan-950 text-cyan-300 px-1 rounded border border-cyan-800">
-                    #{epiCount}
-                  </span>
-                </div>
-                <span className="text-[9px] text-slate-400 mt-1 flex items-center justify-between">
-                  <span>1mg IV Every 3-5m</span>
-                  {!hasCompletedIvAccess && (
-                    <span className="text-[8px] bg-amber-950 text-amber-300 px-1 rounded border border-amber-800/80 shrink-0 font-sans">
-                      Req. IV
-                    </span>
-                  )}
-                </span>
-              </button>
-
-              <button
-                onClick={handleAdministerAmiodarone}
-                className="p-2 bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-indigo-500 rounded-xl text-left transition-all cursor-pointer flex flex-col justify-between"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-black text-indigo-300 font-mono">AMIODARONE</span>
-                  <span className="text-[9px] font-mono font-bold bg-indigo-950 text-indigo-300 px-1 rounded border border-indigo-800">
-                    #{amioCount}
-                  </span>
-                </div>
-                <span className="text-[9px] text-slate-400 mt-1 block">
-                  {amioCount === 0 ? '300mg IV' : '150mg IV'}
-                </span>
-              </button>
-
-              <button
-                onClick={handleAdministerLidocaine}
-                className="p-2 bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-indigo-500 rounded-xl text-left transition-all cursor-pointer flex flex-col justify-between"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-black text-indigo-300 font-mono">LIDOCAINE</span>
-                  <span className="text-[9px] font-mono font-bold bg-indigo-950 text-indigo-300 px-1 rounded border border-indigo-800">
-                    #{lidoCount}
-                  </span>
-                </div>
-                <span className="text-[9px] text-slate-400 mt-1 block">
-                  {lidoCount === 0 ? '1-1.5 mg/kg' : '0.5-0.75 mg/kg'}
-                </span>
-              </button>
-            </div>
-          </div>
         </div>
 
         {/* Footer Actions */}
@@ -472,4 +406,6 @@ export function QuickActionPromptModal({
       </div>
     </div>
   );
+
+  return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : modalContent;
 }

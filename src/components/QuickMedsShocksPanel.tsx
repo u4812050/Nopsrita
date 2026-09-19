@@ -121,56 +121,104 @@ export function QuickMedsShocksPanel({
 
 
 
-      {/* SHOCK Action Banner when Shockable */}
+      {/* SHOCK Status Display Banner when Shockable (Read-only status display, not clickable in this page) */}
       {lastRhythmDecision === 'shockable' && (
         <button
-          onClick={handleDeliverShock}
-          className={`w-full py-2 px-2.5 rounded-xl font-black text-xs flex items-center justify-between cursor-pointer transition-all border shadow-lg active:scale-95 ${
+          type="button"
+          disabled
+          aria-disabled="true"
+          title="สถานะคลื่น: SHOCKABLE (แสดงสถานะ • ไม่สามารถกดใช้งานในหน้านี้ได้)"
+          className={`w-full py-1.5 sm:py-2 px-2.5 rounded-xl font-black text-xs flex items-center justify-between cursor-default select-none pointer-events-none transition-all border shadow-md ${
             shockButtonFlashing
-              ? 'bg-rose-600 hover:bg-rose-500 text-white border-rose-300 animate-pulse ring-4 ring-rose-500/80 shadow-rose-500/50'
-              : 'bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-white border-amber-300'
+              ? 'bg-gradient-to-r from-rose-950/90 via-slate-900 to-rose-950/80 border-rose-500/80 text-white ring-2 ring-rose-500/50 shadow-[0_0_16px_rgba(244,63,94,0.35)] animate-pulse'
+              : 'bg-gradient-to-r from-amber-950/85 via-slate-900 to-amber-950/75 border-amber-500/70 text-amber-100 shadow-[0_0_12px_rgba(245,158,11,0.25)]'
           }`}
         >
           <div className="flex items-center gap-2">
-            <Zap className={`w-4 h-4 text-yellow-200 fill-yellow-200 ${shockButtonFlashing ? 'animate-bounce' : ''}`} />
-            <span>ปล่อยช็อกหัวใจ (DEFIBRILLATE 200J)</span>
+            <Zap className={`w-4 h-4 text-amber-400 fill-amber-400/30 shrink-0 ${shockButtonFlashing ? 'text-rose-400 fill-rose-400/40 animate-pulse' : ''}`} />
+            <div className="flex flex-col text-left">
+              <div className="flex items-center gap-1.5">
+                <span className="font-mono font-black text-[11px] sm:text-xs tracking-tight">DEFIBRILLATION (200J)</span>
+                <span className="text-[7.5px] sm:text-[8px] px-1 py-0.2 rounded font-sans font-bold uppercase tracking-wider bg-slate-800/90 text-slate-300 border border-slate-700/80">
+                  แสดงสถานะ
+                </span>
+              </div>
+              <span className="text-[8px] sm:text-[8.5px] font-sans font-medium text-amber-300/80">
+                สถานะคลื่น: SHOCKABLE (พร้อมช็อก)
+              </span>
+            </div>
           </div>
-          <span className="text-[10px] bg-black/40 px-2 py-0.5 rounded font-mono font-bold">
-            Shock #{shockCount + 1}
-          </span>
+          <div className="flex items-center gap-1 shrink-0">
+            <span className="text-[9.5px] sm:text-[10px] bg-black/60 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded font-mono font-bold">
+              Shock #{shockCount + 1}
+            </span>
+          </div>
         </button>
       )}
 
       {/* Main Medication & Action Grid */}
       <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
         {/* EPINEPHRINE 1mg */}
-        <button
-          onClick={handleAdministerEpinephrine}
-          className={`p-1.5 sm:p-2 rounded-lg text-left transition-all active:scale-95 cursor-pointer flex flex-col justify-between border ${
-            epiAlertActive
-              ? 'bg-rose-900 border-rose-400 text-white animate-pulse ring-2 ring-rose-400 shadow-lg'
-              : 'bg-slate-950 hover:bg-slate-800 border-slate-800 text-slate-200'
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-[10.5px] sm:text-[12px] font-black text-cyan-300 font-mono leading-tight truncate">EPINEPHRINE</span>
-            <span className="text-[9.5px] sm:text-[10px] font-mono font-bold bg-cyan-950 text-cyan-300 px-1 rounded border border-cyan-800 ml-1 shrink-0">
-              #{epiCount}
-            </span>
-          </div>
-          <div className="flex items-center justify-between mt-1 text-[8.5px] sm:text-[9.5px] font-mono font-semibold">
-            <span className="text-cyan-200/90 font-medium truncate">1mg IV Every 3-5m</span>
-            {epiTimerStarted ? (
-              <span className={`font-black ml-1 shrink-0 ${epiTimeRemaining === 0 ? 'text-rose-400 animate-pulse' : 'text-amber-400'}`}>
-                {epiTimeRemaining === 0 ? 'DUE NOW!' : formatMMSS(epiTimeRemaining)}
-              </span>
-            ) : !hasCompletedIvAccess ? (
-              <span className="text-[7.5px] sm:text-[8px] bg-amber-950/80 text-amber-300/90 px-1 rounded border border-amber-800/80 shrink-0 font-sans truncate">
-                Req. IV
-              </span>
-            ) : null}
-          </div>
-        </button>
+        {(() => {
+          const isEpiPrepOnly = lastRhythmDecision === 'shockable' && shockCount < 2 && epiCount === 0;
+          return (
+            <button
+              onClick={handleAdministerEpinephrine}
+              className={`p-1.5 sm:p-2 rounded-lg text-left transition-all active:scale-95 cursor-pointer flex flex-col justify-between border relative overflow-hidden isolate ${
+                epiAlertActive
+                  ? isEpiPrepOnly
+                    ? 'bg-gradient-to-b from-amber-600 via-amber-700 to-amber-900 border-2 border-amber-300 text-white animate-pulse ring-4 ring-amber-500/80 shadow-[0_0_24px_rgba(245,158,11,0.9)]'
+                    : 'bg-gradient-to-b from-rose-600 via-rose-700 to-red-900 border-2 border-rose-300 text-white animate-pulse ring-4 ring-rose-500/80 shadow-[0_0_24px_rgba(244,63,94,0.9)]'
+                  : 'bg-slate-950 hover:bg-slate-800 border-slate-800 text-slate-200'
+              }`}
+            >
+              {/* แสงสะท้อนกลอสซี่ (Glossy top reflection) เมื่อเตือนให้ยาหรือเตรียมยา */}
+              {epiAlertActive && (
+                <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/30 via-white/10 to-transparent pointer-events-none" />
+              )}
+              <div className="flex items-center justify-between relative z-1">
+                <span className={`text-[10.5px] sm:text-[12px] font-black font-mono leading-tight truncate ${
+                  epiAlertActive ? 'text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]' : 'text-cyan-300'
+                }`}>
+                  EPINEPHRINE
+                </span>
+                <span className={`text-[9px] sm:text-[9.5px] font-mono font-bold px-1 rounded border ml-1 shrink-0 ${
+                  epiAlertActive
+                    ? isEpiPrepOnly
+                      ? 'bg-amber-950 text-amber-200 border-amber-400 font-bold'
+                      : 'bg-white text-rose-800 border-rose-200 shadow-xs font-black'
+                    : 'bg-cyan-950 text-cyan-300 border-cyan-800'
+                }`}>
+                  {isEpiPrepOnly && epiAlertActive ? 'รอ Shock #2' : `#${epiCount}`}
+                </span>
+              </div>
+              <div className="flex items-center justify-between mt-1 text-[8px] sm:text-[9px] font-mono font-semibold relative z-1">
+                <span className={`truncate ${
+                  epiAlertActive
+                    ? isEpiPrepOnly
+                      ? 'text-amber-100 font-bold'
+                      : 'text-rose-100 font-bold'
+                    : 'text-cyan-200/90 font-medium'
+                }`}>
+                  {epiAlertActive
+                    ? isEpiPrepOnly
+                      ? '⚠️ เตรียมยา (รอ Shock #2)'
+                      : '⚡ ให้ยา 1mg ทันที'
+                    : '1mg IV Every 3-5m'}
+                </span>
+                {epiTimerStarted ? (
+                  <span className={`font-black ml-1 shrink-0 ${epiTimeRemaining === 0 ? 'text-rose-400 animate-pulse' : 'text-amber-400'}`}>
+                    {epiTimeRemaining === 0 ? 'DUE NOW!' : formatMMSS(epiTimeRemaining)}
+                  </span>
+                ) : !hasCompletedIvAccess ? (
+                  <span className="text-[7.5px] sm:text-[8px] bg-amber-950/80 text-amber-300/90 px-1 rounded border border-amber-800/80 shrink-0 font-sans truncate">
+                    Req. IV
+                  </span>
+                ) : null}
+              </div>
+            </button>
+          );
+        })()}
 
         {/* AMIODARONE */}
         <button

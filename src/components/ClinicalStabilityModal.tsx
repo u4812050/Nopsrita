@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { AlertTriangle, CheckCircle2, AlertOctagon, X, Activity, ShieldAlert, HeartPulse, Zap } from 'lucide-react';
 
 interface ClinicalStabilityModalProps {
@@ -56,8 +57,8 @@ export function ClinicalStabilityModal({
     onClose();
   };
 
-  return (
-    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in">
+  const modalContent = (
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-slate-950/95 backdrop-blur-md animate-fade-in">
       <div className="bg-slate-900 border border-slate-700/80 rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden relative transform transition-all duration-200">
         
         {/* Header */}
@@ -107,12 +108,12 @@ export function ClinicalStabilityModal({
             <div className="flex items-center gap-2 border-b border-amber-500/30 pb-2">
               <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 animate-bounce" />
               <span className="font-black text-xs sm:text-sm text-amber-300 tracking-wide">
-                รายการประเมินสัญญาณวิกฤต (Critical Warning Signs)
+                การประเมินสัญญาณวิกฤต (Critical Warning Signs)
               </span>
             </div>
             
             <p className="text-[11px] text-amber-200/80 font-medium">
-              หากมีอาการวิกฤตข้อใดข้อหนึ่งต่อไปนี้ ให้จัดอยู่ในกลุ่ม <span className="font-bold text-rose-400 underline decoration-rose-500/50 underline-offset-2">UNSTABLE (อาการไม่คงที่)</span> ทันที:
+              หากมีอาการ 1 ใน 5ข้อ นี้ ให้เลือก <span className="font-bold text-rose-400 underline decoration-rose-500/50 underline-offset-2">UNSTABLE (อาการไม่คงที่)</span> ทันที:
             </p>
 
             <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] font-semibold">
@@ -136,7 +137,7 @@ export function ClinicalStabilityModal({
                 <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0 mt-1"></span>
                 <div>
                   <span className="font-bold text-rose-300">Signs of Shock</span>
-                  <span className="block text-[10px] text-slate-400 font-normal">ภาวะช็อก (ปลายมือเท้าเย็น, CRT&gt;2s)</span>
+                  <span className="block text-[10px] text-slate-400 font-normal">ภาวะช็อก (ปลายมือเท้าเย็น, CRT &gt; 2s)</span>
                 </div>
               </li>
 
@@ -144,7 +145,7 @@ export function ClinicalStabilityModal({
                 <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0 mt-1"></span>
                 <div>
                   <span className="font-bold text-rose-300">Ischemic Chest Pain</span>
-                  <span className="block text-[10px] text-slate-400 font-normal">เจ็บหน้าอกขาดเลือด</span>
+                  <span className="block text-[10px] text-slate-400 font-normal">เจ็บหน้าอก</span>
                 </div>
               </li>
 
@@ -152,7 +153,7 @@ export function ClinicalStabilityModal({
                 <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0 mt-1"></span>
                 <div>
                   <span className="font-bold text-rose-300">Acute Heart Failure</span>
-                  <span className="block text-[10px] text-slate-400 font-normal">ภาวะหัวใจล้มเหลวเฉียบพลัน (หายใจเหนื่อย ฟังปอดพบเสียง Crepitation, เส้นเลือดดำคอโป่งพอง)</span>
+                  <span className="block text-[10px] text-slate-400 font-normal">มีภาวะหัวใจล้มเหลวเฉียบพลัน (หายใจเหนื่อย ฟังปอดพบ Crepitation, เส้นเลือดดำคอโป่งพอง)</span>
                 </div>
               </li>
             </ul>
@@ -184,4 +185,6 @@ export function ClinicalStabilityModal({
       </div>
     </div>
   );
+
+  return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : modalContent;
 }

@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { Activity, Play, X } from 'lucide-react';
 
 interface PulseCheckModalProps {
@@ -20,8 +21,8 @@ export function PulseCheckModal({
 }: PulseCheckModalProps) {
   if (!pulseCheckActive) return null;
 
-  return (
-    <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[99999] flex items-center justify-center p-4">
+  const modalContent = (
+    <div className="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-[99999] flex items-center justify-center p-4 animate-fadeIn">
       <div className="bg-slate-900 border-2 border-amber-500/80 rounded-2xl max-w-md w-full p-6 text-center shadow-2xl relative overflow-hidden animate-in fade-in zoom-in duration-200">
         <div className="w-12 h-12 rounded-full bg-amber-500/20 border border-amber-500 flex items-center justify-center mx-auto mb-3">
           <Activity className="w-6 h-6 text-amber-400 animate-pulse" />
@@ -61,4 +62,6 @@ export function PulseCheckModal({
       </div>
     </div>
   );
+
+  return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : modalContent;
 }

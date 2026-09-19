@@ -38,10 +38,18 @@ export default function App() {
   const metronomeBeatRef = useRef<number>(0);
   const cprSubCycleRef = useRef<number>(1);
   const lastPulseCheckedCycleRef = useRef<number>(0);
+  const guidelineToCprTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [voiceAlertsOn, setVoiceAlertsOn] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState<GuidelineTab>('trc_cardiac');
   const [mobileViewTab, setMobileViewTab] = useState<'cpr' | 'meds' | 'guidelines' | 'logs'>('cpr');
   const [audioTesting, setAudioTesting] = useState<boolean>(false);
+
+  const handleSelectMobileTab = (tab: 'cpr' | 'meds' | 'guidelines' | 'logs') => {
+    if (guidelineToCprTimeoutRef.current) {
+      clearTimeout(guidelineToCprTimeoutRef.current);
+    }
+    setMobileViewTab(tab);
+  };
 
   // --- CORE CLINICAL STATES ---
   const [caseActive, setCaseActive] = useState<boolean>(false);
@@ -134,6 +142,22 @@ export default function App() {
   const [pulseCheckTime, setPulseCheckTime] = useState<number>(10);
   const [cprButtonFlash, setCprButtonFlash] = useState<boolean>(false);
   const [shockButtonFlashing, setShockButtonFlashing] = useState<boolean>(false);
+
+  // Transition helper: Show Guidelines for 5 seconds, then auto-switch to CPR Timer
+  const triggerGuidelineToCprTransition = (guidelineMsg?: string) => {
+    setShowProceduresModal(false);
+    setShowQuickActionModal(false);
+    setMobileViewTab('guidelines');
+    setActiveTab('trc_cardiac');
+    setGuidanceMessage(guidelineMsg || "คำแนะนำ: กำลังแสดง Guidelines (ACLS Algorithm) 5 วินาที ก่อนสลับไปหน้า CPR Timer อัตโนมัติ");
+    if (guidelineToCprTimeoutRef.current) {
+      clearTimeout(guidelineToCprTimeoutRef.current);
+    }
+    guidelineToCprTimeoutRef.current = setTimeout(() => {
+      setMobileViewTab('cpr');
+      setGuidanceMessage("สลับสู่หน้า CPR Timer อัตโนมัติ เพื่อติดตามรอบการกดหน้าอก 2 นาที");
+    }, 5000);
+  };
 
   // Web Audio Context reference for synthesiser metronome
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -513,6 +537,19 @@ export default function App() {
               onEnd();
             }
           };
+          utterance.onerror = () => {
+            if (!hasCalledEnd) {
+              hasCalledEnd = true;
+              onEnd();
+            }
+          };
+          const fallbackTimeoutMs = Math.max(6000, spokenText.length * 80);
+          setTimeout(() => {
+            if (!hasCalledEnd) {
+              hasCalledEnd = true;
+              onEnd();
+            }
+          }, fallbackTimeoutMs);
         }
 
         let selectedVoice = thaiVoiceRef.current;
@@ -968,25 +1005,40 @@ export default function App() {
       if (!hasCompletedIvAccess) {
         setIvAccessAlertActive(true);
         setGuidanceMessage(
-          "SHOCK DELIVERED! Defibrillation #1 complete. Immediately resume chest compressions for 2 minutes. Establish IV/IO line!"
+          "SHOCK DELIVERED! Defibrillation #1 complete. เปิดเส้น IV/IO และเตรียมยา EPINEPHRINE 1mg (ให้ยาหลัง Shock #2) เริ่มกดหน้าอก 2 นาที!"
         );
-        addLog(`Defibrillation #1 Delivered (200J)`, "shock");
-        speakThai("ปล่อยช็อกครั้งที่หนึ่ง เรียบร้อยแล้วค่ะ เริ่มกดหน้าอกต่อทันที สองนาทีค่ะ");
+        addLog(`Defibrillation #1 Delivered (200J) - เตรียมเปิดเส้นและเตรียมยา Epinephrine (รอให้ยาหลัง Shock #2)`, "shock");
+        speakThai("ปล่อยช็อกครั้งที่หนึ่ง เรียบร้อยแล้วค่ะ เตรียมให้ยาเอพิเนฟริน หนึ่งมิลลิกรัม แล้วเริ่มกดหน้าอกต่อทันที สองนาทีค่ะ", () => {
+          setEpiAlertActive(true);
+          setMobileViewTab('meds');
+          setGuidanceMessage("⚠️ เตรียมยา EPINEPHRINE 1mg (กะพริบเตือนเตรียมยา • กดบริหารยาได้หลัง Shock #2)");
+          playAlertChime('med_due');
+        });
       } else {
         setIvAccessAlertActive(false);
         setGuidanceMessage(
-          "SHOCK DELIVERED! Defibrillation #1 complete. Immediately resume chest compressions for 2 minutes."
+          "SHOCK DELIVERED! Defibrillation #1 complete. เตรียมยา EPINEPHRINE 1mg (ให้ยาหลัง Shock #2) เริ่มกดหน้าอก 2 นาที!"
         );
-        addLog(`Defibrillation #1 Delivered (200J)`, "shock");
-        speakThai("ปล่อยช็อกครั้งที่หนึ่ง เรียบร้อยแล้วค่ะ เริ่มกดหน้าอกต่อทันที สองนาทีค่ะ");
+        addLog(`Defibrillation #1 Delivered (200J) - เตรียมยา Epinephrine (รอให้ยาหลัง Shock #2)`, "shock");
+        speakThai("ปล่อยช็อกครั้งที่หนึ่ง เรียบร้อยแล้วค่ะ เตรียมให้ยาเอพิเนฟริน หนึ่งมิลลิกรัม แล้วเริ่มกดหน้าอกต่อทันที สองนาทีค่ะ", () => {
+          setEpiAlertActive(true);
+          triggerGuidelineToCprTransition();
+          playAlertChime('med_due');
+        });
       }
     } else if (nextShock === 2) {
-      setEpiAlertActive(true);
       setGuidanceMessage(
-        "SHOCK DELIVERED! Defibrillation #2 complete. ADMINISTER EPINEPHRINE 1mg IV/IO IMMEDIATELY according to ACLS Protocol!"
+        "SHOCK DELIVERED! Defibrillation #2 complete. ถึงเวลาให้ยา EPINEPHRINE 1mg IV/IO ตามเกณฑ์ ACLS!"
       );
-      addLog(`Defibrillation #2 Delivered (200J)`, "shock");
-      speakThai("ปล่อยช็อกครั้งที่สอง เรียบร้อยแล้วค่ะ เตรียมให้ยาเอพิเนฟริน หนึ่งมิลลิกรัม แล้วเริ่มกดหน้าอกต่อทันที สองนาทีค่ะ");
+      addLog(`Defibrillation #2 Delivered (200J) - ถึงเวลาบริหารยา Epinephrine 1mg`, "shock");
+      setEpiAlertActive(false);
+      speakThai("ปล่อยช็อกครั้งที่สอง เรียบร้อยแล้วค่ะ ให้ยาเอพิเนฟริน หนึ่งมิลลิกรัม แล้วเริ่มกดหน้าอกต่อทันที สองนาทีค่ะ", () => {
+        // เมื่อพูดจบ ให้กระพริบเตือน Epinephrine เพื่อให้กดบริหารยาได้ทันที ในแถบ Quick Meds
+        setEpiAlertActive(true);
+        setMobileViewTab('meds');
+        setGuidanceMessage("⚡ กรุณากดบริหารยา EPINEPHRINE 1mg IV/IO ทันที!");
+        playAlertChime('med_due');
+      });
     } else if (nextShock === 3) {
       setAmioAlertActive(true);
       setLidoAlertActive(true);
@@ -1150,6 +1202,12 @@ export default function App() {
       return;
     }
 
+    if (lastRhythmDecision === 'shockable' && shockCount < 2 && epiCount === 0) {
+      setGuidanceMessage("⚠️ ยาเอพิเนฟรินเตรียมพร้อมแล้ว (โปรดรอให้ยาหลังช็อกครั้งที่ 2 ตามแนวทาง ACLS)");
+      speakThai("ยาเอพิเนฟรินเตรียมพร้อมแล้วค่ะ ตามแนวทาง ACLS ให้บริหารยาหลังช็อกครั้งที่สองนะคะ");
+      return;
+    }
+
     const nextEpi = epiCount + 1;
     setEpiCount(nextEpi);
     setEpiTimeRemaining(240);
@@ -1157,23 +1215,27 @@ export default function App() {
     setEpiTimerStarted(true);
 
     addLog(`Medication: Epinephrine 1mg IV/IO administered (Total Dose #${nextEpi})`, "med");
-    if (nextEpi === 1) {
-      if (!hasCompletedAirway || !hasCompletedEtco2) {
-        if (!hasCompletedAirway) setAirwayAlertActive(true);
-        if (!hasCompletedEtco2) setEtco2AlertActive(true);
-        setGuidanceMessage(
-          "EPINEPHRINE #1 GIVEN! Please consider Advanced Airway & Capnography (ETCO2 monitoring)."
-        );
-        speakThai("ให้ยาเอพิเนฟริน เข็มที่หนึ่ง เรียบร้อยแล้วค่ะ");
-      } else {
-        setAirwayAlertActive(false);
-        setEtco2AlertActive(false);
-        setGuidanceMessage("EPINEPHRINE #1 GIVEN! Resume CPR immediately.");
-        speakThai("ให้ยาเอพิเนฟริน เข็มที่หนึ่ง เรียบร้อยแล้วค่ะ");
-      }
-    } else {
-      speakThai(`ให้ยาเอพิเนฟริน หนึ่งมิลลิกรัม เข็มที่ ${nextEpi} เรียบร้อยแล้วค่ะ`);
-    }
+    
+    // Close any other open modals to prevent popup collision or bleed-through
+    setShowQuickActionModal(false);
+    setShowAltMedsModal(false);
+    setShowStabilityModal(false);
+    setShowUnstableBradyModal(false);
+    setShowStableBradyModal(false);
+    setShowStableTachyModal(false);
+    setShowUnstableTachyModal(false);
+    setShowPalsModal(false);
+
+    // เชื่อมโยงใส่ท่อช่วยหายใจ (Link to Advanced Airway ET-Tube)
+    setAirwayAlertActive(true);
+    setEtco2AlertActive(true);
+    setShowProceduresModal(true);
+
+    const epiDoseThai = nextEpi === 1 ? "เข็มที่หนึ่ง" : `เข็มที่ ${nextEpi}`;
+    setGuidanceMessage(
+      `EPINEPHRINE #${nextEpi} GIVEN! พิจารณาใส่ท่อช่วยหายใจขั้นสูง (Advanced Airway / ET-Tube) และติดตาม ETCO2`
+    );
+    speakThai(`ให้ยาเอพิเนฟริน ${epiDoseThai} เรียบร้อยแล้วค่ะ พิจารณาใส่ท่อช่วยหายใจขั้นสูงนะคะ`);
   };
 
   const handleAdministerAmiodarone = () => {
@@ -1272,7 +1334,16 @@ export default function App() {
     if (procName.includes('IV / IO') || procName.includes('IV Access') || procName.includes('IV Line')) {
       setIvAccessAlertActive(false);
       setEpiAlertActive(true);
-      speakThai("เปิดเส้นให้ยาเรียบร้อยแล้ว เตรียมให้ยาเอพิเนฟรินค่ะ");
+      speakThai("เปิดเส้นให้ยาเรียบร้อยแล้ว เตรียมให้ยาเอพิเนฟรินค่ะ", () => {
+        setShowProceduresModal(false);
+        setShowQuickActionModal(false);
+
+        // หลัง shock ครั้งที่ 1 เมื่อเปิดเส้นเรียบร้อย และพูดเตรียมให้ยาจบ หลังจาก pop up ปิดลง:
+        // สลับไปหน้า Guidelines 5 วินาที และสลับไปหน้า CPR timer อัตโนมัติ
+        if (shockCount >= 1) {
+          triggerGuidelineToCprTransition();
+        }
+      });
       setGuidanceMessage("เปิดเส้นทาง IV/IO Access สำเร็จ! โปรดกดบริหารยา EPINEPHRINE 1mg IV/IO");
     }
 
@@ -1282,7 +1353,27 @@ export default function App() {
       procName.includes('ET-Tube')
     ) {
       setAirwayAlertActive(false);
-      speakThai("ใส่ท่อช่วยหายใจแล้วค่ะ");
+      // ตรวจสอบว่ายืนยัน ETCO2 ไปแล้วหรือยัง
+      const isEtco2Done = completedProcedures.some(p => 
+        p.includes('Intubation Confirmed') || p.includes('ETCO2') || p.includes('Capnography') || p.includes('PETCO2')
+      );
+
+      if (isEtco2Done) {
+        let closed = false;
+        const onConfirmTubeDone = () => {
+          if (!closed) {
+            closed = true;
+            setShowProceduresModal(false);
+            triggerGuidelineToCprTransition("คำแนะนำ: ยืนยันตำแหน่งท่อช่วยหายใจสำเร็จ! กำลังแสดง Guidelines (ACLS Algorithm) 5 วินาที ก่อนสลับไปหน้า CPR Timer อัตโนมัติ");
+          }
+        };
+        speakThai("ใส่ท่อช่วยหายใจเรียบร้อยแล้วค่ะ และยืนยันตำแหน่งด้วยแค๊บโนกราฟฟี่ครบถ้วนค่ะ", onConfirmTubeDone);
+        setTimeout(onConfirmTubeDone, 6000);
+      } else {
+        setEtco2AlertActive(true);
+        speakThai("ใส่ท่อช่วยหายใจเรียบร้อยแล้วค่ะ โปรดยืนยันตำแหน่งท่อด้วยอีทีซีโอทูนะคะ");
+        setGuidanceMessage("ใส่ท่อช่วยหายใจแล้ว! โปรดยืนยันตำแหน่งด้วย ETCO2 Capnography จึงจะปิดหน้าต่างอัตโนมัติ");
+      }
     }
 
     if (
@@ -1292,11 +1383,31 @@ export default function App() {
       procName.includes('PETCO2')
     ) {
       setEtco2AlertActive(false);
-      speakThai("ประเมินท่อช่วยหายใจอยู่ในตำแหน่ง ขอติดแค๊บโนกราฟฟี่ค่ะ", () => {
-        setMetronomeMode('continuous');
-        playAlertChime('mode_switch');
-        speakThai("เปลี่ยนการซีพีอา เป็นแบบสองนาทีต่อเนื่อง และเปลี่ยนการช่วยหายใจทุกหกวินาทีค่ะ");
-      });
+      setAirwayAlertActive(false);
+      setMetronomeMode('continuous');
+      playAlertChime('mode_switch');
+
+      // ตรวจสอบว่าใส่ท่อช่วยหายใจแล้วหรือยัง หากยังไม่ได้บันทึก ให้บันทึกคู่กันให้สมบูรณ์
+      const isAirwayDone = completedProcedures.some(p => 
+        p.includes('Advanced Airway') || p.includes('ET Tube') || p.includes('ET-Tube')
+      );
+      if (!isAirwayDone) {
+        setCompletedProcedures(prev => prev.includes('Advanced Airway Secured (ET Tube)') ? prev : [...prev, 'Advanced Airway Secured (ET Tube)']);
+      }
+
+      // เมื่อยืนยันตำแหน่งท่อช่วยหายใจ (Confirm Tube) จบลง และปิด pop up:
+      // สลับไปหน้า Guidelines 5 วินาที แล้วสลับกลับหน้า CPR Timer อัตโนมัติ
+      let closed = false;
+      const onConfirmTubeDone = () => {
+        if (!closed) {
+          closed = true;
+          setShowProceduresModal(false);
+          triggerGuidelineToCprTransition("คำแนะนำ: ยืนยันตำแหน่งท่อช่วยหายใจสำเร็จ! กำลังแสดง Guidelines (ACLS Algorithm) 5 วินาที ก่อนสลับไปหน้า CPR Timer อัตโนมัติ");
+        }
+      };
+
+      speakThai("ประเมินท่อช่วยหายใจอยู่ในตำแหน่ง ขอติดแค๊บโนกราฟฟี่ค่ะ เปลี่ยนการซีพีอา เป็นแบบสองนาทีต่อเนื่อง และเปลี่ยนการช่วยหายใจทุกหกวินาทีค่ะ", onConfirmTubeDone);
+      setTimeout(onConfirmTubeDone, 7500);
     }
 
     if (
@@ -1444,6 +1555,10 @@ export default function App() {
     setMetronomeOn(true);
     setMetronomeTempo(100);
     setShowResetConfirm(false);
+    if (guidelineToCprTimeoutRef.current) {
+      clearTimeout(guidelineToCprTimeoutRef.current);
+    }
+    setMobileViewTab('cpr');
 
     setTimeout(() => {
       speakThai("เริ่มต้นใหม่ค่ะ", undefined, 1.1);
@@ -1568,7 +1683,7 @@ export default function App() {
         {/* Mobile View Tab Selector Header (Hidden on Tablet md and Desktop lg) */}
         <div className="flex md:hidden items-center justify-between bg-slate-900 border border-slate-800 rounded-lg p-1 shrink-0 gap-1 overflow-x-auto no-scrollbar shadow-md w-full">
           <button
-            onClick={() => setMobileViewTab('cpr')}
+            onClick={() => handleSelectMobileTab('cpr')}
             className={`flex-1 min-w-0 py-2 px-1.5 sm:px-2 text-[10px] sm:text-xs font-black rounded-md flex items-center justify-center gap-1 transition-all cursor-pointer truncate ${
               mobileViewTab === 'cpr' ? 'bg-cyan-600 text-white shadow-xs ring-1 ring-cyan-400' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
             }`}
@@ -1578,7 +1693,7 @@ export default function App() {
           </button>
 
           <button
-            onClick={() => setMobileViewTab('meds')}
+            onClick={() => handleSelectMobileTab('meds')}
             className={`flex-1 min-w-0 py-2 px-1.5 sm:px-2 text-[10px] sm:text-xs font-black rounded-md flex items-center justify-center gap-1 transition-all cursor-pointer truncate ${
               mobileViewTab === 'meds' ? 'bg-cyan-600 text-white shadow-xs ring-1 ring-cyan-400' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
             }`}
@@ -1588,7 +1703,7 @@ export default function App() {
           </button>
 
           <button
-            onClick={() => setMobileViewTab('guidelines')}
+            onClick={() => handleSelectMobileTab('guidelines')}
             className={`flex-1 min-w-0 py-2 px-1.5 sm:px-2 text-[10px] sm:text-xs font-black rounded-md flex items-center justify-center gap-1 transition-all cursor-pointer truncate ${
               mobileViewTab === 'guidelines' ? 'bg-cyan-600 text-white shadow-xs ring-1 ring-cyan-400' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
             }`}
@@ -1598,7 +1713,7 @@ export default function App() {
           </button>
 
           <button
-            onClick={() => setMobileViewTab('logs')}
+            onClick={() => handleSelectMobileTab('logs')}
             className={`flex-1 min-w-0 py-2 px-1.5 sm:px-2 text-[10px] sm:text-xs font-black rounded-md flex items-center justify-center gap-1 transition-all cursor-pointer truncate ${
               mobileViewTab === 'logs' ? 'bg-cyan-600 text-white shadow-xs ring-1 ring-cyan-400' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
             }`}
@@ -1613,7 +1728,7 @@ export default function App() {
           mobileViewTab === 'cpr' || mobileViewTab === 'meds' ? 'flex' : 'hidden md:flex'
         }`}>
           {/* CPR Timer Card */}
-          <div className={`flex flex-col h-[418px] w-full shrink-0 ${mobileViewTab === 'cpr' ? 'flex' : 'hidden md:flex'}`}>
+          <div className={`flex flex-col min-h-[418px] w-full shrink-0 ${mobileViewTab === 'cpr' ? 'flex' : 'hidden md:flex'}`}>
             <CprTimerCard
               cprTimeRemaining={cprTimeRemaining}
               cprActive={cprActive}
@@ -1634,6 +1749,7 @@ export default function App() {
               metronomeOn={metronomeOn}
               metronomeBeat={metronomeBeat}
               handleLogPresetMed={handleLogPresetMed}
+              logs={logs}
             />
           </div>
 
@@ -1750,6 +1866,7 @@ export default function App() {
               setShowProceduresModal={setShowProceduresModal}
               setShowAltMedsModal={setShowAltMedsModal}
               mgSo4AlertActive={mgSo4AlertActive}
+              epiAlertActive={epiAlertActive}
               onOpenUnstableBradyModal={() => setShowUnstableBradyModal(true)}
               onOpenStableBradyModal={() => setShowStableBradyModal(true)}
               onOpenStableTachyModal={() => setShowStableTachyModal(true)}
