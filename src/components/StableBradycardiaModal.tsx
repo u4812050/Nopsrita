@@ -138,7 +138,6 @@ export function StableBradycardiaModal({
               <button
                 onClick={() => {
                   handleLogProcedure('Obtain 12-lead EKG');
-                  speakThai('ทำการตรวจคลื่นไฟฟ้าหัวใจ 12 หลีด เรียบร้อยค่ะ');
                 }}
                 className={`p-3 border rounded-xl text-left transition-all flex justify-between items-center gap-2.5 shadow-md cursor-pointer group ${
                   completedProcedures.includes('Obtain 12-lead EKG')

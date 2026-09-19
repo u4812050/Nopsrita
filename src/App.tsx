@@ -1477,6 +1477,16 @@ export default function App() {
       speakThai("ใส่ไอซีดี");
     }
 
+    if (
+      procName.includes('12-lead') ||
+      procName.includes('12-Lead') ||
+      procName.includes('12 leads') ||
+      procName.includes('ECG 12') ||
+      procName.includes('EKG 12')
+    ) {
+      speakThai("ตรวจคลื่นไฟฟ้าหัวใจสิบสองลีด");
+    }
+
     const isLoggingAirway =
       procName.includes('Advanced Airway') ||
       procName.includes('ET Tube') ||
