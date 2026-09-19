@@ -1045,16 +1045,51 @@ export default function App() {
       setGuidanceMessage(
         "SHOCK DELIVERED! Defibrillation #3 complete. ADMINISTER AMIODARONE 300mg OR LIDOCAINE 1-1.5mg/kg IV/IO IMMEDIATELY!"
       );
-      addLog(`Defibrillation #3 Delivered (200J)`, "shock");
-      speakThai("ปล่อยช็อกครั้งที่สาม เรียบร้อยแล้วค่ะ พิจารณาให้ยาอะมิโอดาโรน สามร้อยมิลลิกรัม หรือยาลิโดเคน แล้วเริ่มกดหน้าอกต่อทันที สองนาทีค่ะ");
+      addLog(`Defibrillation #3 Delivered (200J) - แนะนำให้ยา Amiodarone หรือ Lidocaine`, "shock");
+      speakThai(
+        "ปล่อยช็อกครั้งที่สาม เรียบร้อยแล้วค่ะ พิจารณาให้ยาอะมิโอดาโรน สามร้อยมิลลิกรัม หรือยาลิโดเคน แล้วเริ่มกดหน้าอกต่อทันที สองนาทีค่ะ",
+        () => {
+          setShowQuickActionModal(false);
+          setShowProceduresModal(false);
+          setMobileViewTab('meds');
+          setGuidanceMessage("⚡ โปรดเลือกและกดบริหารยา AMIODARONE หรือ LIDOCAINE ในหน้า Quick Actions");
+          playAlertChime('med_due');
+        }
+      );
+    } else if (nextShock === 4) {
+      setAmioAlertActive(true);
+      setLidoAlertActive(true);
+      setGuidanceMessage(
+        "SHOCK DELIVERED! Defibrillation #4 complete. แนะนำให้ยา AMIODARONE หรือ LIDOCAINE IV/IO ทันที!"
+      );
+      addLog(`Defibrillation #4 Delivered (200J) - แนะนำให้ยา Amiodarone หรือ Lidocaine`, "shock");
+      speakThai(
+        "ปล่อยช็อกครั้งที่สี่ เรียบร้อยแล้วค่ะ แนะนำให้ยาอะมิโอดาโรน หรือยาลิโดเคน แล้วเริ่มกดหน้าอกต่อทันที สองนาทีค่ะ",
+        () => {
+          setShowQuickActionModal(false);
+          setShowProceduresModal(false);
+          setMobileViewTab('meds');
+          setGuidanceMessage("⚡ โปรดเลือกและกดบริหารยา AMIODARONE หรือ LIDOCAINE ในหน้า Quick Actions");
+          playAlertChime('med_due');
+        }
+      );
     } else if (nextShock === 5) {
       setAmioAlertActive(true);
       setLidoAlertActive(true);
       setGuidanceMessage(
         "SHOCK DELIVERED! Defibrillation #5 complete. ADMINISTER AMIODARONE 150mg OR LIDOCAINE 0.5-0.75mg/kg IV/IO!"
       );
-      addLog(`Defibrillation #5 Delivered (200J)`, "shock");
-      speakThai("ปล่อยช็อกครั้งที่ห้า เรียบร้อยแล้วค่ะ พิจารณาให้ยาอะมิโอดาโรน ร้อยห้าสิบมิลลิกรัม หรือยาลิโดเคน แล้วเริ่มกดหน้าอกต่อทันที สองนาทีค่ะ");
+      addLog(`Defibrillation #5 Delivered (200J) - แนะนำให้ยา Amiodarone หรือ Lidocaine`, "shock");
+      speakThai(
+        "ปล่อยช็อกครั้งที่ห้า เรียบร้อยแล้วค่ะ พิจารณาให้ยาอะมิโอดาโรน ร้อยห้าสิบมิลลิกรัม หรือยาลิโดเคน แล้วเริ่มกดหน้าอกต่อทันที สองนาทีค่ะ",
+        () => {
+          setShowQuickActionModal(false);
+          setShowProceduresModal(false);
+          setMobileViewTab('meds');
+          setGuidanceMessage("⚡ โปรดเลือกและกดบริหารยา AMIODARONE หรือ LIDOCAINE ในหน้า Quick Actions");
+          playAlertChime('med_due');
+        }
+      );
     } else {
       setGuidanceMessage(
         `SHOCK DELIVERED! Defibrillation #${nextShock} complete. Immediately resume chest compressions.`
@@ -1255,6 +1290,11 @@ export default function App() {
     } else {
       speakThai(`ให้ยาอะมิโอดาโรน ร้อยห้าสิบมิลลิกรัม เข็มที่ ${nextAmio} เรียบร้อยแล้วค่ะ`);
     }
+
+    // สลับไปแท็บ Guidelines ทันที เพื่อแสดงแนวทางการรักษาตาม ACLS Algorithm ค้างไว้ 5 วินาที แล้วสลับกลับหน้า CPR Timer อัตโนมัติ
+    triggerGuidelineToCprTransition(
+      "คำแนะนำ: บริหารยา Amiodarone เรียบร้อยแล้ว! กำลังแสดงแนวทางการรักษาตาม ACLS Algorithm 5 วินาที ก่อนสลับกลับหน้า CPR Timer อัตโนมัติ"
+    );
   };
 
   const handleAdministerLidocaine = () => {
@@ -1270,6 +1310,11 @@ export default function App() {
     let doseText = nextLido === 1 ? "1-1.5 mg/kg bolus" : nextLido === 2 ? "0.5-0.75 mg/kg bolus" : "bolus";
     addLog(`Medication: Lidocaine ${doseText} IV/IO administered (Total Dose #${nextLido})`, "med");
     speakThai(`ให้ยาลิโดเคน เข็มที่ ${nextLido} เรียบร้อยแล้วค่ะ`);
+
+    // สลับไปแท็บ Guidelines ทันที เพื่อแสดงแนวทางการรักษาตาม ACLS Algorithm ค้างไว้ 5 วินาที แล้วสลับกลับหน้า CPR Timer อัตโนมัติ
+    triggerGuidelineToCprTransition(
+      "คำแนะนำ: บริหารยา Lidocaine เรียบร้อยแล้ว! กำลังแสดงแนวทางการรักษาตาม ACLS Algorithm 5 วินาที ก่อนสลับกลับหน้า CPR Timer อัตโนมัติ"
+    );
   };
 
   const handleLogPresetMed = (medName: string, skipSpeech?: boolean, onSpeechEnd?: () => void) => {
