@@ -13,6 +13,7 @@ interface LogsPanelProps {
   customNote?: string;
   setCustomNote?: (text: string) => void;
   handleLogCustomNote?: (e: React.FormEvent) => void;
+  onOpenSusModal?: () => void;
 }
 
 export function LogsPanel({
@@ -26,6 +27,7 @@ export function LogsPanel({
   customNote = '',
   setCustomNote,
   handleLogCustomNote,
+  onOpenSusModal,
 }: LogsPanelProps) {
   return (
     <div className="bg-slate-900 rounded-xl border border-slate-800 flex flex-col h-full overflow-hidden shadow-xl">
@@ -36,7 +38,7 @@ export function LogsPanel({
           <h3 className="text-xs font-black uppercase text-slate-200 tracking-wider">
             Live Resus. Flowsheet Log
           </h3>
-          <span className="text-[10px] font-mono font-bold bg-slate-800 text-cyan-300 px-1.5 py-0.5 rounded border border-slate-700">
+          <span className="text-[10px] font-mono font-bold bg-slate-800 text-cyan-300 pt-[2px] pl-[6px] pr-1.5 pb-0.5 -ml-[6px] -mt-[5px] mr-[3px] mb-0 rounded border border-slate-700">
             {logs.length} Entries
           </span>
         </div>

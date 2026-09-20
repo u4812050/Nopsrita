@@ -23,6 +23,9 @@ export interface SummaryStats {
   noradrenalineCount: number;
   checked5H: string[];
   checked5T: string[];
+  susScore?: number;
+  susGrade?: string;
+  susEvaluator?: string;
 }
 
 /**
@@ -423,7 +426,14 @@ export async function generateResuscitationPDF(logs: LogEntry[], stats: SummaryS
   // Column 3
   doc.text(`Atropine: ${stats.atropineCount} Doses | Adenosine: ${stats.adenosineCount} Doses`, 165, 31);
   doc.text(`Reversible Causes Evaluated: 5Hs (${stats.checked5H.length}/5) | 5Ts (${stats.checked5T.length}/5)`, 165, 36);
-  doc.text(`Case ID: ACLS-${Date.now().toString().slice(-6)}`, 165, 41);
+  if (stats.susScore !== undefined) {
+    doc.setTextColor(180, 83, 9); // Amber-700
+    doc.text(`SUS Usability Score: ${stats.susScore.toFixed(1)}/100 (${stats.susGrade || 'Grade A'})`, 165, 41);
+    doc.setTextColor(30, 41, 59);
+    doc.text(`Case ID: ACLS-${Date.now().toString().slice(-6)}`, 242, 41);
+  } else {
+    doc.text(`Case ID: ACLS-${Date.now().toString().slice(-6)}`, 165, 41);
+  }
 
   // --- BUILD FLOWSHEET TABLE MATCHING PICTURE FORM ---
   // Headers layout (18 columns total, including 9 Drug columns in exact requested order)

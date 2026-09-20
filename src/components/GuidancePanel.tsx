@@ -492,11 +492,11 @@ export function GuidancePanel({
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 text-slate-300">
                 <div className="bg-slate-900/80 p-1.5 rounded border border-slate-800/80">
                   <span className="text-white font-bold block text-[9.5px]">1. High Quality CPR</span>
-                  <span className="text-[8.5px] text-slate-400 block leading-tight">Hard 5-6cm,Fast 100-120bpm,Fully Recoil,Avoid Hypervent.,Minimize interrupt,Change person</span>
+                  <span className="text-[8.5px] text-slate-400 block leading-tight">Push Hard 5-6cm, Push Fast 100-120bpm, Fully Recoil, Avoid Hyperventilation, Minimize interruption &lt;10s, Change person every 2min.</span>
                 </div>
                 <div className="bg-slate-900/80 p-1.5 rounded border border-slate-800/80">
                   <span className="text-rose-300 font-bold block text-[9.5px]">2. Shockable (VF/pVT)</span>
-                  <span className="text-[8.5px] text-slate-400 block">Shock 200J → CPR 2m → Epi 1mg / Amio</span>
+                  <span className="text-[8.5px] text-slate-400 block leading-tight">Shock 200J → CPR 2m → Shock 200J → CPR 2m+Epi 1mg → Shock 200J → CPR 2m+Amio300mg</span>
                 </div>
                 <div className="bg-slate-900/80 p-1.5 rounded border border-slate-800/80">
                   <span className="text-cyan-300 font-bold block text-[9.5px]">3. Non-Shockable</span>

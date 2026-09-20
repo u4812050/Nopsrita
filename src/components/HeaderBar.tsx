@@ -11,6 +11,7 @@ interface HeaderBarProps {
   formatMMSS: (sec: number) => string;
   onOpenLogoModal?: () => void;
   onOpenInstallModal?: () => void;
+  onOpenSusModal?: () => void;
 }
 
 export function HeaderBar({
@@ -22,6 +23,7 @@ export function HeaderBar({
   formatMMSS,
   onOpenLogoModal,
   onOpenInstallModal,
+  onOpenSusModal,
 }: HeaderBarProps) {
   return (
     <header className="bg-slate-900 border-b border-slate-800 text-white shadow-xl shrink-0 z-30 relative w-full max-w-full pt-safe pl-safe pr-safe">

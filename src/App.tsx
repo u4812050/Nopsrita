@@ -23,7 +23,8 @@ import { StableTachycardiaModal } from './components/StableTachycardiaModal';
 import { UnstableTachycardiaModal } from './components/UnstableTachycardiaModal';
 import { LogoModal } from './components/LogoModal';
 import { InstallPromptModal } from './components/InstallPromptModal';
-import { Clock, Zap, Activity, ListFilter, Heart } from 'lucide-react';
+import { SystemUsabilityScaleModal, SusResultData } from './components/SystemUsabilityScaleModal';
+import { Clock, Zap, Activity, ListFilter, Heart, Power, RotateCcw } from 'lucide-react';
 
 const SAVE_KEY = 'smart_acls_copilot_state_v2';
 
@@ -135,7 +136,11 @@ export default function App() {
   const [showUnstableTachyModal, setShowUnstableTachyModal] = useState<boolean>(false);
   const [showAltMedsModal, setShowAltMedsModal] = useState<boolean>(false);
   const [showQuickActionModal, setShowQuickActionModal] = useState<boolean>(false);
+  const [showSusModal, setShowSusModal] = useState<boolean>(false);
+  const [isExportPending, setIsExportPending] = useState<boolean>(false);
+  const [lastSusScore, setLastSusScore] = useState<{ score: number; grade: string; evaluator: string } | null>(null);
   const [mgSo4AlertActive, setMgSo4AlertActive] = useState<boolean>(false);
+  const [isAppClosed, setIsAppClosed] = useState<boolean>(false);
 
   // 10-Second Pulse & EKG assessment timer states
   const [pulseCheckActive, setPulseCheckActive] = useState<boolean>(false);
@@ -143,20 +148,43 @@ export default function App() {
   const [cprButtonFlash, setCprButtonFlash] = useState<boolean>(false);
   const [shockButtonFlashing, setShockButtonFlashing] = useState<boolean>(false);
 
-  // Transition helper: Show Guidelines for 5 seconds, then auto-switch to CPR Timer
+  // Transition helper: Show Guidelines, speak High Quality CPR reminder, then auto-switch to CPR Timer
+  const isSpeakingThaiRef = useRef<boolean>(false);
+
+  const speakHighQualityCpr = () => {
+    if (!voiceAlertsOn) return;
+    const phrase = "เน้นกานทำไฮควอลิตี้ซีพีอาด้วยค่ะ";
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      if (isSpeakingThaiRef.current || window.speechSynthesis.speaking) {
+        const checkInterval = setInterval(() => {
+          if (!isSpeakingThaiRef.current && !window.speechSynthesis.speaking) {
+            clearInterval(checkInterval);
+            speakThai(phrase);
+          }
+        }, 150);
+        setTimeout(() => clearInterval(checkInterval), 10000);
+        return;
+      }
+    }
+    speakThai(phrase);
+  };
+
   const triggerGuidelineToCprTransition = (guidelineMsg?: string) => {
     setShowProceduresModal(false);
     setShowQuickActionModal(false);
     setMobileViewTab('guidelines');
     setActiveTab('trc_cardiac');
-    setGuidanceMessage(guidelineMsg || "คำแนะนำ: กำลังแสดง Guidelines (ACLS Algorithm) 5 วินาที ก่อนสลับไปหน้า CPR Timer อัตโนมัติ");
+    setGuidanceMessage(guidelineMsg || "คำแนะนำ: กำลังแสดง Guidelines (ACLS Algorithm) ก่อนสลับไปหน้า CPR Timer อัตโนมัติ");
     if (guidelineToCprTimeoutRef.current) {
       clearTimeout(guidelineToCprTimeoutRef.current);
     }
     guidelineToCprTimeoutRef.current = setTimeout(() => {
       setMobileViewTab('cpr');
       setGuidanceMessage("สลับสู่หน้า CPR Timer อัตโนมัติ เพื่อติดตามรอบการกดหน้าอก 2 นาที");
-    }, 5000);
+    }, 6500);
+
+    // ทุกครั้งที่สลับมาแท็บ Guidelines อัตโนมัติในกลุ่ม Cardiac Arrest ให้พูดเตือนเน้น High-Quality CPR
+    speakHighQualityCpr();
   };
 
   // Web Audio Context reference for synthesiser metronome
@@ -529,28 +557,20 @@ export default function App() {
         utterance.rate = customRate !== undefined ? customRate : 1.1;
         utterance.pitch = 1.05;
 
-        if (onEnd) {
-          let hasCalledEnd = false;
-          utterance.onend = () => {
-            if (!hasCalledEnd) {
-              hasCalledEnd = true;
-              onEnd();
-            }
-          };
-          utterance.onerror = () => {
-            if (!hasCalledEnd) {
-              hasCalledEnd = true;
-              onEnd();
-            }
-          };
-          const fallbackTimeoutMs = Math.max(6000, spokenText.length * 80);
-          setTimeout(() => {
-            if (!hasCalledEnd) {
-              hasCalledEnd = true;
-              onEnd();
-            }
-          }, fallbackTimeoutMs);
-        }
+        isSpeakingThaiRef.current = true;
+        let hasCalledEnd = false;
+        const handleSpeechDone = () => {
+          if (!hasCalledEnd) {
+            hasCalledEnd = true;
+            isSpeakingThaiRef.current = false;
+            if (onEnd) onEnd();
+          }
+        };
+
+        utterance.onend = handleSpeechDone;
+        utterance.onerror = handleSpeechDone;
+        const fallbackTimeoutMs = Math.max(6000, spokenText.length * 80);
+        setTimeout(handleSpeechDone, fallbackTimeoutMs);
 
         let selectedVoice = thaiVoiceRef.current;
         if (!selectedVoice) {
@@ -574,9 +594,11 @@ export default function App() {
         window.speechSynthesis.speak(utterance);
       } catch (err) {
         console.error("Speech Synthesis error:", err);
+        isSpeakingThaiRef.current = false;
         if (onEnd) onEnd();
       }
     } else {
+      isSpeakingThaiRef.current = false;
       if (onEnd) onEnd();
     }
   };
@@ -922,6 +944,8 @@ export default function App() {
 
     if (cprActive) {
       setCprActive(false);
+      speakThai("หยุด ซีพีอา", undefined, 1.1);
+      addLog("หยุด CPR ชั่วคราว (Pause CPR)", "cpr");
     } else {
       setCprActive(true);
       speakThai("เริ่ม CPR", undefined, 1.1);
@@ -1005,10 +1029,10 @@ export default function App() {
       if (!hasCompletedIvAccess) {
         setIvAccessAlertActive(true);
         setGuidanceMessage(
-          "SHOCK DELIVERED! Defibrillation #1 complete. เปิดเส้น IV/IO และเตรียมยา EPINEPHRINE 1mg (ให้ยาหลัง Shock #2) เริ่มกดหน้าอก 2 นาที!"
+          "SHOCK DELIVERED! Defibrillation #1 complete. เปิดเส้น IV/IO ตรวจเลือดครบชุด และเตรียมยา EPINEPHRINE 1mg (ให้ยาหลัง Shock #2) เริ่มกดหน้าอก 2 นาที!"
         );
-        addLog(`Defibrillation #1 Delivered (200J) - เตรียมเปิดเส้นและเตรียมยา Epinephrine (รอให้ยาหลัง Shock #2)`, "shock");
-        speakThai("ปล่อยช็อกครั้งที่หนึ่ง เรียบร้อยแล้วค่ะ เตรียมให้ยาเอพิเนฟริน หนึ่งมิลลิกรัม แล้วเริ่มกดหน้าอกต่อทันที สองนาทีค่ะ", () => {
+        addLog(`Defibrillation #1 Delivered (200J) - ขอเปิดเส้นตรวจเลือดครบชุดและเตรียมยา Epinephrine (รอให้ยาหลัง Shock #2)`, "shock");
+        speakThai("ปล่อยช็อกครั้งที่หนึ่ง เรียบร้อยแล้วค่ะ ขอเปิดเส้นตรวจเลือดครบชุด เตรียมให้ยาเอพิเนฟริน หนึ่งมิลลิกรัม แล้วเริ่มกดหน้าอกต่อทันที สองนาทีค่ะ", () => {
           setEpiAlertActive(true);
           setMobileViewTab('meds');
           setGuidanceMessage("⚠️ เตรียมยา EPINEPHRINE 1mg (กะพริบเตือนเตรียมยา • กดบริหารยาได้หลัง Shock #2)");
@@ -1020,7 +1044,7 @@ export default function App() {
           "SHOCK DELIVERED! Defibrillation #1 complete. เตรียมยา EPINEPHRINE 1mg (ให้ยาหลัง Shock #2) เริ่มกดหน้าอก 2 นาที!"
         );
         addLog(`Defibrillation #1 Delivered (200J) - เตรียมยา Epinephrine (รอให้ยาหลัง Shock #2)`, "shock");
-        speakThai("ปล่อยช็อกครั้งที่หนึ่ง เรียบร้อยแล้วค่ะ เตรียมให้ยาเอพิเนฟริน หนึ่งมิลลิกรัม แล้วเริ่มกดหน้าอกต่อทันที สองนาทีค่ะ", () => {
+        speakThai("ปล่อยช็อกครั้งที่หนึ่ง เรียบร้อยแล้วค่ะ ขอเปิดเส้นตรวจเลือดครบชุด เตรียมให้ยาเอพิเนฟริน หนึ่งมิลลิกรัม แล้วเริ่มกดหน้าอกต่อทันที สองนาทีค่ะ", () => {
           setEpiAlertActive(true);
           triggerGuidelineToCprTransition();
           playAlertChime('med_due');
@@ -1124,7 +1148,9 @@ export default function App() {
       "พบคลื่นไฟฟ้าหัวใจ NON-SHOCKABLE! โปรดเลือกชนิดคลื่น (Asystole/PEA) และทำ IV Access เพื่อเปิดเส้นทางบริหารยา"
     );
 
-    speakThai("คลื่นไฟฟ้าหัวใจช็อกไม่ได้ โปรดเลือกชนิดคลื่นไฟฟ้าหัวใจ อะซิสโทลี หรือ พีอีเอ และเปิดเส้นให้ยานะคะ");
+    speakThai("คลื่นไฟฟ้าหัวใจช็อกไม่ได้ โปรดเลือกชนิดคลื่นไฟฟ้าหัวใจ อะซิสโทลี หรือ พีอีเอ และเปิดเส้นให้ยานะคะ", () => {
+      speakHighQualityCpr();
+    });
     setActiveTab('trc_cardiac');
     setMobileViewTab('guidelines');
   };
@@ -1261,16 +1287,29 @@ export default function App() {
     setShowUnstableTachyModal(false);
     setShowPalsModal(false);
 
-    // เชื่อมโยงใส่ท่อช่วยหายใจ (Link to Advanced Airway ET-Tube)
-    setAirwayAlertActive(true);
-    setEtco2AlertActive(true);
-    setShowProceduresModal(true);
+    if (nextEpi === 1) {
+      // เชื่อมโยงใส่ท่อช่วยหายใจเฉพาะเข็มที่ 1 (Link to Advanced Airway ET-Tube on Dose #1 only)
+      setAirwayAlertActive(true);
+      setEtco2AlertActive(true);
+      setShowProceduresModal(true);
 
-    const epiDoseThai = nextEpi === 1 ? "เข็มที่หนึ่ง" : `เข็มที่ ${nextEpi}`;
-    setGuidanceMessage(
-      `EPINEPHRINE #${nextEpi} GIVEN! พิจารณาใส่ท่อช่วยหายใจขั้นสูง (Advanced Airway / ET-Tube) และติดตาม ETCO2`
-    );
-    speakThai(`ให้ยาเอพิเนฟริน ${epiDoseThai} เรียบร้อยแล้วค่ะ พิจารณาใส่ท่อช่วยหายใจขั้นสูงนะคะ`);
+      setGuidanceMessage(
+        `EPINEPHRINE #1 GIVEN! พิจารณาใส่ท่อช่วยหายใจขั้นสูง (Advanced Airway / ET-Tube) และติดตาม ETCO2`
+      );
+      speakThai(`ให้ยาเอพิเนฟริน เข็มที่หนึ่ง เรียบร้อยแล้วค่ะ พิจารณาใส่ท่อช่วยหายใจขั้นสูงนะคะ`);
+    } else {
+      // เข็มถัดไป (Dose #2, #3, …): ไม่ต้อง pop up เพื่อเลือกการใส่ท่อช่วยหายใจอีก
+      setAirwayAlertActive(false);
+      setEtco2AlertActive(false);
+      setShowProceduresModal(false);
+
+      const thaiNumbers = ["", "หนึ่ง", "สอง", "สาม", "สี่", "ห้า", "หก", "เจ็ด", "แปด", "เก้า", "สิบ"];
+      const epiDoseThai = nextEpi <= 10 ? `เข็มที่${thaiNumbers[nextEpi]}` : `เข็มที่ ${nextEpi}`;
+      setGuidanceMessage(
+        `EPINEPHRINE #${nextEpi} GIVEN! บริหารยาเอพิเนฟริน 1mg เรียบร้อยแล้ว (รอบให้ยาซ้ำทุก 3-5 นาที)`
+      );
+      speakThai(`ให้ยาเอพิเนฟริน ${epiDoseThai} เรียบร้อยแล้วค่ะ`);
+    }
   };
 
   const handleAdministerAmiodarone = () => {
@@ -1620,7 +1659,8 @@ export default function App() {
     }, 50);
   };
 
-  const handleExportPDF = async () => {
+  const executeExportPDF = async (susOverride?: { score: number; grade: string; evaluator: string }) => {
+    const effectiveSus = susOverride || lastSusScore;
     await generateResuscitationPDF(logs, {
       caseElapsedSeconds,
       cprCycle,
@@ -1633,8 +1673,42 @@ export default function App() {
       adenosineCount,
       noradrenalineCount,
       checked5H,
-      checked5T
+      checked5T,
+      susScore: effectiveSus?.score,
+      susGrade: effectiveSus?.grade,
+      susEvaluator: effectiveSus?.evaluator,
     });
+  };
+
+  const handleExportPDF = () => {
+    // When user requests PDF flowsheet export, automatically open SUS evaluation modal first
+    setIsExportPending(true);
+    setShowSusModal(true);
+  };
+
+  const handleSaveAndExportPDF = async (susData: SusResultData) => {
+    const susInfo = {
+      score: susData.score,
+      grade: susData.grade,
+      evaluator: susData.evaluatorName,
+    };
+    setLastSusScore(susInfo);
+    setIsExportPending(false);
+    setShowSusModal(false);
+    await executeExportPDF(susInfo);
+    addLog(`ส่งออกเอกสาร PDF Resuscitation Flowsheet เรียบร้อยแล้ว (คะแนน SUS: ${susData.score.toFixed(1)}/100)`, 'system');
+  };
+
+  const handleDirectExportPDF = async () => {
+    setIsExportPending(false);
+    setShowSusModal(false);
+    await executeExportPDF();
+    addLog('ส่งออกเอกสาร PDF Resuscitation Flowsheet เรียบร้อยแล้ว', 'system');
+  };
+
+  const handleCloseSusModal = () => {
+    setIsExportPending(false);
+    setShowSusModal(false);
   };
 
   const copyLogsToClipboard = () => {
@@ -1680,6 +1754,89 @@ export default function App() {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const handleCloseApp = () => {
+    setCprActive(false);
+    setCaseActive(false);
+    setPulseCheckActive(false);
+    setMetronomeOn(false);
+
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      try {
+        window.speechSynthesis.cancel();
+      } catch (e) {
+        // ignore
+      }
+    }
+    if (audioCtxRef.current) {
+      try {
+        audioCtxRef.current.close();
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    addLog('ปิดแอปพลิเคชัน: ผู้ใช้งานสั่งปิดระบบเรียบร้อยแล้ว', 'system');
+
+    try {
+      window.close();
+    } catch (e) {
+      // ignore
+    }
+
+    setIsAppClosed(true);
+  };
+
+  if (isAppClosed) {
+    return (
+      <div 
+        id="smart_acls_closed_screen"
+        className="min-h-[100dvh] h-[100dvh] w-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-center p-4 sm:p-6 select-none font-sans"
+      >
+        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 max-w-md w-full text-center space-y-6 shadow-2xl relative overflow-hidden">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-rose-950/70 border border-rose-800/80 flex items-center justify-center mx-auto text-rose-400 shadow-inner">
+            <Power className="w-8 h-8 sm:w-10 sm:h-10" />
+          </div>
+
+          <div className="space-y-2">
+            <h2 className="text-lg sm:text-xl font-black text-white font-mono tracking-tight">
+              ปิดแอปพลิเคชันเรียบร้อยแล้ว
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
+              ระบบ SMART ACLS COPILOT ได้หยุดการทำงานและเก็บบันทึกข้อมูลอย่างปลอดภัยแล้ว ท่านสามารถปิดแท็บเบราว์เซอร์นี้ได้ทันที
+            </p>
+          </div>
+
+          <div className="pt-2 border-t border-slate-800/80 flex flex-col gap-2.5">
+            <button
+              id="btn_restart_app_after_close"
+              onClick={() => {
+                setIsAppClosed(false);
+                window.location.reload();
+              }}
+              className="w-full py-3 px-4 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-black text-xs sm:text-sm transition-all shadow-lg shadow-cyan-900/30 flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+            >
+              <RotateCcw className="w-4 h-4" />
+              <span>เปิดใช้งานใหม่อีกครั้ง (Restart App)</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                try {
+                  window.close();
+                } catch (e) {
+                  // ignore
+                }
+              }}
+              className="w-full py-2.5 px-4 rounded-xl bg-slate-800/80 hover:bg-slate-800 text-slate-400 hover:text-slate-200 font-bold text-xs transition-colors cursor-pointer"
+            >
+              ปิดหน้าต่าง / แท็บทันที (Close Tab)
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div 
       id="smart_acls_root" 
@@ -1699,6 +1856,10 @@ export default function App() {
         formatMMSS={formatMMSS}
         onOpenLogoModal={() => setShowLogoModal(true)}
         onOpenInstallModal={() => setShowInstallModal(true)}
+        onOpenSusModal={() => {
+          setIsExportPending(false);
+          setShowSusModal(true);
+        }}
       />
 
       {/* 2. CONTROL BAR */}
@@ -1714,6 +1875,8 @@ export default function App() {
         metronomeMode={metronomeMode}
         setMetronomeMode={setMetronomeMode}
         cprActive={cprActive}
+        caseActive={caseActive}
+        onCloseApp={handleCloseApp}
         metronomeBeat={metronomeBeat}
         confirmNewCase={confirmNewCase}
         addLog={addLog}
@@ -1731,6 +1894,10 @@ export default function App() {
         setShowAltMedsPopover={setShowAltMedsModal}
         mgSo4AlertActive={mgSo4AlertActive}
         setMgSo4AlertActive={setMgSo4AlertActive}
+        onOpenSusModal={() => {
+          setIsExportPending(false);
+          setShowSusModal(true);
+        }}
       />
 
       {/* 3. MAIN WORKSPACE (Side-by-side on Tablet/Desktop md+, Tabbed full screen on Mobile) */}
@@ -1738,26 +1905,19 @@ export default function App() {
         {/* Mobile View Tab Selector Header (Hidden on Tablet md and Desktop lg) */}
         <div className="flex md:hidden items-center justify-between bg-slate-900 border border-slate-800 rounded-lg p-1 shrink-0 gap-1 overflow-x-auto no-scrollbar shadow-md w-full">
           <button
+            id="tab_mobile_cpr"
             onClick={() => handleSelectMobileTab('cpr')}
             className={`flex-1 min-w-0 py-2 px-1.5 sm:px-2 text-[10px] sm:text-xs font-black rounded-md flex items-center justify-center gap-1 transition-all cursor-pointer truncate ${
-              mobileViewTab === 'cpr' ? 'bg-cyan-600 text-white shadow-xs ring-1 ring-cyan-400' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+              mobileViewTab === 'cpr' || mobileViewTab === 'meds' ? 'bg-cyan-600 text-white shadow-xs ring-1 ring-cyan-400' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
             }`}
           >
             <Clock className="w-3.5 h-3.5 shrink-0" />
-            <span className="truncate">CPR Timer</span>
+            <Zap className="w-3.5 h-3.5 text-amber-300 shrink-0 -ml-0.5" />
+            <span className="truncate">CPR & Actions</span>
           </button>
 
           <button
-            onClick={() => handleSelectMobileTab('meds')}
-            className={`flex-1 min-w-0 py-2 px-1.5 sm:px-2 text-[10px] sm:text-xs font-black rounded-md flex items-center justify-center gap-1 transition-all cursor-pointer truncate ${
-              mobileViewTab === 'meds' ? 'bg-cyan-600 text-white shadow-xs ring-1 ring-cyan-400' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-            }`}
-          >
-            <Zap className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-            <span className="truncate">Actions & Meds</span>
-          </button>
-
-          <button
+            id="tab_mobile_guidelines"
             onClick={() => handleSelectMobileTab('guidelines')}
             className={`flex-1 min-w-0 py-2 px-1.5 sm:px-2 text-[10px] sm:text-xs font-black rounded-md flex items-center justify-center gap-1 transition-all cursor-pointer truncate ${
               mobileViewTab === 'guidelines' ? 'bg-cyan-600 text-white shadow-xs ring-1 ring-cyan-400' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
@@ -1768,6 +1928,7 @@ export default function App() {
           </button>
 
           <button
+            id="tab_mobile_logs"
             onClick={() => handleSelectMobileTab('logs')}
             className={`flex-1 min-w-0 py-2 px-1.5 sm:px-2 text-[10px] sm:text-xs font-black rounded-md flex items-center justify-center gap-1 transition-all cursor-pointer truncate ${
               mobileViewTab === 'logs' ? 'bg-cyan-600 text-white shadow-xs ring-1 ring-cyan-400' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
@@ -1778,12 +1939,12 @@ export default function App() {
           </button>
         </div>
 
-        {/* LEFT COLUMN: TIMERS & QUICK ACTIONS (50% width on tablet md & desktop lg) */}
-        <div className={`flex-1 md:w-1/2 flex-col gap-1.5 sm:gap-2 overflow-hidden md:overflow-y-auto h-full w-full ${
+        {/* LEFT COLUMN: TIMERS & QUICK ACTIONS (50% width on tablet md & desktop lg, unified on mobile) */}
+        <div className={`flex-1 md:w-1/2 flex flex-col gap-1.5 sm:gap-2 overflow-y-auto h-full w-full ${
           mobileViewTab === 'cpr' || mobileViewTab === 'meds' ? 'flex' : 'hidden md:flex'
         }`}>
-          {/* CPR Timer Card */}
-          <div className={`flex flex-col min-h-[418px] w-full shrink-0 ${mobileViewTab === 'cpr' ? 'flex' : 'hidden md:flex'}`}>
+          {/* CPR Timer Card with Integrated Left (Meds) and Right (Rhythms) Actions */}
+          <div className="flex flex-col w-full shrink-0">
             <CprTimerCard
               cprTimeRemaining={cprTimeRemaining}
               cprActive={cprActive}
@@ -1805,40 +1966,23 @@ export default function App() {
               metronomeBeat={metronomeBeat}
               handleLogPresetMed={handleLogPresetMed}
               logs={logs}
-            />
-          </div>
-
-          {/* Quick Meds and Shocks Panel */}
-          <div className={`flex flex-col h-[185px] w-full shrink-0 ${mobileViewTab === 'meds' ? 'flex' : 'hidden md:flex'}`}>
-            <QuickMedsShocksPanel
               hasCompletedIvAccess={hasCompletedIvAccess}
               handleAdministerEpinephrine={handleAdministerEpinephrine}
               epiCount={epiCount}
               epiTimeRemaining={epiTimeRemaining}
               epiTimerStarted={epiTimerStarted}
               epiAlertActive={epiAlertActive}
-              handleDeliverShock={handleDeliverShock}
-              shockCount={shockCount}
               handleAdministerAmiodarone={handleAdministerAmiodarone}
               amioCount={amioCount}
               amioAlertActive={amioAlertActive}
               handleAdministerLidocaine={handleAdministerLidocaine}
               lidoCount={lidoCount}
               lidoAlertActive={lidoAlertActive}
-              handleRhythmShockable={handleRhythmShockable}
-              handleRhythmNonShockable={handleRhythmNonShockable}
               handleRhythmBradycardia={handleRhythmBradycardia}
               handleRhythmTachycardia={handleRhythmTachycardia}
               handleRhythmROSC={handleRhythmROSC}
               lastRhythmDecision={lastRhythmDecision}
-              selectedShockableRhythm={selectedShockableRhythm}
-              setSelectedShockableRhythm={setSelectedShockableRhythm}
-              selectedNonShockableRhythm={selectedNonShockableRhythm}
-              setSelectedNonShockableRhythm={setSelectedNonShockableRhythm}
-              setShockButtonFlashing={setShockButtonFlashing}
-              addLog={addLog}
-              speakThai={speakThai}
-              formatMMSS={formatMMSS}
+              shockCount={shockCount}
               shockButtonFlashing={shockButtonFlashing}
             />
           </div>
@@ -1944,6 +2088,10 @@ export default function App() {
               customNote={customNote}
               setCustomNote={setCustomNote}
               handleLogCustomNote={handleLogCustomNote}
+              onOpenSusModal={() => {
+                setIsExportPending(false);
+                setShowSusModal(true);
+              }}
             />
           </div>
         </div>
@@ -2074,6 +2222,15 @@ export default function App() {
       <InstallPromptModal
         isOpen={showInstallModal}
         onClose={() => setShowInstallModal(false)}
+      />
+
+      <SystemUsabilityScaleModal
+        isOpen={showSusModal}
+        onClose={handleCloseSusModal}
+        addLog={addLog}
+        isExportPending={isExportPending}
+        onSaveAndExportPDF={handleSaveAndExportPDF}
+        onDirectExportPDF={handleDirectExportPDF}
       />
     </div>
   );

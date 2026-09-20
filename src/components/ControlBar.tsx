@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Volume2, RotateCcw, Heart, Baby, Syringe, ChevronDown, Sparkles, Check, Info, Stethoscope, Plus, AlertTriangle } from 'lucide-react';
+import { Volume2, RotateCcw, Heart, Baby, Syringe, ChevronDown, Sparkles, Check, Info, Stethoscope, Plus, AlertTriangle, ClipboardCheck, Power } from 'lucide-react';
 import { ALT_RESUSCITATION_MEDS, AltMedItem } from '../data/altMeds';
 import { PROCEDURE_PRESETS } from '../types';
 
@@ -16,6 +16,8 @@ interface ControlBarProps {
   metronomeMode: '30:2' | 'continuous';
   setMetronomeMode: (mode: '30:2' | 'continuous') => void;
   cprActive: boolean;
+  caseActive?: boolean;
+  onCloseApp?: () => void;
   metronomeBeat: number;
   confirmNewCase: () => void;
   addLog: (text: string, type?: 'cpr' | 'med' | 'shock' | 'rhythm' | 'note' | 'system') => void;
@@ -33,6 +35,7 @@ interface ControlBarProps {
   setShowAltMedsPopover?: (val: boolean) => void;
   mgSo4AlertActive?: boolean;
   setMgSo4AlertActive?: (val: boolean) => void;
+  onOpenSusModal?: () => void;
 }
 
 export function ControlBar({
@@ -47,6 +50,8 @@ export function ControlBar({
   metronomeMode,
   setMetronomeMode,
   cprActive,
+  caseActive = false,
+  onCloseApp,
   metronomeBeat,
   confirmNewCase,
   addLog,
@@ -64,6 +69,7 @@ export function ControlBar({
   setShowAltMedsPopover: setShowAltMedsProp,
   mgSo4AlertActive = false,
   setMgSo4AlertActive,
+  onOpenSusModal,
 }: ControlBarProps) {
   const [localShowAltMeds, setLocalShowAltMeds] = useState<boolean>(false);
   const showAltMedsPopover = showAltMedsProp !== undefined ? showAltMedsProp : localShowAltMeds;
@@ -71,6 +77,21 @@ export function ControlBar({
 
   const [lastLoggedMed, setLastLoggedMed] = useState<string | null>(null);
   const [selectedMedDetail, setSelectedMedDetail] = useState<AltMedItem | null>(null);
+  const [showCloseModal, setShowCloseModal] = useState<boolean>(false);
+
+  const handleExecuteCloseApp = () => {
+    setShowCloseModal(false);
+    addLog('ปิดแอปพลิเคชัน: ผู้ใช้งานเลือกปิดการทำงานของระบบ', 'system');
+    if (onCloseApp) {
+      onCloseApp();
+    } else {
+      try {
+        window.close();
+      } catch (e) {
+        // ignore
+      }
+    }
+  };
 
   const isProceduresFlashing = ivAccessAlertActive || airwayAlertActive || etco2AlertActive;
 
@@ -492,6 +513,18 @@ export function ControlBar({
 
         {/* Right Side Actions */}
         <div className="flex items-center gap-2">
+          {onOpenSusModal && (
+            <button
+              id="btn_control_sus"
+              type="button"
+              onClick={onOpenSusModal}
+              className="px-2.5 py-1 bg-gradient-to-r from-amber-950/80 to-yellow-950/80 hover:from-amber-900 hover:to-yellow-900 text-amber-300 hover:text-white border border-amber-600/70 hover:border-amber-400 rounded-md text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer active:scale-95 shadow-xs"
+              title="เปิดแบบประเมินความพึงพอใจ System Usability Scale (SUS)"
+            >
+              <ClipboardCheck className="w-3.5 h-3.5 text-amber-400" />
+              <span>ประเมิน SUS</span>
+            </button>
+          )}
           <span
             id="badge_aha_guideline_2025"
             className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] sm:text-[11px] font-black uppercase tracking-wide bg-cyan-950/80 text-cyan-300 border border-cyan-700/80 shadow-xs"
@@ -507,12 +540,81 @@ export function ControlBar({
             <RotateCcw className="w-3.5 h-3.5 text-rose-400" />
             <span>Reset Case</span>
           </button>
+          <button
+            id="btn_close_app"
+            onClick={() => setShowCloseModal(true)}
+            className="px-2.5 py-1 bg-slate-900 hover:bg-rose-950/90 text-slate-300 hover:text-rose-200 border border-slate-700 hover:border-rose-600 rounded-md text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer active:scale-95 shadow-xs"
+            title="ปิดแอปพลิเคชัน (Close Application)"
+          >
+            <Power className="w-3.5 h-3.5 text-rose-400" />
+            <span>ปิด App</span>
+          </button>
           <span className="hidden xl:inline-flex items-center gap-1 text-[10px] text-emerald-400 font-bold bg-emerald-950/50 px-2 py-0.5 rounded border border-emerald-900">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
             Offline Ready
           </span>
         </div>
       </div>
+
+      {/* Close App Confirmation Modal */}
+      {showCloseModal && typeof document !== 'undefined' && createPortal(
+        <div 
+          className="fixed inset-0 z-[99999] bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn"
+          onClick={() => setShowCloseModal(false)}
+        >
+          <div 
+            className="bg-slate-900 border border-rose-600/70 rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl space-y-4 text-left relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 border-b border-slate-800 pb-3">
+              <div className="w-10 h-10 rounded-xl bg-rose-950/90 border border-rose-800 flex items-center justify-center text-rose-400 shrink-0 shadow-inner">
+                <Power className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <h3 className="text-base font-black text-white font-mono leading-tight truncate">
+                  ยืนยันการปิดแอปพลิเคชัน
+                </h3>
+                <p className="text-xs text-slate-400">
+                  SMART ACLS COPILOT SYSTEM
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-2 text-xs text-slate-300">
+              <p className="leading-relaxed">
+                คุณต้องการออกจากแอปพลิเคชันและปิดการทำงานของระบบใช่หรือไม่?
+              </p>
+              {(caseActive || cprActive) && (
+                <div className="p-2.5 rounded-lg bg-amber-950/60 border border-amber-800/80 text-amber-300 text-[11px] flex items-start gap-2">
+                  <AlertTriangle className="w-4 h-4 shrink-0 text-amber-400 mt-0.5" />
+                  <span className="leading-tight">
+                    <strong>คำเตือน:</strong> มีการกู้ชีพหรือตัวจับเวลา CPR กำลังทำงานอยู่ การปิดแอปจะหยุดการจับเวลาทั้งหมดทันที
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 pt-2 border-t border-slate-800">
+              <button
+                type="button"
+                onClick={() => setShowCloseModal(false)}
+                className="flex-1 py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition-colors cursor-pointer"
+              >
+                ยกเลิก (ใช้งานต่อ)
+              </button>
+              <button
+                type="button"
+                onClick={handleExecuteCloseApp}
+                className="flex-1 py-2.5 px-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-black text-xs transition-all shadow-lg shadow-rose-900/40 flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+              >
+                <Power className="w-3.5 h-3.5" />
+                <span>ยืนยันปิดแอป</span>
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
 
       {/* Drug Info Modal */}
       {selectedMedDetail && typeof document !== 'undefined' && createPortal(

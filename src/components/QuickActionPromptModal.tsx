@@ -2,7 +2,7 @@ import React from 'react';
 import { createPortal } from 'react-dom';
 import { Zap, ShieldAlert, Heart, Activity, X, Play, Check, AlertCircle, Syringe, Lock } from 'lucide-react';
 import { RhythmDecision, ShockableRhythmType, NonShockableRhythmType } from '../types';
-import { VfEkgIcon, VtEkgIcon, AsystoleEkgIcon, PeaEkgIcon } from './EkgIcons';
+import { VfEkgIcon, VtEkgIcon, AsystoleEkgIcon, PeaEkgIcon, TorsadesEkgIcon } from './EkgIcons';
 
 interface QuickActionPromptModalProps {
   isOpen: boolean;
@@ -146,7 +146,7 @@ export function QuickActionPromptModal({
                 }`}
               >
                 <Activity className="w-4 h-4 mb-0.5 text-amber-300" />
-                <span className="text-xs uppercase font-mono block leading-none">BRADY</span>
+                <span className="text-[11px] sm:text-xs uppercase font-mono block leading-none tracking-tight">BRADYCARDIA</span>
                 <span className="text-[9px] opacity-80 mt-1">HR &lt; 50</span>
               </button>
 
@@ -162,7 +162,7 @@ export function QuickActionPromptModal({
                 }`}
               >
                 <Activity className="w-4 h-4 mb-0.5 text-purple-300" />
-                <span className="text-xs uppercase font-mono block leading-none">TACHY</span>
+                <span className="text-[11px] sm:text-xs uppercase font-mono block leading-none tracking-tight">TACHYCARDIA</span>
                 <span className="text-[9px] opacity-80 mt-1">HR &ge; 150</span>
               </button>
 
@@ -245,6 +245,7 @@ export function QuickActionPromptModal({
                       : 'bg-slate-950 border-slate-800 text-slate-300 hover:bg-slate-900'
                   }`}
                 >
+                  <TorsadesEkgIcon className="w-8 h-5 shrink-0" />
                   <div className="min-w-0">
                     <span className="font-bold text-xs block leading-none">TdP</span>
                     <span className="text-[8px] text-slate-400 block truncate">Torsades</span>

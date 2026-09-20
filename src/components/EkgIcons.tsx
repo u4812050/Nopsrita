@@ -155,14 +155,14 @@ export function PeaEkgIcon({ className = "w-14 h-8" }: { className?: string }) {
 // Mini EKG Waveform Component for Torsades de pointes (Polymorphic VT)
 export function TorsadesEkgIcon({ className = "w-14 h-8" }: { className?: string }) {
   return (
-    <div className={`${className} bg-slate-950 rounded-lg border border-purple-900/80 p-0.5 relative overflow-hidden isolate flex items-center justify-center shrink-0 shadow-inner`}>
-      <svg className="absolute inset-0 w-full h-full opacity-30 pointer-events-none" viewBox="0 0 60 30">
-        <line x1="0" y1="7.5" x2="60" y2="7.5" stroke="#c084fc" strokeWidth="0.5" strokeDasharray="1,1" />
-        <line x1="0" y1="15" x2="60" y2="15" stroke="#c084fc" strokeWidth="0.5" strokeDasharray="1,1" />
-        <line x1="0" y1="22.5" x2="60" y2="22.5" stroke="#c084fc" strokeWidth="0.5" strokeDasharray="1,1" />
-        <line x1="15" y1="0" x2="15" y2="30" stroke="#c084fc" strokeWidth="0.5" strokeDasharray="1,1" />
-        <line x1="30" y1="0" x2="30" y2="30" stroke="#c084fc" strokeWidth="0.5" strokeDasharray="1,1" />
-        <line x1="45" y1="0" x2="45" y2="30" stroke="#c084fc" strokeWidth="0.5" strokeDasharray="1,1" />
+    <div className={`${className} bg-slate-950 rounded-lg border border-purple-800/80 p-0.5 relative overflow-hidden isolate flex items-center justify-center shrink-0 shadow-inner`}>
+      <svg className="absolute inset-0 w-full h-full opacity-25 pointer-events-none" viewBox="0 0 60 30">
+        <line x1="0" y1="7.5" x2="60" y2="7.5" stroke="#ec4899" strokeWidth="0.5" strokeDasharray="1,1" />
+        <line x1="0" y1="15" x2="60" y2="15" stroke="#ec4899" strokeWidth="0.5" strokeDasharray="1,1" />
+        <line x1="0" y1="22.5" x2="60" y2="22.5" stroke="#ec4899" strokeWidth="0.5" strokeDasharray="1,1" />
+        <line x1="15" y1="0" x2="15" y2="30" stroke="#ec4899" strokeWidth="0.5" strokeDasharray="1,1" />
+        <line x1="30" y1="0" x2="30" y2="30" stroke="#ec4899" strokeWidth="0.5" strokeDasharray="1,1" />
+        <line x1="45" y1="0" x2="45" y2="30" stroke="#ec4899" strokeWidth="0.5" strokeDasharray="1,1" />
       </svg>
       <svg viewBox="0 0 60 30" className="w-full h-full relative z-0 overflow-hidden">
         <defs>
@@ -174,10 +174,11 @@ export function TorsadesEkgIcon({ className = "w-14 h-8" }: { className?: string
             </feMerge>
           </filter>
         </defs>
+        {/* Polymorphic Ventricular Tachycardia with classic sinusoidal spindle twist */}
         <path
-          d="M 0 15 Q 3 2, 6 28 T 12 15 Q 15 9, 18 21 T 24 15 Q 27 13, 30 17 T 36 15 Q 39 5, 42 25 T 48 15 Q 51 2, 54 28 T 60 15"
+          d="M 0 15 L 4 3 L 8 27 L 12 6 L 16 24 L 20 9 L 24 21 L 28 13 L 32 17 L 36 9 L 40 21 L 44 6 L 48 24 L 52 3 L 56 27 L 60 15"
           fill="none"
-          stroke="#e879f9"
+          stroke="#f472b6"
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"

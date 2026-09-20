@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Clock, RotateCcw, Heart, Activity, Check } from 'lucide-react';
+import { Clock, RotateCcw, Heart, Activity, Check, Zap } from 'lucide-react';
 import { ALT_RESUSCITATION_MEDS, AltMedItem } from '../data/altMeds';
 import { LogEntry } from '../types';
 
@@ -27,6 +27,28 @@ interface CprTimerCardProps {
   metronomeBeat: number;
   handleLogPresetMed?: (medName: string, skipSpeech?: boolean) => void;
   logs?: LogEntry[];
+
+  // Resuscitation Meds (Left Side)
+  hasCompletedIvAccess?: boolean;
+  handleAdministerEpinephrine?: () => void;
+  epiCount?: number;
+  epiTimeRemaining?: number;
+  epiTimerStarted?: boolean;
+  epiAlertActive?: boolean;
+  handleAdministerAmiodarone?: () => void;
+  amioCount?: number;
+  amioAlertActive?: boolean;
+  handleAdministerLidocaine?: () => void;
+  lidoCount?: number;
+  lidoAlertActive?: boolean;
+
+  // Rhythm Triggers & ROSC (Right Side)
+  handleRhythmBradycardia?: () => void;
+  handleRhythmTachycardia?: () => void;
+  handleRhythmROSC?: () => void;
+  lastRhythmDecision?: 'shockable' | 'non-shockable' | 'bradycardia' | 'tachycardia' | 'rosc' | null;
+  shockCount?: number;
+  shockButtonFlashing?: boolean;
 }
 
 export function CprTimerCard({
@@ -50,6 +72,26 @@ export function CprTimerCard({
   metronomeBeat,
   handleLogPresetMed,
   logs = [],
+
+  hasCompletedIvAccess = false,
+  handleAdministerEpinephrine,
+  epiCount = 0,
+  epiTimeRemaining = 0,
+  epiTimerStarted = false,
+  epiAlertActive = false,
+  handleAdministerAmiodarone,
+  amioCount = 0,
+  amioAlertActive = false,
+  handleAdministerLidocaine,
+  lidoCount = 0,
+  lidoAlertActive = false,
+
+  handleRhythmBradycardia,
+  handleRhythmTachycardia,
+  handleRhythmROSC,
+  lastRhythmDecision = null,
+  shockCount = 0,
+  shockButtonFlashing = false,
 }: CprTimerCardProps) {
   // Real-time latest 2 logs for the mini LiveResus Log (newest first)
   const latestTwoLogs = useMemo(() => {
@@ -177,12 +219,121 @@ export function CprTimerCard({
         </div>
       </div>
 
-      {/* Timer Digits Display with Circular Progress Gauge */}
-      <div className="flex flex-col items-center justify-center my-0.5 w-full max-w-full overflow-hidden flex-1">
-        <div className="relative flex items-center justify-center w-32 h-32 xs:w-40 xs:h-40 sm:w-48 sm:h-48 my-0.5 max-w-full">
+      {/* Cockpit Row: [Resus Meds (Left)] | [Circular CPR Timer (Center)] | [Rhythm Decisions (Right)] */}
+      <div className="w-full flex items-center justify-between gap-1 xs:gap-1.5 sm:gap-2 my-1 px-0.5 shrink-0">
+        {/* LEFT COLUMN: RESUS MEDS (EPINEPHRINE, AMIODARONE, LIDOCAINE) */}
+        <div className="flex-1 flex flex-col gap-1 xs:gap-1.5 min-w-0 max-w-[105px] xs:max-w-[125px] sm:max-w-[145px]">
+          <div className="text-[7.5px] xs:text-[8.5px] font-mono font-black text-cyan-400 uppercase tracking-wider text-center border-b border-slate-800/80 pb-0.5 mb-0.5 flex items-center justify-center gap-1">
+            <span>MEDS</span>
+          </div>
+
+          {/* 1. EPINEPHRINE */}
+          {(() => {
+            const isEpiPrepOnly = lastRhythmDecision === 'shockable' && (shockCount ?? 0) < 2 && (epiCount ?? 0) === 0;
+            return (
+              <button
+                type="button"
+                id="btn_cpr_epinephrine"
+                onClick={handleAdministerEpinephrine}
+                className={`p-1 xs:p-1.5 rounded-lg text-left transition-all active:scale-95 cursor-pointer flex flex-col justify-between border relative overflow-hidden isolate h-[40px] xs:h-[45px] ${
+                  epiAlertActive
+                    ? isEpiPrepOnly
+                      ? 'bg-gradient-to-b from-amber-600 via-amber-700 to-amber-900 border-2 border-amber-300 text-white animate-pulse ring-2 ring-amber-500/80 shadow-[0_0_16px_rgba(245,158,11,0.8)]'
+                      : 'bg-gradient-to-b from-rose-600 via-rose-700 to-red-900 border-2 border-rose-300 text-white animate-pulse ring-2 ring-rose-500/80 shadow-[0_0_16px_rgba(244,63,94,0.8)]'
+                    : 'bg-slate-950 hover:bg-slate-800 border-slate-800 text-slate-200'
+                }`}
+              >
+                {epiAlertActive && (
+                  <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/30 via-white/10 to-transparent pointer-events-none" />
+                )}
+                <div className="flex items-center justify-between w-full relative z-1">
+                  <span className={`text-[8.5px] xs:text-[9.5px] font-black font-mono leading-tight truncate ${
+                    epiAlertActive ? 'text-white' : 'text-cyan-300'
+                  }`}>
+                    EPINEPHRINE
+                  </span>
+                  <span className={`text-[7px] xs:text-[8px] font-mono font-bold px-1 rounded border ml-0.5 shrink-0 ${
+                    epiAlertActive
+                      ? isEpiPrepOnly ? 'bg-amber-950 text-amber-200 border-amber-400' : 'bg-white text-rose-800 border-rose-200'
+                      : 'bg-cyan-950 text-cyan-300 border-cyan-800'
+                  }`}>
+                    {isEpiPrepOnly && epiAlertActive ? 'รอ#2' : `#${epiCount ?? 0}`}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between w-full text-[6.5px] xs:text-[7.5px] font-mono relative z-1">
+                  <span className="truncate opacity-90">
+                    {epiAlertActive
+                      ? isEpiPrepOnly ? '⚠️ เตรียมยา' : '⚡ ให้ 1mg'
+                      : '1mg IV'}
+                  </span>
+                  {epiTimerStarted ? (
+                    <span className={`font-black ml-0.5 shrink-0 ${epiTimeRemaining === 0 ? 'text-rose-400 animate-pulse' : 'text-amber-400'}`}>
+                      {epiTimeRemaining === 0 ? 'DUE!' : formatMMSS(epiTimeRemaining ?? 0)}
+                    </span>
+                  ) : !hasCompletedIvAccess ? (
+                    <span className="text-[6.5px] bg-amber-950/80 text-amber-300 px-0.5 rounded border border-amber-800 shrink-0">
+                      IV
+                    </span>
+                  ) : null}
+                </div>
+              </button>
+            );
+          })()}
+
+          {/* 2. AMIODARONE */}
+          <button
+            type="button"
+            id="btn_cpr_amiodarone"
+            onClick={handleAdministerAmiodarone}
+            className={`p-1 xs:p-1.5 rounded-lg text-left transition-all active:scale-95 cursor-pointer flex flex-col justify-between border h-[36px] xs:h-[40px] ${
+              amioAlertActive
+                ? 'bg-indigo-900 border-indigo-400 text-white animate-pulse ring-2 ring-indigo-400 shadow-[0_0_12px_rgba(99,102,241,0.6)]'
+                : 'bg-slate-950 hover:bg-slate-800 border-slate-800 text-slate-200'
+            }`}
+          >
+            <div className="flex items-center justify-between w-full">
+              <span className="text-[8px] xs:text-[9px] font-black text-indigo-300 font-mono truncate">
+                AMIODARONE
+              </span>
+              <span className="text-[7px] xs:text-[8px] font-mono font-bold bg-indigo-950 text-indigo-300 px-1 rounded border border-indigo-800 shrink-0">
+                #{amioCount ?? 0}
+              </span>
+            </div>
+            <span className="text-[6.5px] xs:text-[7.5px] text-slate-400 font-semibold block truncate">
+              {(amioCount ?? 0) === 0 ? '300mg IV' : '150mg IV'}
+            </span>
+          </button>
+
+          {/* 3. LIDOCAINE */}
+          <button
+            type="button"
+            id="btn_cpr_lidocaine"
+            onClick={handleAdministerLidocaine}
+            className={`p-1 xs:p-1.5 rounded-lg text-left transition-all active:scale-95 cursor-pointer flex flex-col justify-between border h-[36px] xs:h-[40px] ${
+              lidoAlertActive
+                ? 'bg-indigo-900 border-indigo-400 text-white animate-pulse ring-2 ring-indigo-400 shadow-[0_0_12px_rgba(99,102,241,0.6)]'
+                : 'bg-slate-950 hover:bg-slate-800 border-slate-800 text-slate-200'
+            }`}
+          >
+            <div className="flex items-center justify-between w-full">
+              <span className="text-[8px] xs:text-[9px] font-black text-indigo-300 font-mono truncate">
+                LIDOCAINE
+              </span>
+              <span className="text-[7px] xs:text-[8px] font-mono font-bold bg-indigo-950 text-indigo-300 px-1 rounded border border-indigo-800 shrink-0">
+                #{lidoCount ?? 0}
+              </span>
+            </div>
+            <span className="text-[6.5px] xs:text-[7.5px] text-slate-400 font-semibold block truncate">
+              {(lidoCount ?? 0) === 0 ? '1-1.5 mg/kg' : '0.5-0.75 mg/kg'}
+            </span>
+          </button>
+        </div>
+
+        {/* CENTER: CIRCULAR CPR TIMER GAUGE */}
+        <div className="relative flex items-center justify-center shrink-0 w-28 h-28 xs:w-36 xs:h-36 sm:w-44 sm:h-44 max-w-full">
           {/* SVG Circular Ring Gauge */}
           <svg className="w-full h-full transform -rotate-90 drop-shadow-[0_0_20px_rgba(6,182,212,0.25)]" viewBox="0 0 160 160">
-            {/* Ambient Outer Track Glow/Background Circle (12px outer shadow ring) */}
+            {/* Ambient Outer Track Glow */}
             <circle
               cx="80"
               cy="80"
@@ -191,7 +342,7 @@ export function CprTimerCard({
               strokeWidth="12"
               fill="transparent"
             />
-            {/* Background Track Circle (10px track width) */}
+            {/* Background Track Circle */}
             <circle
               cx="80"
               cy="80"
@@ -200,7 +351,7 @@ export function CprTimerCard({
               strokeWidth="10"
               fill="transparent"
             />
-            {/* Dynamic Progress Circle (10px stroke width, depletes as countdown approaches 0) */}
+            {/* Dynamic Progress Circle */}
             <circle
               cx="80"
               cy="80"
@@ -219,17 +370,17 @@ export function CprTimerCard({
           </svg>
 
           {/* Centered Timer Content inside the Ring */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-2">
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-1">
             <div
               id="timer-display"
-              className={`text-2xl xs:text-4xl sm:text-5xl font-mono font-black leading-none tracking-tight tabular-nums ${
+              className={`text-xl xs:text-3xl sm:text-4xl font-mono font-black leading-none tracking-tight tabular-nums ${
                 cprTimeRemaining <= 30 ? 'text-rose-400 animate-pulse glow-red' : 'text-amber-300 drop-shadow-[0_0_12px_rgba(251,191,36,0.4)]'
               }`}
             >
               {formatMMSS(cprTimeRemaining)}
             </div>
             <span
-              className={`text-[8.5px] xs:text-[9.5px] font-bold tracking-wider uppercase mt-1 xs:mt-1.5 px-2 py-0.5 rounded-full border transition-all ${
+              className={`text-[7.5px] xs:text-[8.5px] font-bold tracking-wider uppercase mt-1 px-1.5 py-0.5 rounded-full border transition-all ${
                 cprActive
                   ? cprTimeRemaining <= 30
                     ? 'text-rose-300 bg-rose-950/80 border-rose-800/80 animate-pulse'
@@ -237,10 +388,100 @@ export function CprTimerCard({
                   : 'text-slate-400 bg-slate-950/80 border-slate-800'
               }`}
             >
-              {cprActive ? (cprTimeRemaining <= 30 ? 'TIME CRITICAL' : 'CPR ACTIVE') : 'CPR PAUSED'}
+              {cprActive ? (cprTimeRemaining <= 30 ? 'CRITICAL' : 'ACTIVE') : 'PAUSED'}
             </span>
           </div>
         </div>
+
+        {/* RIGHT COLUMN: RHYTHM TRIGGERS & ROSC */}
+        <div className="flex-1 flex flex-col gap-1 xs:gap-1.5 min-w-0 max-w-[105px] xs:max-w-[125px] sm:max-w-[145px]">
+          <div className="text-[7.5px] xs:text-[8.5px] font-mono font-black text-amber-400 uppercase tracking-wider text-center border-b border-slate-800/80 pb-0.5 mb-0.5 flex items-center justify-center gap-1">
+            <span>RHYTHM</span>
+          </div>
+
+          {/* 1. BRADYCARDIA */}
+          <button
+            type="button"
+            id="btn_cpr_bradycardia"
+            onClick={handleRhythmBradycardia}
+            className={`p-1 xs:p-1.5 rounded-lg text-center font-black transition-all cursor-pointer flex flex-col items-center justify-center border h-[36px] xs:h-[40px] ${
+              lastRhythmDecision === 'bradycardia'
+                ? 'bg-amber-600 text-white border-amber-300 ring-2 ring-amber-400 shadow-[0_0_14px_rgba(251,191,36,0.9)] animate-pulse'
+                : 'bg-amber-950/60 hover:bg-amber-900 text-amber-300 border-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.5)]'
+            }`}
+          >
+            <span className="text-[7.5px] xs:text-[8.5px] uppercase font-mono block leading-none tracking-tight truncate w-full">
+              BRADYCARDIA
+            </span>
+            <span className="text-[6.5px] xs:text-[7px] opacity-80 mt-0.5 truncate w-full">
+              HR &lt; 50
+            </span>
+          </button>
+
+          {/* 2. TACHYCARDIA */}
+          <button
+            type="button"
+            id="btn_cpr_tachycardia"
+            onClick={handleRhythmTachycardia}
+            className={`p-1 xs:p-1.5 rounded-lg text-center font-black transition-all cursor-pointer flex flex-col items-center justify-center border h-[36px] xs:h-[40px] ${
+              lastRhythmDecision === 'tachycardia'
+                ? 'bg-purple-600 text-white border-purple-300 ring-2 ring-purple-400 shadow-[0_0_14px_rgba(168,85,247,0.9)] animate-pulse'
+                : 'bg-purple-950/60 hover:bg-purple-900 text-purple-300 border-purple-400 shadow-[0_0_8px_rgba(168,85,247,0.5)]'
+            }`}
+          >
+            <span className="text-[7.5px] xs:text-[8.5px] uppercase font-mono block leading-none tracking-tight truncate w-full">
+              TACHYCARDIA
+            </span>
+            <span className="text-[6.5px] xs:text-[7px] opacity-80 mt-0.5 truncate w-full">
+              HR &ge; 150
+            </span>
+          </button>
+
+          {/* 3. ROSC */}
+          <button
+            type="button"
+            id="btn_cpr_rosc"
+            onClick={handleRhythmROSC}
+            className={`p-1 xs:p-1.5 rounded-lg text-center font-black transition-all cursor-pointer flex flex-col items-center justify-center border h-[40px] xs:h-[45px] ${
+              lastRhythmDecision === 'rosc'
+                ? 'bg-emerald-600 text-white border-emerald-300 ring-2 ring-emerald-400 shadow-[0_0_18px_rgba(52,211,153,0.95)] animate-pulse'
+                : 'bg-emerald-950/70 hover:bg-emerald-900 text-emerald-300 border-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.6)]'
+            }`}
+          >
+            <span className="text-[8.5px] xs:text-[9.5px] uppercase font-mono block leading-none truncate w-full">
+              ROSC
+            </span>
+            <span className="text-[6.5px] xs:text-[7.5px] opacity-90 mt-0.5 truncate w-full text-emerald-200 font-bold">
+              Pulse Back
+            </span>
+          </button>
+        </div>
+      </div>
+
+      {/* SHOCK Status Display Banner when Shockable */}
+      {lastRhythmDecision === 'shockable' && (
+        <div
+          className={`w-full py-1 xs:py-1.5 px-2 rounded-lg font-black text-xs flex items-center justify-between transition-all border my-0.5 shadow-md shrink-0 ${
+            shockButtonFlashing
+              ? 'bg-gradient-to-r from-rose-950/90 via-slate-900 to-rose-950/80 border-rose-500/80 text-white ring-2 ring-rose-500/50 shadow-[0_0_16px_rgba(244,63,94,0.35)] animate-pulse'
+              : 'bg-gradient-to-r from-amber-950/85 via-slate-900 to-amber-950/75 border-amber-500/70 text-amber-100 shadow-[0_0_12px_rgba(245,158,11,0.25)]'
+          }`}
+        >
+          <div className="flex items-center gap-1.5">
+            <Zap className={`w-3.5 h-3.5 text-amber-400 fill-amber-400/30 shrink-0 ${shockButtonFlashing ? 'text-rose-400 fill-rose-400/40 animate-pulse' : ''}`} />
+            <span className="font-mono font-black text-[10px] xs:text-[11px]">DEFIBRILLATION (200J)</span>
+            <span className="text-[7px] px-1 py-0.2 rounded font-bold uppercase bg-slate-800 text-slate-300">
+              SHOCKABLE
+            </span>
+          </div>
+          <span className="text-[8.5px] bg-black/60 text-amber-300 border border-amber-500/30 px-1.5 py-0.5 rounded font-mono font-bold">
+            Shock #{(shockCount ?? 0) + 1}
+          </span>
+        </div>
+      )}
+
+      {/* Below Cockpit: Beat Feedback / Guideline Specs */}
+      <div className="flex flex-col items-center justify-center w-full max-w-full overflow-hidden shrink-0">
 
         {/* Live Beat Feedback Line */}
         <div className="h-5 flex items-center justify-center my-0.5 max-w-full px-1">
@@ -273,7 +514,7 @@ export function CprTimerCard({
               id="cpr_guideline_specs"
               className="text-[7.5px] xs:text-[9px] sm:text-[10px] text-slate-300 font-mono font-bold uppercase tracking-tight text-center truncate px-2 py-0.5 rounded-full bg-slate-950/70 border border-slate-800/90 shadow-inner flex items-center justify-center gap-1 sm:gap-1.5 max-w-full"
             >
-              <span className="text-cyan-400 font-black">TARGET:</span>
+              <span className="text-cyan-400 font-black">FAST:</span>
               <span className="text-slate-200 font-bold">100-120BPM</span>
               <span className="text-slate-600 font-normal">/</span>
               <span className="text-amber-400 font-black">DEPTH:</span>
