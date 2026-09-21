@@ -68,7 +68,7 @@ export function HeaderBar({
             <Heart className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-rose-400 shrink-0 fill-rose-500/20" />
             <div className="text-left">
               <span className="text-[7.5px] sm:text-[8px] uppercase tracking-tight text-slate-400 font-bold block leading-none">
-                CPR Cycle
+                CPR CYCLE
               </span>
               <div className="flex items-baseline gap-0.5 sm:gap-1 leading-none">
                 <span className="text-xs sm:text-base font-mono font-black text-rose-400">

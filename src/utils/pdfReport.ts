@@ -42,13 +42,14 @@ function translateLogTextToEnglish(text: string): string {
     [/หยุด CPR|หยุดกดหน้าอก/gi, 'CPR Paused'],
     [/กดหน้าอกต่อ/gi, 'Resume CPR'],
     [/เลือกการนับ CPR 2 นาทีแบบต่อเนื่อง|เลือกการนับเวลา CPR 2 นาที แบบต่อเนื่อง/gi, 'Mode: 2-Min Continuous CPR'],
-    [/เลือกการนับ CPR แบบ 30 ต่อ 2|เลือกการนับ 30 ต่อ 2/gi, 'Mode: 30:2 CPR (5 Cycles)'],
-    [/CPR 30:2 ครบ 5 Cycle|CPR 30:2 ครบ 5 รอบ|ครบ 5 รอบ สามสิบต่อสอง|ครบ 5 ไซเคิล/gi, 'Completed 5 Cycles of 30:2 CPR'],
+    [/เลือกการนับ CPR แบบ 30 ต่อ 2|เลือกการนับ 30 ต่อ 2/gi, 'Mode: 30:2 CPR (5 CYCLES)'],
+    [/CPR 30:2 ครบ 5 CYCLE|CPR 30:2 ครบ 5 Cycle|CPR 30:2 ครบ 5 รอบ|ครบ 5 รอบ สามสิบต่อสอง|ครบ 5 ไซเคิล/gi, 'Completed 5 CYCLES of 30:2 CPR'],
     [/CPR ต่อเนื่องครบ 2 นาที|CPR ครบ 2 นาที/gi, 'Completed 2-Min Continuous CPR'],
-    [/ประเมินชีพจรและ EKG|ประเมินชีพจรและอีเคจี/gi, 'Assess Pulse & Rhythm (EKG)'],
-    [/ครบรอบที่ (\d+)/gi, 'Completed 30:2 Cycle $1'],
-    [/รอบที่ (\d+) จาก 5/gi, '30:2 Cycle $1 of 5'],
-    [/รอบที่ (\d+)/gi, 'Cycle $1'],
+    [/ประเมินชีพจรและ EKG|ประเมินชีพจรและอีเคจี|ตรวจชีพจรและคลื่นไฟฟ้าหัวใจ/gi, 'Assess Pulse & Rhythm (EKG)'],
+    [/หยุด CPR ก่อนตรวจชีพจรและคลื่นไฟฟ้าหัวใจ/gi, 'Stop CPR - Assess Pulse & Rhythm (EKG)'],
+    [/ครบรอบที่ (\d+)/gi, 'Completed 30:2 CYCLE $1'],
+    [/รอบที่ (\d+) จาก 5/gi, '30:2 CYCLE $1 of 5'],
+    [/รอบที่ (\d+)/gi, 'CYCLE $1'],
     [/ปล่อยช็อกครั้งที่ (\d+)/gi, 'Defibrillation #$1 Delivered'],
     [/ช็อคได้/gi, 'Shockable Rhythm'],
     [/ช็อคไม่ได้/gi, 'Non-Shockable Rhythm'],
@@ -202,14 +203,24 @@ function parseLogRow(entry: LogEntry) {
     textLower.includes('addressed') ||
     textLower.includes('deselected');
 
+  const isMedicationPromptOrAdvice =
+    textLower.includes('แนะนำให้ยา') ||
+    textLower.includes('เตรียมยา') ||
+    textLower.includes('รอให้ยา') ||
+    textLower.includes('ถึงเวลาบริหารยา') ||
+    textLower.includes('consider ') ||
+    textLower.includes('prepare ') ||
+    textLower.includes('recommend');
+
   const isMedicationLog =
+    entry.type !== 'shock' &&
     !isLabOrProcedureCheck &&
+    !isMedicationPromptOrAdvice &&
     (entry.type === 'med' ||
      textLower.includes('administered') ||
      textLower.includes('given') ||
      textLower.includes('started') ||
-     textLower.includes('medication') ||
-     textLower.includes('ให้ยา'));
+     textLower.includes('medication:'));
 
   if (isMedicationLog) {
     const isNorEpi =
@@ -416,7 +427,7 @@ export async function generateResuscitationPDF(logs: LogEntry[], stats: SummaryS
   // Column 1
   doc.text(`Date / Time: ${todayStr} ${new Date().toLocaleTimeString('en-US', { hour12: false })}`, 14, 31);
   doc.text(`Total Duration: ${totalTimeStr}`, 14, 36);
-  doc.text(`CPR Cycles Completed: ${stats.cprCycle > 1 ? stats.cprCycle - 1 : 0} Cycles`, 14, 41);
+  doc.text(`CPR CYCLES Completed: ${stats.cprCycle > 1 ? stats.cprCycle - 1 : 0} CYCLES`, 14, 41);
 
   // Column 2
   doc.text(`Defibrillations Delivered: ${stats.shockCount} Shocks`, 85, 31);

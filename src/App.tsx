@@ -24,6 +24,7 @@ import { UnstableTachycardiaModal } from './components/UnstableTachycardiaModal'
 import { LogoModal } from './components/LogoModal';
 import { InstallPromptModal } from './components/InstallPromptModal';
 import { SystemUsabilityScaleModal, SusResultData } from './components/SystemUsabilityScaleModal';
+import { MedDueModal } from './components/MedDueModal';
 import { Clock, Zap, Activity, ListFilter, Heart, Power, RotateCcw } from 'lucide-react';
 
 const SAVE_KEY = 'smart_acls_copilot_state_v2';
@@ -137,6 +138,7 @@ export default function App() {
   const [showAltMedsModal, setShowAltMedsModal] = useState<boolean>(false);
   const [showQuickActionModal, setShowQuickActionModal] = useState<boolean>(false);
   const [showSusModal, setShowSusModal] = useState<boolean>(false);
+  const [showMedDueModal, setShowMedDueModal] = useState<boolean>(false);
   const [isExportPending, setIsExportPending] = useState<boolean>(false);
   const [lastSusScore, setLastSusScore] = useState<{ score: number; grade: string; evaluator: string } | null>(null);
   const [mgSo4AlertActive, setMgSo4AlertActive] = useState<boolean>(false);
@@ -147,6 +149,19 @@ export default function App() {
   const [pulseCheckTime, setPulseCheckTime] = useState<number>(10);
   const [cprButtonFlash, setCprButtonFlash] = useState<boolean>(false);
   const [shockButtonFlashing, setShockButtonFlashing] = useState<boolean>(false);
+
+  // Auto-open Medication Due pop-up modal when medication is due according to ACLS protocol
+  useEffect(() => {
+    const isEpiPrepOnly = lastRhythmDecision === 'shockable' && shockCount < 2 && epiCount === 0;
+    if (
+      (epiAlertActive && !isEpiPrepOnly) ||
+      amioAlertActive ||
+      lidoAlertActive ||
+      mgSo4AlertActive
+    ) {
+      setShowMedDueModal(true);
+    }
+  }, [epiAlertActive, amioAlertActive, lidoAlertActive, mgSo4AlertActive, lastRhythmDecision, shockCount, epiCount]);
 
   // Transition helper: Show Guidelines, speak High Quality CPR reminder, then auto-switch to CPR Timer
   const isSpeakingThaiRef = useRef<boolean>(false);
@@ -530,6 +545,7 @@ export default function App() {
           "Non-Shockable": "ช็อคไม่ได้",
           "VF/pVT": "วีเอฟ หรือ พีวีที",
           "PEA/Asystole": "พีอีเอ หรือ อะซิสโทลี",
+          "CYCLE": "ไซเคิล",
           "Cycle": "ไซเคิล",
           "Blood": "บลัด",
           "ICD": "ไอซีดี"
@@ -541,7 +557,7 @@ export default function App() {
         });
 
         const isCountdown = ["สิบ", "เก้า", "แปด", "เจ็ด", "เหจ็ด", "หก", "ห้า", "สี่", "สาม", "สอง", "หนึ่ง", "10", "9", "8", "7", "6", "5", "4", "3", "2", "1"].includes(spokenText.trim());
-        const isCycleNoSuffix = /^((Cycle|ไซเคิล)\s*\d+)$/i.test(spokenText.trim()) || spokenText.includes("ครบ 5 ไซเคิล");
+        const isCycleNoSuffix = /^((CYCLE|Cycle|ไซเคิล|ไซเคิ่น|รอบ)\s*.*)$/i.test(spokenText.trim()) || spokenText.includes("รอบ") || spokenText.includes("ไซเคิล") || spokenText.includes("ครบ 5 ไซเคิล") || spokenText.includes("ครบ 5 CYCLE");
 
         if (!isCountdown) {
           window.speechSynthesis.cancel();
@@ -715,31 +731,45 @@ export default function App() {
 
             const completedCycle = cprSubCycleRef.current;
             if (completedCycle === 5) {
+              // ครบ 5 CYCLE ของ 30:2 -> สิ้นสุดรอบ CPR และเริ่มจับเวลาประเมินชีพจร 10 วินาที
               cprSubCycleRef.current = 1;
               setCprSubCycle302(1);
               setCprActive(false);
-              setCprTimeRemaining(120);
               metronomeBeatRef.current = 0;
               setMetronomeBeat(0);
 
               const currentCycleNumber = cprCycle;
-              if (lastPulseCheckedCycleRef.current !== currentCycleNumber) {
-                lastPulseCheckedCycleRef.current = currentCycleNumber;
-                setCprCycle(c => c + 1);
-                addLog(`CPR 30:2 ครบ 5 Cycle (รอบที่ ${currentCycleNumber}) - ประเมินชีพจรและ EKG`, 'cpr');
-                playAlertChime('cpr_expire');
-                speakThai("ครบ 5 ไซเคิล รีบประเมินชีพจรและอีเคจี", () => {
-                  setPulseCheckActive(true);
-                  setPulseCheckTime(10);
-                }, 1.1);
-              }
+              lastPulseCheckedCycleRef.current = currentCycleNumber;
+              setCprCycle(c => c + 1);
+              addLog(`CPR 30:2 ครบ 5 CYCLE (CYCLE ${currentCycleNumber}) - หยุด CPR ก่อนตรวจชีพจรและคลื่นไฟฟ้าหัวใจ`, 'cpr');
+              playAlertChime('cpr_expire');
+              speakThai("หยุด CPR ก่อนตรวจชีพจรและคลื่นไฟฟ้าหัวใจ", () => {
+                setPulseCheckActive(true);
+                setPulseCheckTime(10);
+              }, 1.15);
               return;
             } else {
               const nextCycle = completedCycle + 1;
               cprSubCycleRef.current = nextCycle;
               setCprSubCycle302(nextCycle);
+              const remainingSeconds = calculateRemainingFrom302(nextCycle, 0);
+              setCprTimeRemaining(remainingSeconds);
 
-              speakThai(`${completedCycle}`);
+              if (nextCycle === 5) {
+                // แจ้งเตือนเมื่อขึ้น CYCLE 5
+                speakThai("รอบที่ห้า เตรียมเปลี่ยนค่ะ", undefined, 1.05);
+                addLog(`CPR 30:2 ขึ้น CYCLE 5 - เตรียมเปลี่ยนผู้กดหน้าอก`, 'cpr');
+              } else if (nextCycle === 4) {
+                speakThai("รอบสี่");
+              } else if (nextCycle === 3) {
+                speakThai("รอบสาม");
+              } else if (nextCycle === 2) {
+                speakThai("รอบสอง");
+              } else if (nextCycle === 1) {
+                speakThai("รอบหนึ่ง");
+              } else {
+                speakThai(`รอบ${nextCycle}`);
+              }
             }
           }
 
@@ -776,39 +806,47 @@ export default function App() {
       mainTicker = setInterval(() => {
         setCaseElapsedSeconds(prev => prev + 1);
 
+        // Continuous mode uses the 2-minute CPR countdown timer
+        // 30:2 mode uses cycle & metronome rhythm beats, while keeping cprTimeRemaining synchronized
         if (cprActive) {
-          setCprTimeRemaining(prev => {
-            const nextValue = prev - 1;
+          if (metronomeMode === 'continuous') {
+            setCprTimeRemaining(prev => {
+              const nextValue = prev - 1;
 
-            if (nextValue === 30 && metronomeMode !== '30:2') {
-              playAlertChime('med_due');
-              speakThai("เหลือเวลา 30 วินาที เตรียมเช็คริทึ่ม และเตรียมยา");
-            }
-
-            if (nextValue <= 0) {
-              setCprActive(false);
-              setCprSubCycle302(1);
-              cprSubCycleRef.current = 1;
-
-              const currentCycleNumber = cprCycle;
-              if (lastPulseCheckedCycleRef.current !== currentCycleNumber) {
-                lastPulseCheckedCycleRef.current = currentCycleNumber;
-                setCprCycle(c => c + 1);
-                if (metronomeMode === '30:2') {
-                  addLog(`CPR 30:2 ครบ 5 Cycle (รอบที่ ${currentCycleNumber}) - ประเมินชีพจรและ EKG`, 'cpr');
-                } else {
-                  addLog(`CPR ต่อเนื่องครบ 2 นาที (รอบที่ ${currentCycleNumber}) - ประเมินชีพจรและ EKG`, 'cpr');
-                }
-                playAlertChime('cpr_expire');
-                speakThai(metronomeMode === '30:2' ? "ครบ 5 ไซเคิล รีบประเมินชีพจรและอีเคจี" : "ครบ 2 นาที รีบประเมินชีพจรและอีเคจี ค่ะ", () => {
-                  setPulseCheckActive(true);
-                  setPulseCheckTime(10);
-                });
+              if (nextValue === 30) {
+                playAlertChime('med_due');
+                speakThai("เหลือเวลา 30 วินาที เตรียมเช็คริทึ่ม และเตรียมยา");
               }
-              return 120;
-            }
-            return nextValue;
-          });
+
+              if (nextValue <= 0) {
+                setCprActive(false);
+                setCprSubCycle302(1);
+                cprSubCycleRef.current = 1;
+                metronomeBeatRef.current = 0;
+                setMetronomeBeat(0);
+
+                const currentCycleNumber = cprCycle;
+                if (lastPulseCheckedCycleRef.current !== currentCycleNumber) {
+                  lastPulseCheckedCycleRef.current = currentCycleNumber;
+                  setCprCycle(c => c + 1);
+                  addLog(`CPR ต่อเนื่องครบ 2 นาที (CYCLE ${currentCycleNumber}) - หยุด CPR ก่อนตรวจชีพจรและคลื่นไฟฟ้าหัวใจ`, 'cpr');
+                  playAlertChime('cpr_expire');
+                  speakThai("หยุด CPR ก่อนตรวจชีพจรและคลื่นไฟฟ้าหัวใจ", () => {
+                    setPulseCheckActive(true);
+                    setPulseCheckTime(10);
+                  }, 1.15);
+                }
+                return 120;
+              }
+              return nextValue;
+            });
+          } else {
+            // Keep cprTimeRemaining synchronized with 30:2 cycles in real time
+            const currentCycle = cprSubCycleRef.current || cprSubCycle302 || 1;
+            const currentBeat = metronomeBeatRef.current || 0;
+            const calculatedRemaining = calculateRemainingFrom302(currentCycle, currentBeat);
+            setCprTimeRemaining(calculatedRemaining);
+          }
         }
 
         if (epiTimerStarted) {
@@ -816,8 +854,12 @@ export default function App() {
             if (prev <= 1) {
               if (prev === 1) {
                 playAlertChime('med_due');
-                speakThai("ถึงเวลาให้ยาเอพิเนฟริน");
+                speakThai("ครบกำหนดสี่นาที ถึงเวลาให้ยาเอพิเนฟริน หนึ่งมิลลิกรัมค่ะ");
                 setEpiAlertActive(true);
+                setShowMedDueModal(true);
+                setGuidanceMessage(
+                  "⚡ ครบกำหนด 4 นาที! ถึงเวลาบริหารยา EPINEPHRINE 1mg IV/IO"
+                );
               }
               return 0;
             }
@@ -874,7 +916,7 @@ export default function App() {
       if (pulseCheckTime === 10) speakThai("สิบ");
       else if (pulseCheckTime === 9) speakThai("เก้า");
       else if (pulseCheckTime === 8) speakThai("แปด");
-      else if (pulseCheckTime === 7) speakThai("เหจ็ด");
+      else if (pulseCheckTime === 7) speakThai("เจ็ด");
       else if (pulseCheckTime === 6) speakThai("หก");
       else if (pulseCheckTime === 5) speakThai("ห้า");
       else if (pulseCheckTime === 4) speakThai("สี่");
@@ -899,8 +941,12 @@ export default function App() {
     if (cprActive) {
       setCprActive(false);
     }
-    setPulseCheckActive(true);
-    setPulseCheckTime(10);
+    addLog("ตรวจชีพจรและคลื่นไฟฟ้าหัวใจ - หยุด CPR ทันที (จำกัดเวลา 10 วินาที)", "cpr");
+    playAlertChime('cpr_expire');
+    speakThai("หยุด CPR ก่อนตรวจชีพจรและคลื่นไฟฟ้าหัวใจ", () => {
+      setPulseCheckActive(true);
+      setPulseCheckTime(10);
+    }, 1.15);
   };
 
   const cancelPulseCheck = () => {
@@ -944,11 +990,28 @@ export default function App() {
 
     if (cprActive) {
       setCprActive(false);
-      speakThai("หยุด ซีพีอา", undefined, 1.1);
+      speakThai("หยุดซีพีอาชั่วคราวค่ะ", undefined, 1.1);
       addLog("หยุด CPR ชั่วคราว (Pause CPR)", "cpr");
     } else {
       setCprActive(true);
-      speakThai("เริ่ม CPR", undefined, 1.1);
+      if (metronomeMode === '30:2') {
+        const cycleNum = cprSubCycleRef.current || cprSubCycle302;
+        if (cycleNum === 1) {
+          speakThai("เริ่ม ซีพีอา  รอบหนึ่งค่ะ", undefined, 1.05);
+        } else if (cycleNum === 2) {
+          speakThai("รอบสอง", undefined, 1.1);
+        } else if (cycleNum === 3) {
+          speakThai("รอบสาม", undefined, 1.1);
+        } else if (cycleNum === 4) {
+          speakThai("รอบสี่", undefined, 1.1);
+        } else if (cycleNum === 5) {
+          speakThai("รอบที่ห้า เตรียมเปลี่ยนค่ะ", undefined, 1.05);
+        } else {
+          speakThai("เริ่ม ซีพีอาค่ะ", undefined, 1.1);
+        }
+      } else {
+        speakThai("เริ่ม ซีพีอาค่ะ", undefined, 1.1);
+      }
     }
   };
 
@@ -956,7 +1019,79 @@ export default function App() {
     setCprTimeRemaining(120);
     setCprSubCycle302(1);
     cprSubCycleRef.current = 1;
-    addLog(`CPR Cycle ${cprCycle} Timer reset back to 02:00`, "cpr");
+    addLog(`CPR CYCLE ${cprCycle} Timer reset back to 02:00`, "cpr");
+  };
+
+  // Helper: คำนวณเวลาที่เหลือจาก CYCLES 30:2 (5 Cycles = 120 วินาที, Cycle ละ 24 วินาที)
+  const calculateRemainingFrom302 = (currentCycle: number, currentBeat: number): number => {
+    const safeCycle = Math.max(1, Math.min(5, currentCycle));
+    const safeBeat = Math.max(0, Math.min(30, currentBeat));
+    // 5 cycles total = 120 seconds (24 seconds per 30:2 cycle)
+    const remainingInCurrentCycle = Math.max(0, 24 - Math.round((safeBeat / 30) * 24));
+    const remainingCycles = Math.max(0, 5 - safeCycle);
+    const totalRemaining = (remainingCycles * 24) + remainingInCurrentCycle;
+    return Math.max(10, Math.min(120, totalRemaining));
+  };
+
+  // เชื่อมโยงการสลับโหมด: 30:2 -> ต่อเนื่อง (คำนวณเวลานับต่อจาก 30:2) หรือ ต่อเนื่อง -> 30:2
+  const changeMetronomeMode = (newMode: '30:2' | 'continuous', isFromIntubation: boolean = false): number => {
+    if (newMode === 'continuous') {
+      if (metronomeMode === '30:2') {
+        const currentCycle = cprSubCycleRef.current || cprSubCycle302 || 1;
+        const currentBeat = metronomeBeatRef.current || 0;
+        const calculatedRemaining = calculateRemainingFrom302(currentCycle, currentBeat);
+
+        setCprTimeRemaining(calculatedRemaining);
+        setMetronomeMode('continuous');
+        playAlertChime('mode_switch');
+
+        if (metronomeBeatRef.current > 30) {
+          metronomeBeatRef.current = 1;
+          setMetronomeBeat(1);
+        }
+
+        if (isFromIntubation) {
+          addLog("ปรับเป็น CPR 2 นาทีต่อเนื่อง และนับเวลาต่อจนครบ 2 นาที", 'cpr');
+          setGuidanceMessage(
+            `⚡ ปรับเป็น CPR 2 นาทีต่อเนื่อง และนับเวลาต่อจนครบ 2 นาที (เหลือเวลาอีก ${formatMMSS(calculatedRemaining)} • ช่วยหายใจ 1 ครั้งทุก 6 วินาที)`
+          );
+        } else {
+          addLog("CPR 2นาที ต่อเนื่อง", 'cpr');
+          setGuidanceMessage(
+            `⚡ CPR 2นาที ต่อเนื่อง (เหลือเวลาอีก ${formatMMSS(calculatedRemaining)} • ช่วยหายใจ 1 ครั้งทุก 6 วินาที)`
+          );
+          speakThai("ซีพีอา สองนาที ต่อเนื่อง");
+        }
+
+        return calculatedRemaining;
+      } else {
+        if (!isFromIntubation) {
+          addLog("CPR 2นาที ต่อเนื่อง", 'cpr');
+          playAlertChime('mode_switch');
+          speakThai("ซีพีอา สองนาที ต่อเนื่อง");
+        }
+      }
+      return cprTimeRemaining;
+    } else {
+      // Switching to 30:2
+      if (metronomeMode === 'continuous') {
+        const elapsedSeconds = Math.max(0, 120 - cprTimeRemaining);
+        const calculatedCycle = Math.min(5, Math.max(1, Math.floor(elapsedSeconds / 24) + 1));
+        cprSubCycleRef.current = calculatedCycle;
+        setCprSubCycle302(calculatedCycle);
+        setMetronomeMode('30:2');
+        playAlertChime('mode_switch');
+        addLog("CPR 30:2 x 5 Cycles", 'cpr');
+        setGuidanceMessage(`⚡ CPR 30:2 x 5 Cycles (รอบที่ ${calculatedCycle}/5)`);
+        speakThai("ซีพีอา 30 ต่อ 2 5รอบ");
+        return calculatedCycle;
+      } else {
+        addLog("CPR 30:2 x 5 Cycles", 'cpr');
+        playAlertChime('mode_switch');
+        speakThai("ซีพีอา 30 ต่อ 2 5รอบ");
+      }
+      return cprSubCycle302;
+    }
   };
 
   const handleRhythmShockable = () => {
@@ -1031,7 +1166,7 @@ export default function App() {
         setGuidanceMessage(
           "SHOCK DELIVERED! Defibrillation #1 complete. เปิดเส้น IV/IO ตรวจเลือดครบชุด และเตรียมยา EPINEPHRINE 1mg (ให้ยาหลัง Shock #2) เริ่มกดหน้าอก 2 นาที!"
         );
-        addLog(`Defibrillation #1 Delivered (200J) - ขอเปิดเส้นตรวจเลือดครบชุดและเตรียมยา Epinephrine (รอให้ยาหลัง Shock #2)`, "shock");
+        addLog(`Defibrillation #1 Delivered (200J)`, "shock");
         speakThai("ปล่อยช็อกครั้งที่หนึ่ง เรียบร้อยแล้วค่ะ ขอเปิดเส้นตรวจเลือดครบชุด เตรียมให้ยาเอพิเนฟริน หนึ่งมิลลิกรัม แล้วเริ่มกดหน้าอกต่อทันที สองนาทีค่ะ", () => {
           setEpiAlertActive(true);
           setMobileViewTab('meds');
@@ -1043,7 +1178,7 @@ export default function App() {
         setGuidanceMessage(
           "SHOCK DELIVERED! Defibrillation #1 complete. เตรียมยา EPINEPHRINE 1mg (ให้ยาหลัง Shock #2) เริ่มกดหน้าอก 2 นาที!"
         );
-        addLog(`Defibrillation #1 Delivered (200J) - เตรียมยา Epinephrine (รอให้ยาหลัง Shock #2)`, "shock");
+        addLog(`Defibrillation #1 Delivered (200J)`, "shock");
         speakThai("ปล่อยช็อกครั้งที่หนึ่ง เรียบร้อยแล้วค่ะ ขอเปิดเส้นตรวจเลือดครบชุด เตรียมให้ยาเอพิเนฟริน หนึ่งมิลลิกรัม แล้วเริ่มกดหน้าอกต่อทันที สองนาทีค่ะ", () => {
           setEpiAlertActive(true);
           triggerGuidelineToCprTransition();
@@ -1054,11 +1189,12 @@ export default function App() {
       setGuidanceMessage(
         "SHOCK DELIVERED! Defibrillation #2 complete. ถึงเวลาให้ยา EPINEPHRINE 1mg IV/IO ตามเกณฑ์ ACLS!"
       );
-      addLog(`Defibrillation #2 Delivered (200J) - ถึงเวลาบริหารยา Epinephrine 1mg`, "shock");
+      addLog(`Defibrillation #2 Delivered (200J)`, "shock");
       setEpiAlertActive(false);
       speakThai("ปล่อยช็อกครั้งที่สอง เรียบร้อยแล้วค่ะ ให้ยาเอพิเนฟริน หนึ่งมิลลิกรัม แล้วเริ่มกดหน้าอกต่อทันที สองนาทีค่ะ", () => {
         // เมื่อพูดจบ ให้กระพริบเตือน Epinephrine เพื่อให้กดบริหารยาได้ทันที ในแถบ Quick Meds
         setEpiAlertActive(true);
+        setShowMedDueModal(true);
         setMobileViewTab('meds');
         setGuidanceMessage("⚡ กรุณากดบริหารยา EPINEPHRINE 1mg IV/IO ทันที!");
         playAlertChime('med_due');
@@ -1069,7 +1205,7 @@ export default function App() {
       setGuidanceMessage(
         "SHOCK DELIVERED! Defibrillation #3 complete. ADMINISTER AMIODARONE 300mg OR LIDOCAINE 1-1.5mg/kg IV/IO IMMEDIATELY!"
       );
-      addLog(`Defibrillation #3 Delivered (200J) - แนะนำให้ยา Amiodarone หรือ Lidocaine`, "shock");
+      addLog(`Defibrillation #3 Delivered (200J)`, "shock");
       speakThai(
         "ปล่อยช็อกครั้งที่สาม เรียบร้อยแล้วค่ะ พิจารณาให้ยาอะมิโอดาโรน สามร้อยมิลลิกรัม หรือยาลิโดเคน แล้วเริ่มกดหน้าอกต่อทันที สองนาทีค่ะ",
         () => {
@@ -1086,7 +1222,7 @@ export default function App() {
       setGuidanceMessage(
         "SHOCK DELIVERED! Defibrillation #4 complete. แนะนำให้ยา AMIODARONE หรือ LIDOCAINE IV/IO ทันที!"
       );
-      addLog(`Defibrillation #4 Delivered (200J) - แนะนำให้ยา Amiodarone หรือ Lidocaine`, "shock");
+      addLog(`Defibrillation #4 Delivered (200J)`, "shock");
       speakThai(
         "ปล่อยช็อกครั้งที่สี่ เรียบร้อยแล้วค่ะ แนะนำให้ยาอะมิโอดาโรน หรือยาลิโดเคน แล้วเริ่มกดหน้าอกต่อทันที สองนาทีค่ะ",
         () => {
@@ -1103,7 +1239,7 @@ export default function App() {
       setGuidanceMessage(
         "SHOCK DELIVERED! Defibrillation #5 complete. ADMINISTER AMIODARONE 150mg OR LIDOCAINE 0.5-0.75mg/kg IV/IO!"
       );
-      addLog(`Defibrillation #5 Delivered (200J) - แนะนำให้ยา Amiodarone หรือ Lidocaine`, "shock");
+      addLog(`Defibrillation #5 Delivered (200J)`, "shock");
       speakThai(
         "ปล่อยช็อกครั้งที่ห้า เรียบร้อยแล้วค่ะ พิจารณาให้ยาอะมิโอดาโรน ร้อยห้าสิบมิลลิกรัม หรือยาลิโดเคน แล้วเริ่มกดหน้าอกต่อทันที สองนาทีค่ะ",
         () => {
@@ -1144,13 +1280,45 @@ export default function App() {
 
     addLog("Rhythm Checked: Non-Shockable", "rhythm");
 
-    setGuidanceMessage(
-      "พบคลื่นไฟฟ้าหัวใจ NON-SHOCKABLE! โปรดเลือกชนิดคลื่น (Asystole/PEA) และทำ IV Access เพื่อเปิดเส้นทางบริหารยา"
-    );
+    if (epiCount === 0) {
+      if (!hasCompletedIvAccess) {
+        setGuidanceMessage(
+          "พบคลื่นไฟฟ้าหัวใจ NON-SHOCKABLE! โปรดเลือกชนิดคลื่น (Asystole/PEA) และเปิดเส้น IV/IO เพื่อให้ยา Epinephrine 1mg ทันที (นับ 4 นาทีหลังให้ยา)"
+        );
+        speakThai("คลื่นไฟฟ้าหัวใจช็อกไม่ได้ โปรดเลือกชนิดคลื่นไฟฟ้าหัวใจ อะซิสโทลี หรือ พีอีเอ และเปิดเส้นให้ยานะคะ", () => {
+          speakHighQualityCpr();
+        });
+      } else {
+        setGuidanceMessage(
+          "พบคลื่นไฟฟ้าหัวใจ NON-SHOCKABLE! บริหารยา EPINEPHRINE 1mg ทันที (เข็มแรก) และเริ่มนับเวลาให้ยาซ้ำทุก 4 นาที"
+        );
+        setEpiAlertActive(true);
+        setShowMedDueModal(true);
+        speakThai("คลื่นไฟฟ้าหัวใจช็อกไม่ได้ ให้ยาเอพิเนฟริน เข็มแรก หนึ่งมิลลิกรัม ทันทีค่ะ", () => {
+          speakHighQualityCpr();
+        });
+      }
+    } else {
+      if (epiTimeRemaining <= 0 || epiAlertActive) {
+        setGuidanceMessage(
+          "พบคลื่นไฟฟ้าหัวใจ NON-SHOCKABLE! ครบกำหนด 4 นาที ถึงเวลาบริหารยา EPINEPHRINE 1mg IV/IO"
+        );
+        setEpiAlertActive(true);
+        setShowMedDueModal(true);
+        speakThai("คลื่นไฟฟ้าหัวใจช็อกไม่ได้ ครบกำหนดสี่นาที ถึงเวลาให้ยาเอพิเนฟริน หนึ่งมิลลิกรัมค่ะ", () => {
+          speakHighQualityCpr();
+        });
+      } else {
+        const remainingMinutes = Math.ceil(epiTimeRemaining / 60);
+        setGuidanceMessage(
+          `พบคลื่นไฟฟ้าหัวใจ NON-SHOCKABLE! กดหน้าอก CPR ต่อเนื่อง 2 นาที • นับเวลาบริหารยา Epinephrine 1mg ทุก 4 นาที (เหลืออีก ${formatMMSS(epiTimeRemaining)})`
+        );
+        speakThai("คลื่นไฟฟ้าหัวใจช็อกไม่ได้ เริ่มกดหน้าอกต่อทันที สองนาทีค่ะ และนับเวลาให้ยาเอพิเนฟรินทุกสี่นาทีนะคะ", () => {
+          speakHighQualityCpr();
+        });
+      }
+    }
 
-    speakThai("คลื่นไฟฟ้าหัวใจช็อกไม่ได้ โปรดเลือกชนิดคลื่นไฟฟ้าหัวใจ อะซิสโทลี หรือ พีอีเอ และเปิดเส้นให้ยานะคะ", () => {
-      speakHighQualityCpr();
-    });
     setActiveTab('trc_cardiac');
     setMobileViewTab('guidelines');
   };
@@ -1274,8 +1442,9 @@ export default function App() {
     setEpiTimeRemaining(240);
     setEpiAlertActive(false);
     setEpiTimerStarted(true);
+    setShowMedDueModal(false);
 
-    addLog(`Medication: Epinephrine 1mg IV/IO administered (Total Dose #${nextEpi})`, "med");
+    addLog(`Medication: Epinephrine 1mg + NSS up to 10ml IV/IO Push administered (Total Dose #${nextEpi})`, "med");
     
     // Close any other open modals to prevent popup collision or bleed-through
     setShowQuickActionModal(false);
@@ -1294,9 +1463,9 @@ export default function App() {
       setShowProceduresModal(true);
 
       setGuidanceMessage(
-        `EPINEPHRINE #1 GIVEN! พิจารณาใส่ท่อช่วยหายใจขั้นสูง (Advanced Airway / ET-Tube) และติดตาม ETCO2`
+        `EPINEPHRINE #1 GIVEN! เริ่มนับเวลาให้ยาซ้ำทุก 4 นาที • พิจารณาใส่ท่อช่วยหายใจขั้นสูง (Advanced Airway / ET-Tube) และติดตาม ETCO2`
       );
-      speakThai(`ให้ยาเอพิเนฟริน เข็มที่หนึ่ง เรียบร้อยแล้วค่ะ พิจารณาใส่ท่อช่วยหายใจขั้นสูงนะคะ`);
+      speakThai(`ให้ยาเอพิเนฟริน เข็มที่หนึ่ง เรียบร้อยแล้วค่ะ เริ่มนับเวลาให้ยาซ้ำทุกสี่นาทีนะคะ พิจารณาใส่ท่อช่วยหายใจขั้นสูงค่ะ`);
     } else {
       // เข็มถัดไป (Dose #2, #3, …): ไม่ต้อง pop up เพื่อเลือกการใส่ท่อช่วยหายใจอีก
       setAirwayAlertActive(false);
@@ -1306,9 +1475,9 @@ export default function App() {
       const thaiNumbers = ["", "หนึ่ง", "สอง", "สาม", "สี่", "ห้า", "หก", "เจ็ด", "แปด", "เก้า", "สิบ"];
       const epiDoseThai = nextEpi <= 10 ? `เข็มที่${thaiNumbers[nextEpi]}` : `เข็มที่ ${nextEpi}`;
       setGuidanceMessage(
-        `EPINEPHRINE #${nextEpi} GIVEN! บริหารยาเอพิเนฟริน 1mg เรียบร้อยแล้ว (รอบให้ยาซ้ำทุก 3-5 นาที)`
+        `EPINEPHRINE #${nextEpi} GIVEN! บริหารยาเอพิเนฟริน 1mg เรียบร้อยแล้ว (เริ่มนับเวลารอบถัดไปทุก 4 นาที)`
       );
-      speakThai(`ให้ยาเอพิเนฟริน ${epiDoseThai} เรียบร้อยแล้วค่ะ`);
+      speakThai(`ให้ยาเอพิเนฟริน ${epiDoseThai} เรียบร้อยแล้วค่ะ เริ่มนับเวลารอบถัดไปทุกสี่นาทีนะคะ`);
     }
   };
 
@@ -1321,9 +1490,10 @@ export default function App() {
     setAmioCount(nextAmio);
     setAmioAlertActive(false);
     setLidoAlertActive(false);
+    setShowMedDueModal(false);
 
-    let doseText = nextAmio === 1 ? "300 mg bolus" : nextAmio === 2 ? "150 mg bolus" : "bolus";
-    addLog(`Medication: Amiodarone ${doseText} IV/IO administered (Total Dose #${nextAmio})`, "med");
+    const doseText = nextAmio === 1 ? "1st Dose: 300 mg+D5W up to 20ml IV/IO" : nextAmio === 2 ? "2nd Dose: 150 mg+D5W up to 20ml IV/IO" : "IV/IO";
+    addLog(`Medication: Amiodarone (${doseText}) administered (Total Dose #${nextAmio})`, "med");
     if (nextAmio === 1) {
       speakThai(`ให้ยาอะมิโอดาโรน สามร้อยมิลลิกรัม เข็มที่ ${nextAmio} เรียบร้อยแล้วค่ะ`);
     } else {
@@ -1345,6 +1515,7 @@ export default function App() {
     setLidoCount(nextLido);
     setAmioAlertActive(false);
     setLidoAlertActive(false);
+    setShowMedDueModal(false);
 
     let doseText = nextLido === 1 ? "1-1.5 mg/kg bolus" : nextLido === 2 ? "0.5-0.75 mg/kg bolus" : "bolus";
     addLog(`Medication: Lidocaine ${doseText} IV/IO administered (Total Dose #${nextLido})`, "med");
@@ -1418,16 +1589,19 @@ export default function App() {
     if (procName.includes('IV / IO') || procName.includes('IV Access') || procName.includes('IV Line')) {
       setIvAccessAlertActive(false);
       setEpiAlertActive(true);
-      speakThai("เปิดเส้นให้ยาเรียบร้อยแล้ว เตรียมให้ยาเอพิเนฟรินค่ะ", () => {
-        setShowProceduresModal(false);
-        setShowQuickActionModal(false);
+      setShowProceduresModal(false);
+      setShowQuickActionModal(false);
 
-        // หลัง shock ครั้งที่ 1 เมื่อเปิดเส้นเรียบร้อย และพูดเตรียมให้ยาจบ หลังจาก pop up ปิดลง:
-        // สลับไปหน้า Guidelines 5 วินาที และสลับไปหน้า CPR timer อัตโนมัติ
-        if (shockCount >= 1) {
-          triggerGuidelineToCprTransition();
-        }
-      });
+      if (lastRhythmDecision === 'non-shockable' || shockCount >= 2 || epiCount > 0) {
+        setShowMedDueModal(true);
+        speakThai("เปิดเส้นให้ยาเรียบร้อยแล้วค่ะ ให้ยาเอพิเนฟริน หนึ่งมิลลิกรัม ทันทีค่ะ");
+      } else {
+        speakThai("เปิดเส้นให้ยาเรียบร้อยแล้ว เตรียมให้ยาเอพิเนฟรินค่ะ", () => {
+          if (shockCount >= 1) {
+            triggerGuidelineToCprTransition();
+          }
+        });
+      }
       setGuidanceMessage("เปิดเส้นทาง IV/IO Access สำเร็จ! โปรดกดบริหารยา EPINEPHRINE 1mg IV/IO");
     }
 
@@ -1451,8 +1625,10 @@ export default function App() {
             triggerGuidelineToCprTransition("คำแนะนำ: ยืนยันตำแหน่งท่อช่วยหายใจสำเร็จ! กำลังแสดง Guidelines (ACLS Algorithm) 5 วินาที ก่อนสลับไปหน้า CPR Timer อัตโนมัติ");
           }
         };
-        speakThai("ใส่ท่อช่วยหายใจเรียบร้อยแล้วค่ะ และยืนยันตำแหน่งด้วยแค๊บโนกราฟฟี่ครบถ้วนค่ะ", onConfirmTubeDone);
-        setTimeout(onConfirmTubeDone, 6000);
+
+        changeMetronomeMode('continuous', true);
+        speakThai("ปรับเป็น CPR 2 นาทีต่อเนื่อง และนับเวลาต่อจนครบ 2 นาที", onConfirmTubeDone);
+        setTimeout(onConfirmTubeDone, 5000);
       } else {
         setEtco2AlertActive(true);
         speakThai("ใส่ท่อช่วยหายใจเรียบร้อยแล้วค่ะ โปรดยืนยันตำแหน่งท่อด้วยอีทีซีโอทูนะคะ");
@@ -1468,8 +1644,6 @@ export default function App() {
     ) {
       setEtco2AlertActive(false);
       setAirwayAlertActive(false);
-      setMetronomeMode('continuous');
-      playAlertChime('mode_switch');
 
       // ตรวจสอบว่าใส่ท่อช่วยหายใจแล้วหรือยัง หากยังไม่ได้บันทึก ให้บันทึกคู่กันให้สมบูรณ์
       const isAirwayDone = completedProcedures.some(p => 
@@ -1490,8 +1664,9 @@ export default function App() {
         }
       };
 
-      speakThai("ประเมินท่อช่วยหายใจอยู่ในตำแหน่ง ขอติดแค๊บโนกราฟฟี่ค่ะ เปลี่ยนการซีพีอา เป็นแบบสองนาทีต่อเนื่อง และเปลี่ยนการช่วยหายใจทุกหกวินาทีค่ะ", onConfirmTubeDone);
-      setTimeout(onConfirmTubeDone, 7500);
+      changeMetronomeMode('continuous', true);
+      speakThai("ปรับเป็น CPR 2 นาทีต่อเนื่อง และนับเวลาต่อจนครบ 2 นาที", onConfirmTubeDone);
+      setTimeout(onConfirmTubeDone, 5000);
     }
 
     if (
@@ -1537,11 +1712,9 @@ export default function App() {
       procName.includes('Capnography') ||
       procName.includes('PETCO2');
 
-    if (
-      (isLoggingEtco2 && hasCompletedAirway) ||
-      (isLoggingAirway && hasCompletedEtco2)
-    ) {
-      setMetronomeMode('continuous');
+    if (isLoggingAirway && hasCompletedEtco2 && metronomeMode === '30:2') {
+      changeMetronomeMode('continuous', true);
+      speakThai("ปรับเป็น CPR 2 นาทีต่อเนื่อง และนับเวลาต่อจนครบ 2 นาที");
     }
 
     const excludedProcedures = [
@@ -1649,6 +1822,7 @@ export default function App() {
     setMetronomeOn(true);
     setMetronomeTempo(100);
     setShowResetConfirm(false);
+    setShowMedDueModal(false);
     if (guidelineToCprTimeoutRef.current) {
       clearTimeout(guidelineToCprTimeoutRef.current);
     }
@@ -1712,7 +1886,7 @@ export default function App() {
   };
 
   const copyLogsToClipboard = () => {
-    const header = `SMART ACLS COPILOT REPORT\n=========================\nDate: ${new Date().toLocaleDateString()}\nTotal Resuscitation Time: ${formatMMSS(caseElapsedSeconds)}\nCPR Cycles Completed: ${cprCycle - 1}\nDefibrillations Delivered: ${shockCount}\nEpinephrine Administered: ${epiCount} doses\nAmiodarone Administered: ${amioCount} doses\nLidocaine Administered: ${lidoCount} doses\n\nDETAILED TIMESTAMP LOGS:\n-------------------------\n`;
+    const header = `SMART ACLS COPILOT REPORT\n=========================\nDate: ${new Date().toLocaleDateString()}\nTotal Resuscitation Time: ${formatMMSS(caseElapsedSeconds)}\nCPR CYCLES Completed: ${cprCycle - 1}\nDefibrillations Delivered: ${shockCount}\nEpinephrine Administered: ${epiCount} doses\nAmiodarone Administered: ${amioCount} doses\nLidocaine Administered: ${lidoCount} doses\n\nDETAILED TIMESTAMP LOGS:\n-------------------------\n`;
     const logBody = logs.map(l => `[${l.time}] (Elapsed: ${l.elapsed}) - ${l.text}`).join('\n');
     const fullText = header + logBody;
 
@@ -1873,7 +2047,7 @@ export default function App() {
         metronomeTempo={metronomeTempo}
         setMetronomeTempo={setMetronomeTempo}
         metronomeMode={metronomeMode}
-        setMetronomeMode={setMetronomeMode}
+        setMetronomeMode={changeMetronomeMode}
         cprActive={cprActive}
         caseActive={caseActive}
         onCloseApp={handleCloseApp}
@@ -1949,7 +2123,7 @@ export default function App() {
               cprTimeRemaining={cprTimeRemaining}
               cprActive={cprActive}
               metronomeMode={metronomeMode}
-              setMetronomeMode={setMetronomeMode}
+              setMetronomeMode={changeMetronomeMode}
               cprSubCycle302={cprSubCycle302}
               setCprSubCycle302={setCprSubCycle302}
               cprSubCycleRef={cprSubCycleRef}
@@ -1966,12 +2140,15 @@ export default function App() {
               metronomeBeat={metronomeBeat}
               handleLogPresetMed={handleLogPresetMed}
               logs={logs}
+              hasCompletedAirway={hasCompletedAirway}
+              hasCompletedEtco2={hasCompletedEtco2}
               hasCompletedIvAccess={hasCompletedIvAccess}
               handleAdministerEpinephrine={handleAdministerEpinephrine}
               epiCount={epiCount}
               epiTimeRemaining={epiTimeRemaining}
               epiTimerStarted={epiTimerStarted}
               epiAlertActive={epiAlertActive}
+              onOpenMedDueModal={() => setShowMedDueModal(true)}
               handleAdministerAmiodarone={handleAdministerAmiodarone}
               amioCount={amioCount}
               amioAlertActive={amioAlertActive}
@@ -2126,6 +2303,9 @@ export default function App() {
         setShockButtonFlashing={setShockButtonFlashing}
         handleAdministerEpinephrine={handleAdministerEpinephrine}
         epiCount={epiCount}
+        epiTimeRemaining={epiTimeRemaining}
+        epiTimerStarted={epiTimerStarted}
+        formatMMSS={formatMMSS}
         handleAdministerAmiodarone={handleAdministerAmiodarone}
         amioCount={amioCount}
         handleAdministerLidocaine={handleAdministerLidocaine}
@@ -2136,6 +2316,10 @@ export default function App() {
         toggleCPR={toggleCPR}
         hasCompletedIvAccess={hasCompletedIvAccess}
         handleLogProcedure={handleLogProcedure}
+        setShowProceduresModal={setShowProceduresModal}
+        setShowMedDueModal={setShowMedDueModal}
+        setIvAccessAlertActive={setIvAccessAlertActive}
+        setEpiAlertActive={setEpiAlertActive}
       />
 
       <ResetConfirmModal
@@ -2231,6 +2415,29 @@ export default function App() {
         isExportPending={isExportPending}
         onSaveAndExportPDF={handleSaveAndExportPDF}
         onDirectExportPDF={handleDirectExportPDF}
+      />
+
+      <MedDueModal
+        isOpen={showMedDueModal}
+        onClose={() => setShowMedDueModal(false)}
+        epiAlertActive={epiAlertActive}
+        epiCount={epiCount}
+        epiTimeRemaining={epiTimeRemaining}
+        handleAdministerEpinephrine={handleAdministerEpinephrine}
+        isEpiPrepOnly={lastRhythmDecision === 'shockable' && shockCount < 2 && epiCount === 0}
+        amioAlertActive={amioAlertActive}
+        amioCount={amioCount}
+        handleAdministerAmiodarone={handleAdministerAmiodarone}
+        lidoAlertActive={lidoAlertActive}
+        lidoCount={lidoCount}
+        handleAdministerLidocaine={handleAdministerLidocaine}
+        mgSo4AlertActive={mgSo4AlertActive}
+        handleLogPresetMed={handleLogPresetMed}
+        hasCompletedIvAccess={hasCompletedIvAccess}
+        handleLogProcedure={handleLogProcedure}
+        shockCount={shockCount}
+        lastRhythmDecision={lastRhythmDecision}
+        formatMMSS={formatMMSS}
       />
     </div>
   );

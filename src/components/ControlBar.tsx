@@ -179,7 +179,6 @@ export function ControlBar({
                 id="btn_metronome_mode_30_2"
                 onClick={() => {
                   setMetronomeMode('30:2');
-                  speakThai('ตั้งค่าเมโทรนอม แบบ สามสิบ ต่อ สอง เรียบร้อยแล้วค่ะ');
                 }}
                 className={`px-1.5 py-0.5 text-[10px] font-black rounded transition-all cursor-pointer ${
                   metronomeMode === '30:2'
@@ -193,7 +192,6 @@ export function ControlBar({
                 id="btn_metronome_mode_continuous"
                 onClick={() => {
                   setMetronomeMode('continuous');
-                  speakThai('ตั้งค่าเมโทรนอม แบบ ต่อเนื่อง เรียบร้อยแล้วค่ะ');
                 }}
                 className={`px-1.5 py-0.5 text-[10px] font-black rounded transition-all cursor-pointer ${
                   metronomeMode === 'continuous'

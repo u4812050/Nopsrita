@@ -1,6 +1,6 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
-import { Zap, ShieldAlert, Heart, Activity, X, Play, Check, AlertCircle, Syringe, Lock } from 'lucide-react';
+import { Zap, ShieldAlert, Heart, Activity, X, Play, Check, Clock } from 'lucide-react';
 import { RhythmDecision, ShockableRhythmType, NonShockableRhythmType } from '../types';
 import { VfEkgIcon, VtEkgIcon, AsystoleEkgIcon, PeaEkgIcon, TorsadesEkgIcon } from './EkgIcons';
 
@@ -23,6 +23,9 @@ interface QuickActionPromptModalProps {
   setShockButtonFlashing?: (val: boolean) => void;
   handleAdministerEpinephrine: () => void;
   epiCount: number;
+  epiTimeRemaining?: number;
+  epiTimerStarted?: boolean;
+  formatMMSS?: (sec: number) => string;
   handleAdministerAmiodarone: () => void;
   amioCount: number;
   handleAdministerLidocaine: () => void;
@@ -33,6 +36,10 @@ interface QuickActionPromptModalProps {
   toggleCPR: () => void;
   hasCompletedIvAccess?: boolean;
   handleLogProcedure?: (procName: string) => void;
+  setShowProceduresModal?: (val: boolean) => void;
+  setShowMedDueModal?: (val: boolean) => void;
+  setIvAccessAlertActive?: (val: boolean) => void;
+  setEpiAlertActive?: (val: boolean) => void;
 }
 
 export function QuickActionPromptModal({
@@ -54,6 +61,9 @@ export function QuickActionPromptModal({
   setShockButtonFlashing,
   handleAdministerEpinephrine,
   epiCount,
+  epiTimeRemaining = 240,
+  epiTimerStarted = false,
+  formatMMSS,
   handleAdministerAmiodarone,
   amioCount,
   handleAdministerLidocaine,
@@ -64,6 +74,10 @@ export function QuickActionPromptModal({
   toggleCPR,
   hasCompletedIvAccess = false,
   handleLogProcedure,
+  setShowProceduresModal,
+  setShowMedDueModal,
+  setIvAccessAlertActive,
+  setEpiAlertActive,
 }: QuickActionPromptModalProps) {
   if (!isOpen) return null;
 
@@ -272,16 +286,66 @@ export function QuickActionPromptModal({
           )}
 
           {lastRhythmDecision === 'non-shockable' && (
-            <div className="bg-slate-950 border border-slate-800 rounded-xl p-2.5 space-y-2 animate-in fade-in duration-150">
-              <span className="text-[10px] font-bold text-cyan-300 uppercase tracking-wider block">
-                ระบุชนิดคลื่นหัวใจ Non-Shockable (Asystole / PEA)
-              </span>
+            <div className="bg-slate-950 border border-slate-800 rounded-xl p-2.5 space-y-2.5 animate-in fade-in duration-150">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold text-cyan-300 uppercase tracking-wider block">
+                  ระบุชนิดคลื่นหัวใจ Non-Shockable (Asystole / PEA)
+                </span>
+                <span className="text-[9px] text-amber-400 font-mono font-bold">
+                  Epinephrine ทุก 4 นาที
+                </span>
+              </div>
+
+              {/* 4-Minute Epinephrine Cycle Status Banner */}
+              <div className="p-2 rounded-lg bg-slate-900/90 border border-slate-800 flex items-center justify-between text-[10px] font-mono">
+                <div className="flex items-center gap-1.5 text-cyan-200">
+                  <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                  <span>รอบยา Epinephrine 1mg:</span>
+                </div>
+                <div>
+                  {epiTimerStarted ? (
+                    epiTimeRemaining <= 0 ? (
+                      <span className="font-black text-rose-300 animate-pulse bg-rose-950/90 px-2 py-0.5 rounded border border-rose-600">
+                        ⚡ DUE NOW! (ครบ 4 นาที)
+                      </span>
+                    ) : (
+                      <span className="font-bold text-amber-300 bg-amber-950/80 px-2 py-0.5 rounded border border-amber-700">
+                        รอบถัดไปอีก {formatMMSS ? formatMMSS(epiTimeRemaining) : `${epiTimeRemaining}s`}
+                      </span>
+                    )
+                  ) : !hasCompletedIvAccess ? (
+                    <span className="text-amber-300 bg-amber-950/80 px-2 py-0.5 rounded border border-amber-800">
+                      รอเปิดเส้น IV/IO
+                    </span>
+                  ) : (
+                    <span className="text-rose-300 font-bold bg-rose-950/80 px-2 py-0.5 rounded border border-rose-800">
+                      ให้เข็มแรกทันที (Dose #1)
+                    </span>
+                  )}
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-1.5">
                 <button
                   onClick={() => {
                     setSelectedNonShockableRhythm('Asystole');
                     addLog('Selected Rhythm Type: Asystole', 'rhythm');
-                    speakThai('เลือก คลื่นไฟฟ้าหัวใจ อะซิสโทลี');
+                    onClose();
+                    if (!hasCompletedIvAccess) {
+                      if (setIvAccessAlertActive) setIvAccessAlertActive(true);
+                      if (setShowProceduresModal) setShowProceduresModal(true);
+                      speakThai('เลือก คลื่นไฟฟ้าหัวใจ อะซิสโทลี เปิดเส้น ไอวี หรือ ไอโอ แอคเซส ค่ะ');
+                    } else if (epiCount === 0) {
+                      if (setEpiAlertActive) setEpiAlertActive(true);
+                      if (setShowMedDueModal) setShowMedDueModal(true);
+                      speakThai('เลือก คลื่นไฟฟ้าหัวใจ อะซิสโทลี ให้ยาเอพิเนฟริน เข็มแรก หนึ่งมิลลิกรัม ทันทีค่ะ');
+                    } else if (epiTimeRemaining <= 0) {
+                      if (setEpiAlertActive) setEpiAlertActive(true);
+                      if (setShowMedDueModal) setShowMedDueModal(true);
+                      speakThai('เลือก คลื่นไฟฟ้าหัวใจ อะซิสโทลี ครบกำหนดสี่นาที ให้ยาเอพิเนฟริน หนึ่งมิลลิกรัมค่ะ');
+                    } else {
+                      speakThai('เลือก คลื่นไฟฟ้าหัวใจ อะซิสโทลี เริ่มกดหน้าอกต่อทันที สองนาทีค่ะ และนับเวลาให้ยาเอพิเนฟรินทุกสี่นาทีนะคะ');
+                    }
                   }}
                   className={`p-1.5 rounded-lg border text-left flex items-center gap-2 cursor-pointer transition-all ${
                     selectedNonShockableRhythm === 'Asystole'
@@ -300,7 +364,22 @@ export function QuickActionPromptModal({
                   onClick={() => {
                     setSelectedNonShockableRhythm('PEA');
                     addLog('Selected Rhythm Type: PEA', 'rhythm');
-                    speakThai('เลือก คลื่นไฟฟ้าหัวใจ พีอีเอ');
+                    onClose();
+                    if (!hasCompletedIvAccess) {
+                      if (setIvAccessAlertActive) setIvAccessAlertActive(true);
+                      if (setShowProceduresModal) setShowProceduresModal(true);
+                      speakThai('เลือก คลื่นไฟฟ้าหัวใจ พีอีเอ เปิดเส้น ไอวี หรือ ไอโอ แอคเซส ค่ะ');
+                    } else if (epiCount === 0) {
+                      if (setEpiAlertActive) setEpiAlertActive(true);
+                      if (setShowMedDueModal) setShowMedDueModal(true);
+                      speakThai('เลือก คลื่นไฟฟ้าหัวใจ พีอีเอ ให้ยาเอพิเนฟริน เข็มแรก หนึ่งมิลลิกรัม ทันทีค่ะ');
+                    } else if (epiTimeRemaining <= 0) {
+                      if (setEpiAlertActive) setEpiAlertActive(true);
+                      if (setShowMedDueModal) setShowMedDueModal(true);
+                      speakThai('เลือก คลื่นไฟฟ้าหัวใจ พีอีเอ ครบกำหนดสี่นาที ให้ยาเอพิเนฟริน หนึ่งมิลลิกรัมค่ะ');
+                    } else {
+                      speakThai('เลือก คลื่นไฟฟ้าหัวใจ พีอีเอ เริ่มกดหน้าอกต่อทันที สองนาทีค่ะ และนับเวลาให้ยาเอพิเนฟรินทุกสี่นาทีนะคะ');
+                    }
                   }}
                   className={`p-1.5 rounded-lg border text-left flex items-center gap-2 cursor-pointer transition-all ${
                     selectedNonShockableRhythm === 'PEA'
@@ -315,68 +394,6 @@ export function QuickActionPromptModal({
                   </div>
                 </button>
               </div>
-
-              {/* Action Buttons for Non-Shockable */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-1">
-                {/* 1. IV / IO Access Button */}
-                <button
-                  onClick={() => {
-                    if (handleLogProcedure) {
-                      handleLogProcedure('IV / IO Access Established');
-                    } else {
-                      addLog('Procedure: IV / IO Access Established', 'system');
-                      speakThai('เปิดเส้นให้ยาเรียบร้อยแล้ว เตรียมให้ยาเอพิเนฟรินค่ะ', () => {
-                        onClose();
-                      });
-                    }
-                  }}
-                  className={`py-2 px-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer transition-all border ${
-                    hasCompletedIvAccess
-                      ? 'bg-emerald-950/80 text-emerald-300 border-emerald-500/80 ring-1 ring-emerald-500 shadow-sm'
-                      : 'bg-amber-600 hover:bg-amber-500 text-white border-amber-300 animate-pulse ring-2 ring-amber-400 shadow-md'
-                  }`}
-                >
-                  <Syringe className="w-3.5 h-3.5 shrink-0" />
-                  <span className="truncate">
-                    {hasCompletedIvAccess
-                      ? '✓ IV / IO Access สำเร็จแล้ว'
-                      : '🩺 เปิดเส้น IV / IO Access (ต้องกดก่อน)'}
-                  </span>
-                </button>
-
-                {/* 2. Epinephrine Button */}
-                <button
-                  onClick={() => {
-                    if (!hasCompletedIvAccess) {
-                      speakThai('กรุณากดเปิดเส้น IV Access ก่อนให้ยาเอพิเนฟรินนะคะ');
-                    } else {
-                      onClose();
-                      handleAdministerEpinephrine();
-                    }
-                  }}
-                  className={`py-2 px-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all border ${
-                    !hasCompletedIvAccess
-                      ? 'bg-slate-900 text-slate-400 border-slate-700/80 cursor-pointer hover:bg-slate-800/80 opacity-90'
-                      : 'bg-cyan-600 hover:bg-cyan-500 text-white border-cyan-300 shadow-md animate-pulse ring-2 ring-cyan-400 cursor-pointer'
-                  }`}
-                >
-                  {!hasCompletedIvAccess ? (
-                    <Lock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                  ) : (
-                    <Check className="w-3.5 h-3.5 text-cyan-200 shrink-0" />
-                  )}
-                  <span className="truncate">
-                    💉 EPINEPHRINE 1mg (Dose #{epiCount + 1})
-                  </span>
-                </button>
-              </div>
-
-              {!hasCompletedIvAccess && (
-                <p className="text-[10px] text-amber-400 font-medium text-center pt-0.5 leading-tight flex items-center justify-center gap-1">
-                  <AlertCircle className="w-3 h-3 shrink-0" />
-                  <span>ต้องกดเปิดเส้น IV / IO Access ก่อน จึงจะสามารถบริหารยา Epinephrine ได้</span>
-                </p>
-              )}
             </div>
           )}
         </div>

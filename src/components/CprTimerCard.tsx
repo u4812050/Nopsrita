@@ -28,6 +28,10 @@ interface CprTimerCardProps {
   handleLogPresetMed?: (medName: string, skipSpeech?: boolean) => void;
   logs?: LogEntry[];
 
+  // Airway & Confirmation State for Continuous CPR
+  hasCompletedAirway?: boolean;
+  hasCompletedEtco2?: boolean;
+
   // Resuscitation Meds (Left Side)
   hasCompletedIvAccess?: boolean;
   handleAdministerEpinephrine?: () => void;
@@ -35,6 +39,7 @@ interface CprTimerCardProps {
   epiTimeRemaining?: number;
   epiTimerStarted?: boolean;
   epiAlertActive?: boolean;
+  onOpenMedDueModal?: () => void;
   handleAdministerAmiodarone?: () => void;
   amioCount?: number;
   amioAlertActive?: boolean;
@@ -73,12 +78,16 @@ export function CprTimerCard({
   handleLogPresetMed,
   logs = [],
 
+  hasCompletedAirway = false,
+  hasCompletedEtco2 = false,
+
   hasCompletedIvAccess = false,
   handleAdministerEpinephrine,
   epiCount = 0,
   epiTimeRemaining = 0,
   epiTimerStarted = false,
   epiAlertActive = false,
+  onOpenMedDueModal,
   handleAdministerAmiodarone,
   amioCount = 0,
   amioAlertActive = false,
@@ -127,7 +136,6 @@ export function CprTimerCard({
             id="tab_cpr_continuous"
             onClick={() => {
               setMetronomeMode('continuous');
-              speakThai('เลือกการนับ ซีพีอา สองนาทีแบบต่อเนื่อง');
             }}
             className={`flex-1 w-1/2 min-w-[100px] py-1.5 px-1 sm:px-2 rounded-lg text-[8.5px] xs:text-[10px] sm:text-[11px] font-black transition-all cursor-pointer flex items-center justify-center gap-1 leading-none ${
               metronomeMode === 'continuous'
@@ -143,8 +151,6 @@ export function CprTimerCard({
             id="tab_cpr_30_2"
             onClick={() => {
               setMetronomeMode('30:2');
-              addLog('Switched CPR Mode to 30:2 CPR (5 Cycles)', 'cpr');
-              speakThai('เลือกการนับ CPR แบบ 30 ต่อ 2');
             }}
             className={`flex-1 w-1/2 min-w-[100px] py-1.5 px-1 sm:px-2 rounded-lg text-[8.5px] xs:text-[10px] sm:text-[11px] font-black transition-all cursor-pointer flex items-center justify-center gap-1 leading-none ${
               metronomeMode === '30:2'
@@ -153,7 +159,7 @@ export function CprTimerCard({
             }`}
           >
             <RotateCcw className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
-            <span className="truncate whitespace-nowrap">30:2 (5 รอบ)</span>
+            <span className="truncate whitespace-nowrap">30:2 (5 CYCLES)</span>
           </button>
         </div>
       </div>
@@ -234,7 +240,13 @@ export function CprTimerCard({
               <button
                 type="button"
                 id="btn_cpr_epinephrine"
-                onClick={handleAdministerEpinephrine}
+                onClick={() => {
+                  if (epiAlertActive && !isEpiPrepOnly && onOpenMedDueModal) {
+                    onOpenMedDueModal();
+                  } else if (handleAdministerEpinephrine) {
+                    handleAdministerEpinephrine();
+                  }
+                }}
                 className={`p-1 xs:p-1.5 rounded-lg text-left transition-all active:scale-95 cursor-pointer flex flex-col justify-between border relative overflow-hidden isolate h-[40px] xs:h-[45px] ${
                   epiAlertActive
                     ? isEpiPrepOnly
@@ -264,7 +276,7 @@ export function CprTimerCard({
                   <span className="truncate opacity-90">
                     {epiAlertActive
                       ? isEpiPrepOnly ? '⚠️ เตรียมยา' : '⚡ ให้ 1mg'
-                      : '1mg IV'}
+                      : '1mg ทุก 4น.'}
                   </span>
                   {epiTimerStarted ? (
                     <span className={`font-black ml-0.5 shrink-0 ${epiTimeRemaining === 0 ? 'text-rose-400 animate-pulse' : 'text-amber-400'}`}>
@@ -299,8 +311,11 @@ export function CprTimerCard({
                 #{amioCount ?? 0}
               </span>
             </div>
-            <span className="text-[6.5px] xs:text-[7.5px] text-slate-400 font-semibold block truncate">
-              {(amioCount ?? 0) === 0 ? '300mg IV' : '150mg IV'}
+            <span
+              className="text-[6.5px] xs:text-[7.5px] text-slate-400 font-semibold block truncate"
+              title={(amioCount ?? 0) === 0 ? '1st Dose: 300 mg+D5W up to 20ml IV/IO' : '2nd Dose: 150 mg+D5W up to 20ml IV/IO'}
+            >
+              {(amioCount ?? 0) === 0 ? '300mg+D5W 20ml' : '150mg+D5W 20ml'}
             </span>
           </button>
 
@@ -332,64 +347,252 @@ export function CprTimerCard({
         {/* CENTER: CIRCULAR CPR TIMER GAUGE */}
         <div className="relative flex items-center justify-center shrink-0 w-28 h-28 xs:w-36 xs:h-36 sm:w-44 sm:h-44 max-w-full">
           {/* SVG Circular Ring Gauge */}
-          <svg className="w-full h-full transform -rotate-90 drop-shadow-[0_0_20px_rgba(6,182,212,0.25)]" viewBox="0 0 160 160">
-            {/* Ambient Outer Track Glow */}
-            <circle
-              cx="80"
-              cy="80"
-              r="70"
-              className="stroke-slate-950/90"
-              strokeWidth="12"
-              fill="transparent"
-            />
-            {/* Background Track Circle */}
-            <circle
-              cx="80"
-              cy="80"
-              r="70"
-              className="stroke-slate-800/90"
-              strokeWidth="10"
-              fill="transparent"
-            />
-            {/* Dynamic Progress Circle */}
-            <circle
-              cx="80"
-              cy="80"
-              r="70"
-              className={`transition-all duration-1000 ease-linear ${
-                cprTimeRemaining <= 30
-                  ? 'stroke-rose-500 drop-shadow-[0_0_18px_rgba(244,63,94,0.85)] animate-pulse'
-                  : 'stroke-cyan-400 drop-shadow-[0_0_14px_rgba(34,211,238,0.65)]'
-              }`}
-              strokeWidth="10"
-              strokeDasharray={439.82}
-              strokeDashoffset={439.82 * (1 - Math.max(0, Math.min(1, cprTimeRemaining / 120)))}
-              strokeLinecap="round"
-              fill="transparent"
-            />
+          <svg
+            className={`w-full h-full transform -rotate-90 transition-all duration-300 ${
+              metronomeMode === '30:2'
+                ? 'drop-shadow-[0_0_20px_rgba(16,185,129,0.2)]'
+                : 'drop-shadow-[0_0_20px_rgba(6,182,212,0.25)]'
+            }`}
+            viewBox="0 0 160 160"
+          >
+            {metronomeMode === '30:2' ? (
+              <>
+                {/* 5-Segment Track for 30:2 Mode (5 CYCLES) */}
+                {/* Ambient Outer Track Glow */}
+                <circle
+                  cx="80"
+                  cy="80"
+                  r="70"
+                  className="stroke-slate-950/90"
+                  strokeWidth="12"
+                  fill="transparent"
+                />
+
+                {/* 5 Segmented Tracks and Progress Arcs */}
+                {[0, 1, 2, 3, 4].map((i) => {
+                  const circumference = 439.82;
+                  const segmentTotal = circumference / 5; // ~87.964
+                  const gap = 6; // 6px clean divider gap between cycles
+                  const segmentLength = segmentTotal - gap; // ~81.964
+                  const dashOffset = -(i * segmentTotal + gap / 2);
+                  const cycleNum = i + 1;
+                  const isPast = cprSubCycle302 > cycleNum;
+                  const isCurrent = cprSubCycle302 === cycleNum;
+
+                  // Active cycle progress calculation (0 to 32 beats: 30 compressions + 2 ventilations)
+                  const beatProgress = cprActive ? Math.min(1, Math.max(0, (metronomeBeat || 1) / 32)) : 0;
+                  const activeFillLength = Math.max(0.1, segmentLength * (beatProgress || 0.04));
+
+                  return (
+                    <g key={`cycle-segment-${i}`}>
+                      {/* Background segment track */}
+                      <circle
+                        cx="80"
+                        cy="80"
+                        r="70"
+                        className="stroke-slate-800/90"
+                        strokeWidth="10"
+                        strokeDasharray={`${segmentLength} ${circumference - segmentLength}`}
+                        strokeDashoffset={dashOffset}
+                        strokeLinecap="butt"
+                        fill="transparent"
+                      />
+
+                      {/* Active or Completed segment fill */}
+                      {(isPast || isCurrent) && (
+                        <circle
+                          cx="80"
+                          cy="80"
+                          r="70"
+                          className={`transition-all duration-200 ease-linear ${
+                            isPast
+                              ? 'stroke-emerald-500 drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]'
+                              : cycleNum === 5
+                                ? 'stroke-amber-400 drop-shadow-[0_0_16px_rgba(251,191,36,0.9)] animate-pulse'
+                                : 'stroke-emerald-400 drop-shadow-[0_0_12px_rgba(52,211,153,0.7)]'
+                          }`}
+                          strokeWidth="10"
+                          strokeDasharray={
+                            isPast
+                              ? `${segmentLength} ${circumference - segmentLength}`
+                              : `${activeFillLength} ${circumference - activeFillLength}`
+                          }
+                          strokeDashoffset={dashOffset}
+                          strokeLinecap="butt"
+                          fill="transparent"
+                        />
+                      )}
+                    </g>
+                  );
+                })}
+
+                {/* 5 Divider Lines cutting cleanly between each cycle segment */}
+                {[0, 72, 144, 216, 288].map((deg) => (
+                  <line
+                    key={`divider-cycle-${deg}`}
+                    x1={80 + 64 * Math.cos((deg * Math.PI) / 180)}
+                    y1={80 + 64 * Math.sin((deg * Math.PI) / 180)}
+                    x2={80 + 76 * Math.cos((deg * Math.PI) / 180)}
+                    y2={80 + 76 * Math.sin((deg * Math.PI) / 180)}
+                    stroke="#020617"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                  />
+                ))}
+
+                {/* Subtle Inner Cycle Indicator Dots for each of the 5 segments */}
+                {[36, 108, 180, 252, 324].map((midDeg, idx) => {
+                  const cycleNum = idx + 1;
+                  const isPast = cprSubCycle302 > cycleNum;
+                  const isCurrent = cprSubCycle302 === cycleNum;
+                  return (
+                    <circle
+                      key={`dot-cycle-${idx}`}
+                      cx={80 + 58 * Math.cos((midDeg * Math.PI) / 180)}
+                      cy={80 + 58 * Math.sin((midDeg * Math.PI) / 180)}
+                      r={isCurrent ? 2.5 : 1.8}
+                      className={`transition-colors duration-200 ${
+                        isPast
+                          ? 'fill-emerald-400'
+                          : isCurrent
+                            ? cycleNum === 5
+                              ? 'fill-amber-300 animate-ping'
+                              : 'fill-emerald-300'
+                            : 'fill-slate-700'
+                      }`}
+                    />
+                  );
+                })}
+              </>
+            ) : (
+              <>
+                {/* Continuous Mode (Single Unbroken Circle) */}
+                {/* Ambient Outer Track Glow */}
+                <circle
+                  cx="80"
+                  cy="80"
+                  r="70"
+                  className="stroke-slate-950/90"
+                  strokeWidth="12"
+                  fill="transparent"
+                />
+                {/* Background Track Circle */}
+                <circle
+                  cx="80"
+                  cy="80"
+                  r="70"
+                  className="stroke-slate-800/90"
+                  strokeWidth="10"
+                  fill="transparent"
+                />
+                {/* Dynamic Progress Circle */}
+                <circle
+                  cx="80"
+                  cy="80"
+                  r="70"
+                  className={`transition-all duration-300 ease-linear ${
+                    cprTimeRemaining <= 30
+                      ? 'stroke-rose-500 drop-shadow-[0_0_18px_rgba(244,63,94,0.85)] animate-pulse'
+                      : 'stroke-cyan-400 drop-shadow-[0_0_14px_rgba(34,211,238,0.65)]'
+                  }`}
+                  strokeWidth="10"
+                  strokeDasharray={439.82}
+                  strokeDashoffset={439.82 * (1 - Math.max(0, Math.min(1, cprTimeRemaining / 120)))}
+                  strokeLinecap="round"
+                  fill="transparent"
+                />
+              </>
+            )}
           </svg>
 
-          {/* Centered Timer Content inside the Ring */}
+          {/* Centered Timer / Cycle Content inside the Ring */}
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-1">
-            <div
-              id="timer-display"
-              className={`text-xl xs:text-3xl sm:text-4xl font-mono font-black leading-none tracking-tight tabular-nums ${
-                cprTimeRemaining <= 30 ? 'text-rose-400 animate-pulse glow-red' : 'text-amber-300 drop-shadow-[0_0_12px_rgba(251,191,36,0.4)]'
-              }`}
-            >
-              {formatMMSS(cprTimeRemaining)}
-            </div>
-            <span
-              className={`text-[7.5px] xs:text-[8.5px] font-bold tracking-wider uppercase mt-1 px-1.5 py-0.5 rounded-full border transition-all ${
-                cprActive
-                  ? cprTimeRemaining <= 30
-                    ? 'text-rose-300 bg-rose-950/80 border-rose-800/80 animate-pulse'
-                    : 'text-cyan-300 bg-cyan-950/80 border-cyan-800/80'
-                  : 'text-slate-400 bg-slate-950/80 border-slate-800'
-              }`}
-            >
-              {cprActive ? (cprTimeRemaining <= 30 ? 'CRITICAL' : 'ACTIVE') : 'PAUSED'}
-            </span>
+            {metronomeMode === '30:2' ? (
+              <>
+                <span className="text-[7.5px] xs:text-[8px] font-mono font-bold tracking-widest text-slate-400 uppercase">
+                  30:2 CPR
+                </span>
+                <div
+                  id="timer-display"
+                  className={`text-[25px] font-mono font-black leading-none tracking-tight tabular-nums mt-0.5 text-amber-300 drop-shadow-[0_0_12px_rgba(251,191,36,0.6)] ${
+                    cprSubCycle302 === 5 ? 'animate-pulse drop-shadow-[0_0_18px_rgba(251,191,36,0.85)]' : ''
+                  }`}
+                >
+                  CYCLE {cprSubCycle302}/5
+                </div>
+                {cprActive && metronomeBeat > 0 ? (
+                  <div className="text-[9px] xs:text-[10px] font-mono font-bold text-slate-200 tabular-nums mt-0.5">
+                    {metronomeBeat <= 30 ? (
+                      <span>กด: <span className="text-emerald-400 font-black">{metronomeBeat}</span>/30</span>
+                    ) : (
+                      <span className="text-cyan-300 font-black animate-pulse">ช่วยหายใจ {metronomeBeat - 30}/2</span>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-[8px] xs:text-[9px] font-mono text-slate-400 mt-0.5">
+                    รอบละ 30:2
+                  </div>
+                )}
+                <span
+                  className={`text-[7px] xs:text-[8px] font-bold tracking-wider uppercase mt-1 px-1.5 py-0.5 rounded-full border transition-all ${
+                    pulseCheckActive
+                      ? 'text-rose-200 bg-rose-950/90 border-rose-500 animate-pulse shadow-[0_0_8px_rgba(244,63,94,0.6)]'
+                      : cprActive
+                        ? cprSubCycle302 === 5
+                          ? 'text-amber-200 bg-amber-950/90 border-amber-500 animate-pulse shadow-[0_0_8px_rgba(245,158,11,0.5)]'
+                          : 'text-emerald-300 bg-emerald-950/80 border-emerald-800'
+                        : 'text-slate-400 bg-slate-950/80 border-slate-800'
+                  }`}
+                >
+                  {pulseCheckActive
+                    ? '🛑 หยุด CPR'
+                    : cprActive
+                      ? (cprSubCycle302 === 5 ? 'เตรียมเปลี่ยน' : '30:2 เคาะจังหวะ')
+                      : 'PAUSED'}
+                </span>
+              </>
+            ) : (
+              <>
+                <span className="text-[7.5px] xs:text-[8px] font-mono font-bold tracking-widest text-slate-400 uppercase flex items-center justify-center gap-1">
+                  {hasCompletedAirway && hasCompletedEtco2 ? (
+                    <span className="text-emerald-300 font-black px-1 py-0.2 bg-emerald-950/90 rounded border border-emerald-600/70 text-[6.5px] xs:text-[7.5px]">
+                      ETT+ETCO₂
+                    </span>
+                  ) : null}
+                  <span>2 MIN CPR</span>
+                </span>
+                <div
+                  id="timer-display"
+                  className={`text-[25px] font-mono font-black leading-none tracking-tight tabular-nums mt-0.5 ${
+                    cprTimeRemaining <= 30 ? 'text-rose-400 animate-pulse glow-red' : 'text-amber-300 drop-shadow-[0_0_12px_rgba(251,191,36,0.4)]'
+                  }`}
+                >
+                  {formatMMSS(cprTimeRemaining)}
+                </div>
+                {hasCompletedAirway && hasCompletedEtco2 ? (
+                  <span className="text-[7px] xs:text-[8px] font-mono text-emerald-300 font-bold mt-0.5 text-center leading-tight">
+                    ช่วยหายใจ 1 ครั้ง / 6 วิ
+                  </span>
+                ) : null}
+                <span
+                  className={`text-[7.5px] xs:text-[8.5px] font-bold tracking-wider uppercase mt-1 px-1.5 py-0.5 rounded-full border transition-all ${
+                    pulseCheckActive
+                      ? 'text-rose-200 bg-rose-950/90 border-rose-500 animate-pulse shadow-[0_0_8px_rgba(244,63,94,0.6)]'
+                      : cprActive
+                        ? cprTimeRemaining <= 30
+                          ? 'text-rose-300 bg-rose-950/80 border-rose-800/80 animate-pulse'
+                          : 'text-cyan-300 bg-cyan-950/80 border-cyan-800/80'
+                        : 'text-slate-400 bg-slate-950/80 border-slate-800'
+                  }`}
+                >
+                  {pulseCheckActive
+                    ? '🛑 หยุด CPR'
+                    : cprActive
+                      ? (cprTimeRemaining <= 30 ? 'CRITICAL' : 'ACTIVE')
+                      : 'PAUSED'}
+                </span>
+              </>
+            )}
           </div>
         </div>
 
@@ -529,7 +732,7 @@ export function CprTimerCard({
         {metronomeMode === '30:2' && (
           <div className="w-full bg-slate-950/80 border border-slate-800 rounded-lg p-1 sm:p-1.5 flex flex-wrap items-center justify-between gap-1 my-1">
             <span className="text-[9px] xs:text-[10px] font-bold text-cyan-400 shrink-0 pl-1 truncate">
-              30:2 รอบที่ {cprSubCycle302}/5
+              30:2 CYCLE {cprSubCycle302}/5
             </span>
             <div className="flex items-center gap-0.5 xs:gap-1">
               {[1, 2, 3, 4, 5].map((cycleNum) => {
@@ -541,8 +744,18 @@ export function CprTimerCard({
                     onClick={() => {
                       setCprSubCycle302(cycleNum);
                       cprSubCycleRef.current = cycleNum;
-                      addLog(`Manually set 30:2 CPR Cycle to ${cycleNum}/5`, 'cpr');
-                      speakThai(`${cycleNum}`, undefined, 1.0);
+                      addLog(`Manually set 30:2 CPR CYCLE to ${cycleNum}/5`, 'cpr');
+                      if (cycleNum === 1) {
+                        speakThai("รอบหนึ่ง", undefined, 1.0);
+                      } else if (cycleNum === 2) {
+                        speakThai("รอบสอง", undefined, 1.0);
+                      } else if (cycleNum === 3) {
+                        speakThai("รอบสาม", undefined, 1.0);
+                      } else if (cycleNum === 4) {
+                        speakThai("รอบสี่", undefined, 1.0);
+                      } else if (cycleNum === 5) {
+                        speakThai("รอบที่ห้า เตรียมเปลี่ยนค่ะ", undefined, 1.05);
+                      }
                     }}
                     className={`px-1.5 xs:px-2 py-0.5 rounded text-[9px] xs:text-[10px] font-mono font-black transition-all cursor-pointer ${
                       isActive
@@ -596,17 +809,17 @@ export function CprTimerCard({
           id="btn_pulse_check_trigger"
           onClick={startPulseCheck}
           title="Start 10-Second Pulse & EKG Check Timer"
-          className={`col-span-3 xs:col-span-3 sm:col-span-2 h-11 xs:h-12 rounded-xl flex flex-col items-center justify-center transition-all duration-200 active:scale-[0.95] cursor-pointer border backdrop-blur-md shadow-md group relative overflow-hidden ${
+          className={`col-span-3 xs:col-span-3 sm:col-span-2 h-11 xs:h-12 rounded-xl flex flex-col items-center justify-center transition-all duration-200 active:scale-[0.96] cursor-pointer border backdrop-blur-md shadow-sm group relative overflow-hidden ${
             pulseCheckActive
-              ? 'bg-gradient-to-b from-amber-300 via-amber-400 to-yellow-500 text-slate-950 font-black border-amber-200 shadow-[0_0_25px_rgba(245,158,11,0.95)] animate-pulse ring-4 ring-amber-300/90'
-              : 'bg-gradient-to-b from-amber-950/70 via-slate-900/90 to-amber-950/50 hover:from-amber-900/80 hover:to-slate-900 text-amber-300 border-amber-400/80 hover:border-amber-300 shadow-[0_0_16px_rgba(245,158,11,0.65)] hover:shadow-[0_0_24px_rgba(251,191,36,0.85)] glow-gold ring-1 ring-amber-400/50'
+              ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 font-black border-amber-300 shadow-lg shadow-amber-500/25 animate-pulse ring-2 ring-amber-300/70'
+              : 'bg-gradient-to-b from-amber-500/10 via-slate-900/90 to-slate-950/80 hover:from-amber-500/20 hover:via-slate-800/90 hover:to-slate-900 border-amber-500/30 hover:border-amber-400/60 ring-1 ring-amber-500/10 hover:ring-amber-400/30 text-amber-200 shadow-slate-950/50'
           }`}
         >
-          <div className="flex items-center justify-center gap-0.5">
-            <Clock className={`w-3 h-3 xs:w-3.5 xs:h-3.5 transition-transform duration-200 ${pulseCheckActive ? 'text-slate-950 stroke-[2.5]' : 'text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.85)] group-hover:scale-110'}`} />
-            <Activity className={`w-2.5 h-2.5 xs:w-3 xs:h-3 transition-transform duration-200 ${pulseCheckActive ? 'text-slate-950 stroke-[2.5]' : 'text-yellow-300 drop-shadow-[0_0_8px_rgba(253,224,71,0.9)] group-hover:scale-110'}`} />
+          <div className="flex items-center justify-center gap-1">
+            <Clock className={`w-3.5 h-3.5 transition-all duration-200 ${pulseCheckActive ? 'text-slate-950 stroke-[2.5]' : 'text-amber-400 group-hover:text-amber-300 group-hover:scale-105'}`} />
+            <Activity className={`w-3 h-3 transition-all duration-200 ${pulseCheckActive ? 'text-slate-950 stroke-[2.5]' : 'text-amber-300 group-hover:text-amber-200 group-hover:scale-105'}`} />
           </div>
-          <span className={`text-[8px] xs:text-[9px] font-mono tracking-tight mt-0.5 ${pulseCheckActive ? 'text-slate-950 font-black' : 'text-amber-200 font-bold drop-shadow-[0_0_6px_rgba(245,158,11,0.7)] group-hover:text-amber-100'}`}>
+          <span className={`text-[8px] xs:text-[9px] font-mono font-bold tracking-tight mt-0.5 transition-colors duration-200 ${pulseCheckActive ? 'text-slate-950 font-black' : 'text-amber-300/90 group-hover:text-amber-100'}`}>
             10s Check
           </span>
         </button>

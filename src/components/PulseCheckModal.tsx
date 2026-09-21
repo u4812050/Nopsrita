@@ -23,16 +23,22 @@ export function PulseCheckModal({
 
   const modalContent = (
     <div className="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-[99999] flex items-center justify-center p-4 animate-fadeIn">
-      <div className="bg-slate-900 border-2 border-amber-500/80 rounded-2xl max-w-md w-full p-6 text-center shadow-2xl relative overflow-hidden animate-in fade-in zoom-in duration-200">
-        <div className="w-12 h-12 rounded-full bg-amber-500/20 border border-amber-500 flex items-center justify-center mx-auto mb-3">
-          <Activity className="w-6 h-6 text-amber-400 animate-pulse" />
+      <div className="bg-slate-900 border-2 border-rose-500/80 rounded-2xl max-w-md w-full p-6 text-center shadow-2xl relative overflow-hidden animate-in fade-in zoom-in duration-200">
+        <div className="w-14 h-14 rounded-full bg-rose-500/20 border-2 border-rose-500 flex items-center justify-center mx-auto mb-3 shadow-[0_0_15px_rgba(244,63,94,0.4)] animate-pulse">
+          <Activity className="w-7 h-7 text-rose-400" />
+        </div>
+
+        {/* Warning Banner: หยุด CPR ก่อนตรวจชีพจรและคลื่นไฟฟ้าหัวใจ */}
+        <div className="inline-flex items-center gap-2 bg-rose-950/90 border-2 border-rose-500 text-rose-200 px-4 py-1.5 rounded-full text-xs xs:text-sm font-black tracking-wide mb-3 shadow-[0_0_16px_rgba(244,63,94,0.5)] animate-bounce">
+          <span className="text-base">🛑</span>
+          <span>หยุด CPR ก่อนตรวจชีพจรและคลื่นไฟฟ้าหัวใจ</span>
         </div>
 
         <h3 className="text-xl font-black text-amber-400 uppercase tracking-tight">
-          ประเมินชีพจรและคลื่นหัวใจ (Pulse & EKG)
+          ตรวจชีพจรและคลื่นไฟฟ้าหัวใจ (Pulse & EKG)
         </h3>
-        <p className="text-xs text-slate-400 mt-1">
-          จำกัดเวลาไม่เกิน 10 วินาทีตามแนวทางการช่วยชีวิตขั้นสูง
+        <p className="text-xs text-slate-300 mt-1">
+          หยุดกดหน้าอกทันที จำกัดเวลาประเมินไม่เกิน 10 วินาที
         </p>
 
         {/* Big Countdown Number */}

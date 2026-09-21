@@ -204,7 +204,7 @@ export function QuickMedsShocksPanel({
                     ? isEpiPrepOnly
                       ? '⚠️ เตรียมยา (รอ Shock #2)'
                       : '⚡ ให้ยา 1mg ทันที'
-                    : '1mg IV Every 3-5m'}
+                    : '1mg IV ทุก 4 นาที'}
                 </span>
                 {epiTimerStarted ? (
                   <span className={`font-black ml-1 shrink-0 ${epiTimeRemaining === 0 ? 'text-rose-400 animate-pulse' : 'text-amber-400'}`}>
@@ -236,7 +236,7 @@ export function QuickMedsShocksPanel({
             </span>
           </div>
           <span className="text-[8.5px] sm:text-[9px] text-slate-400 font-semibold block mt-1 truncate">
-            {amioCount === 0 ? '300mg IV Bolus' : '150mg IV Bolus'}
+            {amioCount === 0 ? '1st Dose: 300 mg+D5W up to 20ml IV/IO' : '2nd Dose: 150 mg+D5W up to 20ml IV/IO'}
           </span>
         </button>
 
