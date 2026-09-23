@@ -61,6 +61,7 @@ export default function App() {
   // Timers
   const [cprTimeRemaining, setCprTimeRemaining] = useState<number>(120); // 120s (2 minutes)
   const [cprActive, setCprActive] = useState<boolean>(false);
+  const [noPulseConfirmed, setNoPulseConfirmed] = useState<boolean>(false);
   const [cprCycle, setCprCycle] = useState<number>(1);
   const [cprSubCycle302, setCprSubCycle302] = useState<number>(1); // 30:2 x 5 Cycles
 
@@ -236,6 +237,7 @@ export default function App() {
           setCaseElapsedSeconds(parsed.caseElapsedSeconds || 0);
           setCprTimeRemaining(parsed.cprTimeRemaining ?? 120);
           setCprActive(false); // Pause timers initially for safety on page reload
+          if (parsed.noPulseConfirmed !== undefined) setNoPulseConfirmed(parsed.noPulseConfirmed);
           setCprCycle(parsed.cprCycle || 1);
           setCprSubCycle302(parsed.cprSubCycle302 || 1);
           cprSubCycleRef.current = parsed.cprSubCycle302 || 1;
@@ -288,6 +290,7 @@ export default function App() {
         caseElapsedSeconds,
         cprTimeRemaining,
         cprActive,
+        noPulseConfirmed,
         cprCycle,
         cprSubCycle302,
         epiTimeRemaining,
@@ -993,6 +996,7 @@ export default function App() {
       speakThai("หยุดซีพีอาชั่วคราวค่ะ", undefined, 1.1);
       addLog("หยุด CPR ชั่วคราว (Pause CPR)", "cpr");
     } else {
+      setNoPulseConfirmed(true);
       setCprActive(true);
       if (metronomeMode === '30:2') {
         const cycleNum = cprSubCycleRef.current || cprSubCycle302;
@@ -1019,6 +1023,7 @@ export default function App() {
     setCprTimeRemaining(120);
     setCprSubCycle302(1);
     cprSubCycleRef.current = 1;
+    setNoPulseConfirmed(false);
     addLog(`CPR CYCLE ${cprCycle} Timer reset back to 02:00`, "cpr");
   };
 
@@ -1399,6 +1404,7 @@ export default function App() {
       setCprActive(false);
     }
 
+    setNoPulseConfirmed(false);
     setEpiTimerStarted(false);
     setEpiAlertActive(false);
     setAmioAlertActive(false);
@@ -1778,6 +1784,7 @@ export default function App() {
     setCaseElapsedSeconds(0);
     setCprTimeRemaining(120);
     setCprActive(false);
+    setNoPulseConfirmed(false);
     setCprCycle(1);
     setCprSubCycle302(1);
     cprSubCycleRef.current = 1;
@@ -2140,6 +2147,10 @@ export default function App() {
               metronomeBeat={metronomeBeat}
               handleLogPresetMed={handleLogPresetMed}
               logs={logs}
+              noPulseConfirmed={noPulseConfirmed}
+              setNoPulseConfirmed={setNoPulseConfirmed}
+              playAlertChime={playAlertChime}
+              setGuidanceMessage={setGuidanceMessage}
               hasCompletedAirway={hasCompletedAirway}
               hasCompletedEtco2={hasCompletedEtco2}
               hasCompletedIvAccess={hasCompletedIvAccess}
@@ -2281,7 +2292,10 @@ export default function App() {
         cancelPulseCheck={cancelPulseCheck}
         toggleCPR={toggleCPR}
         cprActive={cprActive}
-        onCompletePulseCheck={() => setShowQuickActionModal(true)}
+        onCompletePulseCheck={() => {
+          setNoPulseConfirmed(true);
+          setShowQuickActionModal(true);
+        }}
       />
 
       <QuickActionPromptModal
