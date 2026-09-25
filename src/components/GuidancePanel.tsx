@@ -344,7 +344,7 @@ export function GuidancePanel({
         setAbcCompletedSteps(prev => [...prev, 'IDENT']);
         addLog('ABC Step 3 Completed: Circulation (C) (A-B-C Complete)', 'system');
       }
-      speakThai?.('ประเมินไวทอลซาย อีเคจี เปิดเส้นเลือด ประเมินอีเคจีสิบสองลี๋ด', () => {
+      speakThai?.('ประเมินไวทั่นซาย อีเคจี เปิดเส้นเลือด ประเมินอีเคจีสิบสองหลี่ด', () => {
         setShowStabilityModal?.(true);
       });
     }

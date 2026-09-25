@@ -746,7 +746,7 @@ export default function App() {
               setCprCycle(c => c + 1);
               addLog(`CPR 30:2 ครบ 5 CYCLE (CYCLE ${currentCycleNumber}) - หยุด CPR ก่อนตรวจชีพจรและคลื่นไฟฟ้าหัวใจ`, 'cpr');
               playAlertChime('cpr_expire');
-              speakThai("หยุด CPR ก่อนตรวจชีพจรและคลื่นไฟฟ้าหัวใจ", () => {
+              speakThai("หยุดCPR ขอตรวจชีพจรและคลื่นไฟฟ้าหัวใจค่ะ", () => {
                 setPulseCheckActive(true);
                 setPulseCheckTime(10);
               }, 1.15);
@@ -834,7 +834,7 @@ export default function App() {
                   setCprCycle(c => c + 1);
                   addLog(`CPR ต่อเนื่องครบ 2 นาที (CYCLE ${currentCycleNumber}) - หยุด CPR ก่อนตรวจชีพจรและคลื่นไฟฟ้าหัวใจ`, 'cpr');
                   playAlertChime('cpr_expire');
-                  speakThai("หยุด CPR ก่อนตรวจชีพจรและคลื่นไฟฟ้าหัวใจ", () => {
+                  speakThai("หยุดCPR ขอตรวจชีพจรและคลื่นไฟฟ้าหัวใจค่ะ", () => {
                     setPulseCheckActive(true);
                     setPulseCheckTime(10);
                   }, 1.15);
@@ -903,7 +903,7 @@ export default function App() {
       setShowQuickActionModal(true);
 
       playAlertChime('pulse_check');
-      speakThai("หมดเวลาประเมินชีพจรและอีเคจีรีบซีพีอาต่อค่ะ", () => {
+      speakThai("หมดเวลาประเมินรีบซีพีอาต่อค่ะ", () => {
         if (!caseActive) {
           setCaseActive(true);
           setCaseStartTime(Date.now());
@@ -919,7 +919,7 @@ export default function App() {
       if (pulseCheckTime === 10) speakThai("สิบ");
       else if (pulseCheckTime === 9) speakThai("เก้า");
       else if (pulseCheckTime === 8) speakThai("แปด");
-      else if (pulseCheckTime === 7) speakThai("เจ็ด");
+      else if (pulseCheckTime === 7) speakThai("เหจ็ด");
       else if (pulseCheckTime === 6) speakThai("หก");
       else if (pulseCheckTime === 5) speakThai("ห้า");
       else if (pulseCheckTime === 4) speakThai("สี่");
@@ -946,7 +946,7 @@ export default function App() {
     }
     addLog("ตรวจชีพจรและคลื่นไฟฟ้าหัวใจ - หยุด CPR ทันที (จำกัดเวลา 10 วินาที)", "cpr");
     playAlertChime('cpr_expire');
-    speakThai("หยุด CPR ก่อนตรวจชีพจรและคลื่นไฟฟ้าหัวใจ", () => {
+    speakThai("หยุดCPR ขอตรวจชีพจรและคลื่นไฟฟ้าหัวใจค่ะ", () => {
       setPulseCheckActive(true);
       setPulseCheckTime(10);
     }, 1.15);
@@ -956,7 +956,7 @@ export default function App() {
     setPulseCheckActive(false);
     setPulseCheckTime(10);
     addLog("Pulse & EKG Assessment Timer stopped manually", "system");
-    speakThai("ยกเลิกการจับเวลาประเมินชีพจร");
+    speakThai("ยกเลิกจับเวลาประเมินชีพจร");
   };
 
   const addLog = (text: string, type: 'cpr' | 'med' | 'shock' | 'rhythm' | 'note' | 'system' = 'note') => {
@@ -1959,6 +1959,14 @@ export default function App() {
     addLog('ปิดแอปพลิเคชัน: ผู้ใช้งานสั่งปิดระบบเรียบร้อยแล้ว', 'system');
 
     try {
+      window.opener = null;
+      window.open('', '_self', '');
+      window.close();
+    } catch (e) {
+      // ignore
+    }
+
+    try {
       window.close();
     } catch (e) {
       // ignore
@@ -2001,12 +2009,29 @@ export default function App() {
             </button>
             <button
               type="button"
+              id="btn_close_tab_final"
               onClick={() => {
+                try {
+                  window.opener = null;
+                  window.open('', '_self', '');
+                  window.close();
+                } catch (e) {
+                  // ignore
+                }
                 try {
                   window.close();
                 } catch (e) {
                   // ignore
                 }
+                setTimeout(() => {
+                  try {
+                    if (window.history.length > 1) {
+                      window.history.back();
+                    } else {
+                      window.location.href = 'about:blank';
+                    }
+                  } catch (e) {}
+                }, 150);
               }}
               className="w-full py-2.5 px-4 rounded-xl bg-slate-800/80 hover:bg-slate-800 text-slate-400 hover:text-slate-200 font-bold text-xs transition-colors cursor-pointer"
             >

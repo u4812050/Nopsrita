@@ -112,10 +112,10 @@ export function CprTimerCard({
   shockCount = 0,
   shockButtonFlashing = false,
 }: CprTimerCardProps) {
-  // Real-time latest 2 logs for the mini LiveResus Log (newest first)
-  const latestTwoLogs = useMemo(() => {
-    if (!logs || logs.length === 0) return [];
-    return logs.slice(-2).reverse();
+  // Real-time latest log for the mini LiveResus Log (newest first - 1 line)
+  const latestLog = useMemo(() => {
+    if (!logs || logs.length === 0) return null;
+    return logs[logs.length - 1];
   }, [logs]);
 
   const [highlightNoPulse, setHighlightNoPulse] = useState<boolean>(false);
@@ -130,7 +130,7 @@ export function CprTimerCard({
       setNoPulseConfirmed((prev) => {
         const nextVal = !prev;
         if (nextVal) {
-          addLog("คลำชีพจร: ยืนยันไม่พบชีพจร (No Pulse) — พร้อมเริ่ม CPR", "rhythm");
+          addLog("คลำชีพจร: ยืนยันไม่พบชีพจร (No Pulse) — พร้อมCPR Started", "rhythm");
           if (playAlertChime) playAlertChime('pulse_check');
           speakThai("ไม่พบชีพจร เริ่มทำ ซีพีอา ได้ค่ะ");
           if (setGuidanceMessage) {
@@ -224,7 +224,7 @@ export function CprTimerCard({
         </div>
       </div>
 
-      {/* LIVERESUS LOG ขนาดย่อ 2 บรรทัด (REAL-TIME) */}
+      {/* LIVERESUS LOG ขนาดย่อ 1 บรรทัด (REAL-TIME) */}
       <div
         id="mini_liveresus_log"
         className="w-full bg-slate-950/90 border border-slate-800 rounded-xl px-2.5 py-1.5 shadow-inner flex flex-col justify-center gap-0.5 my-0.5 shrink-0"
@@ -237,50 +237,24 @@ export function CprTimerCard({
             </span>
             LiveResus Log
           </span>
-          <span className="text-[8px] text-slate-500 font-normal">ล่าสุด 2 รายการ • Real-time</span>
+          <span className="text-[8px] text-slate-500 font-normal">ล่าสุด • Real-time</span>
         </div>
 
-        {/* 2 Lines of most recent actions */}
+        {/* 1 Line of most recent action */}
         <div className="flex flex-col gap-0.5 text-[9px] xs:text-[9.5px] font-mono leading-tight overflow-hidden">
-          {latestTwoLogs.length === 0 ? (
-            <>
-              <div className="flex items-center gap-1 text-slate-400 truncate">
-                <span className="text-cyan-500 font-bold shrink-0">▸ 00:00</span>
-                <span className="truncate">รอเริ่มการกู้ชีพ — ระบบพร้อมบันทึก Real-time</span>
-              </div>
-              <div className="flex items-center gap-1 text-slate-500 truncate text-[8.5px]">
-                <span className="text-slate-600 shrink-0">&nbsp;&nbsp;--:--</span>
-                <span className="truncate">กด START CPR หรือบันทึกยา/ช็อกเพื่อเริ่มรายการ</span>
-              </div>
-            </>
+          {!latestLog ? (
+            <div className="flex items-center gap-1 text-slate-400 truncate">
+              <span className="text-cyan-500 font-bold shrink-0">▸ 00:00</span>
+              <span className="truncate">รอเริ่มการกู้ชีพ — ระบบพร้อมบันทึก Real-time</span>
+            </div>
           ) : (
-            <>
-              {/* Line 1: Latest action */}
-              <div className="flex items-center gap-1 text-white font-medium truncate">
-                <span className="text-emerald-400 font-bold shrink-0">▸ {latestTwoLogs[0]?.elapsed || '--:--'}</span>
-                {latestTwoLogs[0] && (
-                  <span className={`px-1 py-0.2 rounded text-[7.5px] font-bold uppercase shrink-0 ${getTypeBadge(latestTwoLogs[0].type)}`}>
-                    {latestTwoLogs[0].type}
-                  </span>
-                )}
-                <span className="truncate text-slate-100">{latestTwoLogs[0]?.text || '—'}</span>
-              </div>
-
-              {/* Line 2: Second latest action */}
-              <div className="flex items-center gap-1 text-slate-400 truncate text-[8.5px] xs:text-[9px]">
-                <span className="text-slate-500 font-normal shrink-0">&nbsp;&nbsp;{latestTwoLogs[1]?.elapsed || '--:--'}</span>
-                {latestTwoLogs[1] ? (
-                  <>
-                    <span className={`px-1 py-0.2 rounded text-[7.5px] font-medium uppercase shrink-0 opacity-80 ${getTypeBadge(latestTwoLogs[1].type)}`}>
-                      {latestTwoLogs[1].type}
-                    </span>
-                    <span className="truncate text-slate-400">{latestTwoLogs[1].text}</span>
-                  </>
-                ) : (
-                  <span className="truncate text-slate-600">— รอรายการถัดไป —</span>
-                )}
-              </div>
-            </>
+            <div className="flex items-center gap-1 text-white font-medium truncate">
+              <span className="text-emerald-400 font-bold shrink-0">▸ {latestLog.elapsed || '--:--'}</span>
+              <span className={`px-1 py-0.2 rounded text-[7.5px] font-bold uppercase shrink-0 ${getTypeBadge(latestLog.type)}`}>
+                {latestLog.type}
+              </span>
+              <span className="truncate text-slate-100">{latestLog.text || '—'}</span>
+            </div>
           )}
         </div>
       </div>

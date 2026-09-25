@@ -86,6 +86,13 @@ export function ControlBar({
       onCloseApp();
     } else {
       try {
+        window.opener = null;
+        window.open('', '_self', '');
+        window.close();
+      } catch (e) {
+        // ignore
+      }
+      try {
         window.close();
       } catch (e) {
         // ignore
@@ -540,7 +547,7 @@ export function ControlBar({
           </button>
           <button
             id="btn_close_app"
-            onClick={() => setShowCloseModal(true)}
+            onClick={handleExecuteCloseApp}
             className="px-2.5 py-1 bg-slate-900 hover:bg-rose-950/90 text-slate-300 hover:text-rose-200 border border-slate-700 hover:border-rose-600 rounded-md text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer active:scale-95 shadow-xs"
             title="ปิดแอปพลิเคชัน (Close Application)"
           >
