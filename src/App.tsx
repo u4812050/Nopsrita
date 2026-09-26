@@ -1718,7 +1718,7 @@ export default function App() {
       procName.includes('ECG 12') ||
       procName.includes('EKG 12')
     ) {
-      speakThai("ตรวจอีเคจีสิบสองหลี่ด");
+      speakThai("ตรวจอีเคจีสิบสองหลีด");
     }
 
     const isLoggingAirway =
