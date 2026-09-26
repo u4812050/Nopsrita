@@ -1102,12 +1102,12 @@ export default function App() {
         playAlertChime('mode_switch');
         addLog("CPR 30:2 x 5 Cycles", 'cpr');
         setGuidanceMessage(`⚡ CPR 30:2 x 5 Cycles (รอบที่ ${calculatedCycle}/5)`);
-        speakThai("ซีพีอา 30 ต่อ 2 5รอบ");
+        speakThai("ซีพีอาสามสิบต่อสอง ห้ารอบ");
         return calculatedCycle;
       } else {
         addLog("CPR 30:2 x 5 Cycles", 'cpr');
         playAlertChime('mode_switch');
-        speakThai("ซีพีอา 30 ต่อ 2 5รอบ");
+        speakThai("ซีพีอาสามสิบต่อสอง ห้ารอบ");
       }
       return cprSubCycle302;
     }
