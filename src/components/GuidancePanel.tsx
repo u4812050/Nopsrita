@@ -257,7 +257,7 @@ export function GuidancePanel({
       badgeBg: 'bg-rose-950 text-rose-300 border-rose-700',
       activeRing: 'border-rose-400 ring-2 ring-rose-400/50 bg-rose-950/25',
       logText: 'ROSC Step E Completed: 12-Lead ECG screened for STEMI / Emergent CAG or PCI',
-      voiceText: 'ตรวจคลื่นไฟฟ้าหัวใจสิบสองลีด',
+      voiceText: 'ตรวจอีเคจีสิบสองหลี่ด',
       detail: (
         <p className="text-[10px] text-slate-300">
           Obtain 12-lead ECG immediately. If <strong className="text-rose-300">STEMI</strong> is present or high suspicion of ACS -&gt; Emergent Coronary Angiography (CAG) / PCI.
