@@ -316,35 +316,28 @@ export function GuidancePanel({
 
   const handleAbcStepClick = (step: 'A-B' | 'C' | 'IDENT') => {
     if (step === 'A-B') {
-      if (!isAbDone) {
-        setAbcCompletedSteps(prev => [...prev, 'A-B']);
-        addLog('ABC Step 1 Completed: Airways (A)', 'system');
-        speakThai?.('ดูแลทางเดินหายใจให้โล่ง');
-      } else {
-        setAbcCompletedSteps(prev => prev.filter(s => s !== 'A-B' && s !== 'C' && s !== 'IDENT'));
-      }
+      if (isAbDone) return; // ไม่สามารถกดซ้ำหรือยกเลิกได้
+      setAbcCompletedSteps(prev => [...prev, 'A-B']);
+      addLog('ABC Step 1 Completed: Airways (A)', 'system');
+      speakThai?.('ดูแลทางเดินหายใจให้โล่ง');
     } else if (step === 'C') {
       if (!isAbDone) {
         speakThai?.('กรุณาทำขั้นตอน Airways (A) ก่อนนะคะ');
         return;
       }
-      if (!isCDone) {
-        setAbcCompletedSteps(prev => [...prev, 'C']);
-        addLog('ABC Step 2 Completed: Breathing (B)', 'system');
-        speakThai?.('ให้ออกซิเจน หรือ ช่วยเหลือการหายใจ');
-      } else {
-        setAbcCompletedSteps(prev => prev.filter(s => s !== 'C' && s !== 'IDENT'));
-      }
+      if (isCDone) return; // ไม่สามารถกดซ้ำหรือยกเลิกได้
+      setAbcCompletedSteps(prev => [...prev, 'C']);
+      addLog('ABC Step 2 Completed: Breathing (B)', 'system');
+      speakThai?.('ให้อ๊อกซิเจ้น หรือ ช่วยเหลือการหายใจ');
     } else if (step === 'IDENT') {
       if (!isCDone) {
         speakThai?.('กรุณาทำขั้นตอน Breathing (B) ก่อนนะคะ');
         return;
       }
-      if (!isIdentDone) {
-        setAbcCompletedSteps(prev => [...prev, 'IDENT']);
-        addLog('ABC Step 3 Completed: Circulation (C) (A-B-C Complete)', 'system');
-      }
-      speakThai?.('ประเมินไวทั่นซาย อีเคจี เปิดเส้นเลือด ประเมินอีเคจีสิบสองหลี่ด', () => {
+      if (isIdentDone) return; // ไม่สามารถกดซ้ำหรือยกเลิกได้
+      setAbcCompletedSteps(prev => [...prev, 'IDENT']);
+      addLog('ABC Step 3 Completed: Circulation (C) (A-B-C Complete)', 'system');
+      speakThai?.('ประเมินไวทั่นซาย อีเคจี เปิดเส้นเลือด ประเมินอีเคจีสิบสองหลีด', () => {
         setShowStabilityModal?.(true);
       });
     }
@@ -488,10 +481,10 @@ export function GuidancePanel({
                   {/* Step 1: A-B */}
                   <button
                     onClick={() => handleAbcStepClick('A-B')}
-                    className={`p-2.5 rounded-lg border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                    className={`p-2.5 rounded-lg border text-left transition-all flex flex-col justify-between ${
                       isAbDone
-                        ? 'bg-amber-950/60 border-amber-400 text-amber-200'
-                        : 'bg-slate-900 hover:bg-slate-850 border-amber-500/60 text-slate-200 animate-pulse active:scale-95'
+                        ? 'bg-amber-950/60 border-amber-400 text-amber-200 cursor-default opacity-90'
+                        : 'bg-slate-900 hover:bg-slate-850 border-amber-500/60 text-slate-200 animate-pulse active:scale-95 cursor-pointer'
                     }`}
                   >
                     <div className="flex items-center justify-between w-full mb-1">
@@ -512,7 +505,7 @@ export function GuidancePanel({
                     onClick={() => handleAbcStepClick('C')}
                     className={`p-2.5 rounded-lg border text-left transition-all flex flex-col justify-between ${
                       isCDone
-                        ? 'bg-cyan-950/60 border-cyan-400 text-cyan-200 cursor-pointer'
+                        ? 'bg-cyan-950/60 border-cyan-400 text-cyan-200 cursor-default opacity-90'
                         : isAbDone
                         ? 'bg-slate-900 hover:bg-slate-850 border-cyan-500/60 text-slate-200 animate-pulse cursor-pointer active:scale-95'
                         : 'bg-slate-950/40 border-slate-800 text-slate-500 opacity-60 cursor-not-allowed'
@@ -538,7 +531,7 @@ export function GuidancePanel({
                     onClick={() => handleAbcStepClick('IDENT')}
                     className={`p-2.5 rounded-lg border text-left transition-all flex flex-col justify-between ${
                       isIdentDone
-                        ? 'bg-emerald-950/60 border-emerald-400 text-emerald-200 cursor-pointer'
+                        ? 'bg-emerald-950/60 border-emerald-400 text-emerald-200 cursor-default opacity-90'
                         : isCDone
                         ? 'bg-slate-900 hover:bg-slate-850 border-emerald-500/60 text-slate-200 animate-pulse cursor-pointer active:scale-95'
                         : 'bg-slate-950/40 border-slate-800 text-slate-500 opacity-60 cursor-not-allowed'
