@@ -992,7 +992,7 @@ export default function App() {
     setLogs(prev => [...prev, newEntry]);
   };
 
-  const toggleCPR = () => {
+  const toggleCPR = (forceStart = false, skipSpeech = false) => {
     if (!caseActive) {
       setCaseActive(true);
       setCaseStartTime(Date.now());
@@ -1005,30 +1005,33 @@ export default function App() {
       addLog("Pulse check cancelled by manually starting CPR", "system");
     }
 
-    if (cprActive) {
+    if (cprActive && !forceStart) {
       setCprActive(false);
       speakThai("หยุดซีพีอาชั่วคราวค่ะ", undefined, 1.1);
       addLog("หยุด CPR ชั่วคราว (Pause CPR)", "cpr");
     } else {
       setNoPulseConfirmed(true);
       setCprActive(true);
-      if (metronomeMode === '30:2') {
-        const cycleNum = cprSubCycleRef.current || cprSubCycle302;
-        if (cycleNum === 1) {
-          speakThai("เริ่มซีพีอา รอบหนึ่งค่ะ", undefined, 1.05);
-        } else if (cycleNum === 2) {
-          speakThai("รอบสอง", undefined, 1.1);
-        } else if (cycleNum === 3) {
-          speakThai("รอบสาม", undefined, 1.1);
-        } else if (cycleNum === 4) {
-          speakThai("รอบสี่", undefined, 1.1);
-        } else if (cycleNum === 5) {
-          speakThai("รอบที่ห้า เตรียมเปลี่ยนค่ะ", undefined, 1.05);
+      setMetronomeOn(true);
+      if (!skipSpeech) {
+        if (metronomeMode === '30:2') {
+          const cycleNum = cprSubCycleRef.current || cprSubCycle302;
+          if (cycleNum === 1) {
+            speakThai("เริ่มซีพีอา รอบหนึ่งค่ะ", undefined, 1.05);
+          } else if (cycleNum === 2) {
+            speakThai("รอบสอง", undefined, 1.1);
+          } else if (cycleNum === 3) {
+            speakThai("รอบสาม", undefined, 1.1);
+          } else if (cycleNum === 4) {
+            speakThai("รอบสี่", undefined, 1.1);
+          } else if (cycleNum === 5) {
+            speakThai("รอบที่ห้า เตรียมเปลี่ยนค่ะ", undefined, 1.05);
+          } else {
+            speakThai("เริ่มซีพีอา ค่ะ", undefined, 1.1);
+          }
         } else {
           speakThai("เริ่มซีพีอา ค่ะ", undefined, 1.1);
         }
-      } else {
-        speakThai("เริ่มซีพีอา ค่ะ", undefined, 1.1);
       }
     }
   };

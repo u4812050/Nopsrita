@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useRef } from 'react';
 import { Clock, RotateCcw, Heart, Activity, Check, Zap, HeartOff } from 'lucide-react';
 import { ALT_RESUSCITATION_MEDS, AltMedItem } from '../data/altMeds';
 import { LogEntry } from '../types';
@@ -14,7 +14,7 @@ interface CprTimerCardProps {
   cprSubCycle302: number;
   setCprSubCycle302: (sub: number) => void;
   cprSubCycleRef: React.MutableRefObject<number>;
-  toggleCPR: () => void;
+  toggleCPR: (forceStart?: boolean, skipSpeech?: boolean) => void;
   resetCPRCycle: () => void;
   startPulseCheck: () => void;
   caseActive: boolean;
@@ -119,6 +119,7 @@ export function CprTimerCard({
   }, [logs]);
 
   const [highlightNoPulse, setHighlightNoPulse] = useState<boolean>(false);
+  const autoStartCprPendingRef = useRef<boolean>(false);
 
   const handleToggleNoPulse = () => {
     if (cprActive) {
@@ -130,13 +131,23 @@ export function CprTimerCard({
       setNoPulseConfirmed((prev) => {
         const nextVal = !prev;
         if (nextVal) {
+          autoStartCprPendingRef.current = true;
           addLog("คลำชีพจร: ยืนยันไม่พบชีพจร (No Pulse) — พร้อมCPR Started", "rhythm");
           if (playAlertChime) playAlertChime('pulse_check');
-          speakThai("ไม่พบชีพจร เริ่มทำ ซีพีอา ได้ค่ะ");
           if (setGuidanceMessage) {
-            setGuidanceMessage("⚡ ยืนยันตรวจไม่พบชีพจร (No Pulse) เรียบร้อย • กดปุ่ม START CPR เพื่อเริ่มกดหน้าอก");
+            setGuidanceMessage("⚡ ยืนยันตรวจไม่พบชีพจร (No Pulse) เรียบร้อย • กำลังเริ่ม CPR...");
           }
+          speakThai("ไม่พบชีพจรเริ่มซีพีอาได้ค่ะ", () => {
+            if (autoStartCprPendingRef.current) {
+              autoStartCprPendingRef.current = false;
+              toggleCPR(true, true);
+              if (setGuidanceMessage) {
+                setGuidanceMessage("⚡ เริ่ม CPR และ Metronome อัตโนมัติเรียบร้อย");
+              }
+            }
+          });
         } else {
+          autoStartCprPendingRef.current = false;
           addLog("ยกเลิกการยืนยันสถานะ No Pulse", "system");
           speakThai("ยกเลิกสถานะ");
           if (setGuidanceMessage) {
@@ -149,6 +160,7 @@ export function CprTimerCard({
   };
 
   const handleStartBtnClick = () => {
+    autoStartCprPendingRef.current = false;
     if (cprActive) {
       toggleCPR();
       return;
