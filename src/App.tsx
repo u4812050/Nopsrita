@@ -144,6 +144,20 @@ export default function App() {
   const [lastSusScore, setLastSusScore] = useState<{ score: number; grade: string; evaluator: string } | null>(null);
   const [mgSo4AlertActive, setMgSo4AlertActive] = useState<boolean>(false);
   const [isAppClosed, setIsAppClosed] = useState<boolean>(false);
+  const [isClosedScreenFadingOut, setIsClosedScreenFadingOut] = useState<boolean>(false);
+  const [closedScreenVisible, setClosedScreenVisible] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (isAppClosed) {
+      const raf = requestAnimationFrame(() => {
+        setClosedScreenVisible(true);
+      });
+      return () => cancelAnimationFrame(raf);
+    } else {
+      setClosedScreenVisible(false);
+      setIsClosedScreenFadingOut(false);
+    }
+  }, [isAppClosed]);
 
   // 10-Second Pulse & EKG assessment timer states
   const [pulseCheckActive, setPulseCheckActive] = useState<boolean>(false);
@@ -1979,9 +1993,23 @@ export default function App() {
     return (
       <div 
         id="smart_acls_closed_screen"
-        className="min-h-[100dvh] h-[100dvh] w-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-center p-4 sm:p-6 select-none font-sans"
+        className={`fixed inset-0 min-h-[100dvh] h-[100dvh] w-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-center p-4 sm:p-6 select-none font-sans z-50 transition-all duration-700 ease-out ${
+          isClosedScreenFadingOut
+            ? 'opacity-0 scale-95 pointer-events-none'
+            : closedScreenVisible
+            ? 'opacity-100 scale-100'
+            : 'opacity-0 scale-95'
+        }`}
       >
-        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 max-w-md w-full text-center space-y-6 shadow-2xl relative overflow-hidden">
+        <div 
+          className={`bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 max-w-md w-full text-center space-y-6 shadow-2xl relative overflow-hidden transition-all duration-700 ease-out ${
+            isClosedScreenFadingOut
+              ? 'opacity-0 scale-90 translate-y-3'
+              : closedScreenVisible
+              ? 'opacity-100 scale-100 translate-y-0'
+              : 'opacity-0 scale-90 translate-y-3'
+          }`}
+        >
           <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-rose-950/70 border border-rose-800/80 flex items-center justify-center mx-auto text-rose-400 shadow-inner">
             <Power className="w-8 h-8 sm:w-10 sm:h-10" />
           </div>
@@ -1998,11 +2026,15 @@ export default function App() {
           <div className="pt-2 border-t border-slate-800/80 flex flex-col gap-2.5">
             <button
               id="btn_restart_app_after_close"
+              disabled={isClosedScreenFadingOut}
               onClick={() => {
-                setIsAppClosed(false);
-                window.location.reload();
+                setIsClosedScreenFadingOut(true);
+                setTimeout(() => {
+                  setIsAppClosed(false);
+                  window.location.reload();
+                }, 400);
               }}
-              className="w-full py-3 px-4 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-black text-xs sm:text-sm transition-all shadow-lg shadow-cyan-900/30 flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+              className="w-full py-3 px-4 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-black text-xs sm:text-sm transition-all shadow-lg shadow-cyan-900/30 flex items-center justify-center gap-2 cursor-pointer active:scale-95 disabled:opacity-50"
             >
               <RotateCcw className="w-4 h-4" />
               <span>เปิดใช้งานใหม่อีกครั้ง (Restart App)</span>
@@ -2010,32 +2042,40 @@ export default function App() {
             <button
               type="button"
               id="btn_close_tab_final"
+              disabled={isClosedScreenFadingOut}
               onClick={() => {
-                try {
-                  window.opener = null;
-                  window.open('', '_self', '');
-                  window.close();
-                } catch (e) {
-                  // ignore
-                }
-                try {
-                  window.close();
-                } catch (e) {
-                  // ignore
-                }
+                setIsClosedScreenFadingOut(true);
                 setTimeout(() => {
                   try {
-                    if (window.history.length > 1) {
-                      window.history.back();
-                    } else {
-                      window.location.href = 'about:blank';
-                    }
-                  } catch (e) {}
-                }, 150);
+                    window.opener = null;
+                    window.open('', '_self', '');
+                    window.close();
+                  } catch (e) {
+                    // ignore
+                  }
+                  try {
+                    window.close();
+                  } catch (e) {
+                    // ignore
+                  }
+                  setTimeout(() => {
+                    try {
+                      if (window.history.length > 1) {
+                        window.history.back();
+                      } else {
+                        window.location.href = 'about:blank';
+                      }
+                    } catch (e) {}
+                  }, 150);
+                }, 700);
               }}
-              className="w-full py-2.5 px-4 rounded-xl bg-slate-800/80 hover:bg-slate-800 text-slate-400 hover:text-slate-200 font-bold text-xs transition-colors cursor-pointer"
+              className={`w-full py-2.5 px-4 rounded-xl font-bold text-xs transition-all cursor-pointer ${
+                isClosedScreenFadingOut
+                  ? 'bg-slate-900 text-slate-500 cursor-not-allowed'
+                  : 'bg-slate-800/80 hover:bg-slate-800 text-slate-400 hover:text-slate-200'
+              }`}
             >
-              ปิดหน้าต่าง / แท็บทันที (Close Tab)
+              {isClosedScreenFadingOut ? 'กำลังปิดหน้าต่าง...' : 'ปิดหน้าต่าง / แท็บทันที (Close Tab)'}
             </button>
           </div>
         </div>
