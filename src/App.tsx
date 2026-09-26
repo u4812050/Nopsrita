@@ -1015,7 +1015,7 @@ export default function App() {
       if (metronomeMode === '30:2') {
         const cycleNum = cprSubCycleRef.current || cprSubCycle302;
         if (cycleNum === 1) {
-          speakThai("เริ่ม ซีพีอา  รอบหนึ่งค่ะ", undefined, 1.05);
+          speakThai("เริ่มซีพีอา รอบหนึ่งค่ะ", undefined, 1.05);
         } else if (cycleNum === 2) {
           speakThai("รอบสอง", undefined, 1.1);
         } else if (cycleNum === 3) {
@@ -1025,10 +1025,10 @@ export default function App() {
         } else if (cycleNum === 5) {
           speakThai("รอบที่ห้า เตรียมเปลี่ยนค่ะ", undefined, 1.05);
         } else {
-          speakThai("เริ่ม ซีพีอาค่ะ", undefined, 1.1);
+          speakThai("เริ่มซีพีอา ค่ะ", undefined, 1.1);
         }
       } else {
-        speakThai("เริ่ม ซีพีอาค่ะ", undefined, 1.1);
+        speakThai("เริ่มซีพีอา ค่ะ", undefined, 1.1);
       }
     }
   };
