@@ -76,6 +76,8 @@ interface GuidancePanelProps {
   setRoscBPStatus: (bp: RoscBPStatus) => void;
   roscComatoseStatus: RoscComatoseStatus;
   setRoscComatoseStatus: (c: RoscComatoseStatus) => void;
+  abcCompletedSteps?: string[];
+  setAbcCompletedSteps?: React.Dispatch<React.SetStateAction<string[]>>;
   checked5H: string[];
   toggle5H: (item: string) => void;
   checked5T: string[];
@@ -152,6 +154,8 @@ export function GuidancePanel({
   setRoscBPStatus,
   roscComatoseStatus,
   setRoscComatoseStatus,
+  abcCompletedSteps: abcStepsProp,
+  setAbcCompletedSteps: setAbcStepsProp,
   checked5H,
   toggle5H,
   checked5T,
@@ -308,7 +312,9 @@ export function GuidancePanel({
     speakThai?.(step.voiceText);
   };
 
-  const [abcCompletedSteps, setAbcCompletedSteps] = useState<string[]>([]);
+  const [localAbcCompletedSteps, setLocalAbcCompletedSteps] = useState<string[]>([]);
+  const abcCompletedSteps = abcStepsProp !== undefined ? abcStepsProp : localAbcCompletedSteps;
+  const setAbcCompletedSteps = setAbcStepsProp || setLocalAbcCompletedSteps;
 
   const isAbDone = abcCompletedSteps.includes('A-B');
   const isCDone = abcCompletedSteps.includes('C');

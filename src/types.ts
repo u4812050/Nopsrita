@@ -49,7 +49,7 @@ export const PROCEDURE_PRESETS: ProcedurePreset[] = [
   { name: 'Intubation Confirmed by ETCO2', short: 'ETCO2 Confirmed' },
   { name: 'IV / IO Line Established', short: 'IV Access' },
   { name: 'Arterial Blood Gas (ABG) Drawn', short: 'ABG Drawn' },
-  { name: 'Mechanical Chest Compressor Applied', short: 'Mechanical CPR' },
+  { name: 'IV/IO Line, Blood Exam', short: 'IV Access 2' },
   { name: 'Needle Decompression & Chest Drain (ICD)', short: 'Needle Decompress+ICD' },
 ];
 

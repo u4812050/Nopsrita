@@ -114,6 +114,7 @@ export default function App() {
   // ROSC Post-Cardiac Arrest Care State
   const [noradrenalineCount, setNoradrenalineCount] = useState<number>(0);
   const [roscCheckedSteps, setRoscCheckedSteps] = useState<string[]>([]);
+  const [abcCompletedSteps, setAbcCompletedSteps] = useState<string[]>([]);
   const [roscStemiStatus, setRoscStemiStatus] = useState<RoscStemiStatus>('unknown');
   const [roscSpO2Level, setRoscSpO2Level] = useState<RoscSpO2Level>('unknown');
   const [roscBPStatus, setRoscBPStatus] = useState<RoscBPStatus>('unknown');
@@ -283,6 +284,7 @@ export default function App() {
 
           setNoradrenalineCount(parsed.noradrenalineCount || 0);
           setRoscCheckedSteps(parsed.roscCheckedSteps || []);
+          setAbcCompletedSteps(parsed.abcCompletedSteps || []);
           setRoscStemiStatus(parsed.roscStemiStatus || 'unknown');
           setRoscSpO2Level(parsed.roscSpO2Level || 'unknown');
           setRoscBPStatus(parsed.roscBPStatus || 'unknown');
@@ -334,6 +336,7 @@ export default function App() {
         completedProcedures,
         noradrenalineCount,
         roscCheckedSteps,
+        abcCompletedSteps,
         roscStemiStatus,
         roscSpO2Level,
         roscBPStatus,
@@ -1704,6 +1707,13 @@ export default function App() {
     }
 
     if (
+      procName.includes('Blood Exam') ||
+      procName.includes('IV Access 2')
+    ) {
+      speakThai("เปิดเส้นและเจาะเลือดส่งตรวจเรียบร้อยแล้วค่ะ");
+    }
+
+    if (
       procName.includes('Needle Decompression') ||
       procName.includes('Chest Drain') ||
       procName.includes('ICD')
@@ -1827,6 +1837,21 @@ export default function App() {
     setSelectedShockableRhythm(null);
     setSelectedNonShockableRhythm(null);
     setStabilityStatus(null);
+    setAbcCompletedSteps([]);
+    setActiveTab('trc_cardiac');
+    setCustomNote('');
+    setShockButtonFlashing(false);
+    setCprButtonFlash(false);
+    setMgSo4AlertActive(false);
+    setShowPalsModal(false);
+    setShowStabilityModal(false);
+    setShowUnstableBradyModal(false);
+    setShowStableBradyModal(false);
+    setShowStableTachyModal(false);
+    setShowUnstableTachyModal(false);
+    setShowAltMedsModal(false);
+    setShowQuickActionModal(false);
+    setShowProceduresModal(false);
     setNoradrenalineCount(0);
     setRoscCheckedSteps([]);
     setRoscStemiStatus('unknown');
@@ -2294,6 +2319,8 @@ export default function App() {
               setRoscBPStatus={setRoscBPStatus}
               roscComatoseStatus={roscComatoseStatus}
               setRoscComatoseStatus={setRoscComatoseStatus}
+              abcCompletedSteps={abcCompletedSteps}
+              setAbcCompletedSteps={setAbcCompletedSteps}
               checked5H={checked5H}
               toggle5H={toggle5H}
               checked5T={checked5T}

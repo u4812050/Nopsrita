@@ -58,6 +58,7 @@ function translateLogTextToEnglish(text: string): string {
     [/ให้ยานอร์เอพิเนฟริน|ให้ยานอร์อดรีนาลีน/gi, 'Administer Norepinephrine'],
     [/ให้ยาเอพิเนฟริน|ให้ยาอดรีนาลีน/gi, 'Administer Epinephrine'],
     [/เปิดเส้นหลอดเลือดดำ|เปิดเส้น IV/gi, 'IV/IO Line Established'],
+    [/IV Access 2|Blood Exam/gi, 'IV/IO Line & Blood Exam Established'],
     [/ท่อช่วยหายใจ|ใส่ท่อช่วยหายใจ/gi, 'Advanced Airway Intubation (ET Tube)'],
     [/ตรวจ ETCO2|เช็ค ETCO2/gi, 'ETCO2 Capnography Monitored'],
     [/สแกน 5H 5T|สาเหตุที่แก้ไขได้/gi, 'Reversible Causes Evaluated (5Hs & 5Ts)'],

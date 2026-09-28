@@ -432,7 +432,7 @@ export function ControlBar({
                     {PROCEDURE_PRESETS.map((proc) => {
                       const isDone = completedProcedures?.includes(proc.name);
 
-                      const isIvProc = proc.name.includes('IV / IO') || proc.short === 'IV Access';
+                      const isIvProc = (proc.name.includes('IV / IO Line Established') || proc.short === 'IV Access') && proc.short !== 'IV Access 2';
                       const isAirwayProc = proc.name.includes('Advanced Airway') || proc.short === 'Airway Secured';
                       const isEtco2Proc = proc.name.includes('Intubation Confirmed') || proc.short === 'ETCO2 Confirmed';
 
