@@ -462,7 +462,7 @@ export default function App() {
           const gain = ctx.createGain();
           osc.type = 'sine';
           osc.frequency.setValueAtTime(freq, now + i * 0.12);
-          gain.gain.setValueAtTime(0.25, now + i * 0.12);
+          gain.gain.setValueAtTime(0.55, now + i * 0.12);
           gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.12 + 0.35);
           osc.connect(gain);
           gain.connect(ctx.destination);
@@ -475,7 +475,7 @@ export default function App() {
           const gain = ctx.createGain();
           osc.type = 'triangle';
           osc.frequency.setValueAtTime(freq, now + i * 0.1);
-          gain.gain.setValueAtTime(0.22, now + i * 0.1);
+          gain.gain.setValueAtTime(0.50, now + i * 0.1);
           gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.1 + 0.25);
           osc.connect(gain);
           gain.connect(ctx.destination);
@@ -488,7 +488,7 @@ export default function App() {
           const gain = ctx.createGain();
           osc.type = 'sine';
           osc.frequency.setValueAtTime(freq, now + i * 0.15);
-          gain.gain.setValueAtTime(0.25, now + i * 0.15);
+          gain.gain.setValueAtTime(0.55, now + i * 0.15);
           gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.15 + 0.12);
           osc.connect(gain);
           gain.connect(ctx.destination);
@@ -501,7 +501,7 @@ export default function App() {
         osc.type = 'sine';
         osc.frequency.setValueAtTime(440, now);
         osc.frequency.exponentialRampToValueAtTime(554.37, now + 0.22);
-        gain.gain.setValueAtTime(0.18, now);
+        gain.gain.setValueAtTime(0.45, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.32);
         osc.connect(gain);
         gain.connect(ctx.destination);
@@ -513,7 +513,7 @@ export default function App() {
           const gain = ctx.createGain();
           osc.type = 'sine';
           osc.frequency.setValueAtTime(freq, now + i * 0.08);
-          gain.gain.setValueAtTime(0.2, now + i * 0.08);
+          gain.gain.setValueAtTime(0.50, now + i * 0.08);
           gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.3);
           osc.connect(gain);
           gain.connect(ctx.destination);
@@ -526,7 +526,7 @@ export default function App() {
           const gain = ctx.createGain();
           osc.type = 'sine';
           osc.frequency.setValueAtTime(freq, now + i * 0.1);
-          gain.gain.setValueAtTime(0.2, now + i * 0.1);
+          gain.gain.setValueAtTime(0.50, now + i * 0.1);
           gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.1 + 0.25);
           osc.connect(gain);
           gain.connect(ctx.destination);
@@ -715,7 +715,7 @@ export default function App() {
       osc.type = 'sine';
       osc.frequency.setValueAtTime(isAccent ? 1200 : 900, ctx.currentTime);
 
-      gain.gain.setValueAtTime(isAccent ? 0.22 : 0.14, ctx.currentTime);
+      gain.gain.setValueAtTime(isAccent ? 0.48 : 0.35, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + (isAccent ? 0.08 : 0.05));
 
       osc.start(ctx.currentTime);
