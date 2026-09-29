@@ -94,6 +94,8 @@ interface GuidancePanelProps {
   ivAccessAlertActive?: boolean;
   setIvAccessAlertActive?: (active: boolean) => void;
   hasCompletedIvAccess?: boolean;
+  hasCompletedAirway?: boolean;
+  hasCompletedEtco2?: boolean;
   airwayAlertActive?: boolean;
   etco2AlertActive?: boolean;
   showStabilityModal?: boolean;
@@ -172,6 +174,8 @@ export function GuidancePanel({
   ivAccessAlertActive = false,
   setIvAccessAlertActive,
   hasCompletedIvAccess = false,
+  hasCompletedAirway = false,
+  hasCompletedEtco2 = false,
   airwayAlertActive = false,
   etco2AlertActive = false,
   setShowStabilityModal,
@@ -184,7 +188,10 @@ export function GuidancePanel({
   onOpenStableTachyModal,
   onOpenUnstableTachyModal,
 }: GuidancePanelProps) {
-  const isProceduresFlashing = ivAccessAlertActive || airwayAlertActive || etco2AlertActive;
+  const isProceduresFlashing = 
+    (ivAccessAlertActive && !hasCompletedIvAccess) || 
+    (airwayAlertActive && !hasCompletedAirway) || 
+    (etco2AlertActive && !hasCompletedEtco2);
 
   // ROSC sequential A > B > C > D > E > F configuration
   const ROSC_STEPS_LIST = [

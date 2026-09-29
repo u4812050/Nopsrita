@@ -78,7 +78,11 @@ export function ControlBar({
   const [lastLoggedMed, setLastLoggedMed] = useState<string | null>(null);
   const [selectedMedDetail, setSelectedMedDetail] = useState<AltMedItem | null>(null);
 
-  const isProceduresFlashing = ivAccessAlertActive || airwayAlertActive || etco2AlertActive;
+  const hasIvDone = completedProcedures?.some(p => p.includes('IV / IO') || p.includes('IV Access') || p.includes('IV Line'));
+  const hasAirwayDone = completedProcedures?.some(p => p.includes('Advanced Airway') || p.includes('ET Tube') || p.includes('ET-Tube'));
+  const hasEtco2Done = completedProcedures?.some(p => p.includes('Intubation Confirmed') || p.includes('ETCO2') || p.includes('Capnography') || p.includes('PETCO2'));
+
+  const isProceduresFlashing = (ivAccessAlertActive && !hasIvDone) || (airwayAlertActive && !hasAirwayDone) || (etco2AlertActive && !hasEtco2Done);
 
   const handleAdministerAltMed = (med: AltMedItem) => {
     if (handleLogPresetMed) {
@@ -410,20 +414,31 @@ export function ControlBar({
                         <span>⚡ แจ้งเตือนหัตถการแนะนำตามเกณฑ์ ACLS:</span>
                       </div>
                       <div className="text-[11px] text-amber-100/90 space-y-0.5 pl-5">
-                        {ivAccessAlertActive && (
+                        {ivAccessAlertActive && !hasIvDone && (
                           <p>• <strong>IV / IO Access:</strong> เปิดเส้นให้ยาก่อนบริหารยา Epinephrine</p>
                         )}
-                        {airwayAlertActive && (
+                        {airwayAlertActive && !hasAirwayDone && (
                           <p>• <strong>ขั้นที่ 1 (ใส่ท่อช่วยหายใจ):</strong> Advanced Airway Secured (ET Tube)</p>
                         )}
-                        {etco2AlertActive && (
-                          <p>• <strong>ขั้นที่ 2 (ยืนยันตำแหน่ง):</strong> Intubation Confirmed by ETCO2 {airwayAlertActive ? '(ต้องทำทั้ง 2 ขั้นตอน กล่องจะปิดอัตโนมัติ)' : '(กดยืนยันแล้วกล่องจะปิดอัตโนมัติ)'}</p>
+                        {etco2AlertActive && !hasEtco2Done && (
+                          <p>• <strong>ขั้นที่ 2 (ยืนยันตำแหน่ง):</strong> Intubation Confirmed by ETCO2 {!hasAirwayDone ? '(ต้องทำทั้ง 2 ขั้นตอน กล่องจะปิดอัตโนมัติ)' : '(กดยืนยันแล้วกล่องจะปิดอัตโนมัติ)'}</p>
                         )}
                       </div>
                     </div>
                   )}
 
-                  <p className="text-[11px] text-amber-300/80 font-medium -mt-1">
+                  {/* CONTINUOUS SHARED RESUSCITATION BANNER */}
+                  <div className="bg-slate-950/90 border border-emerald-800/60 rounded-xl p-2.5 flex flex-wrap items-center justify-between gap-1.5 text-[11px]">
+                    <div className="flex items-center gap-1.5 text-emerald-300 font-bold">
+                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>หัตถการที่เลือกใช้ร่วมกันต่อเนื่องตลอดการกู้ชีพ (ไม่ต้องกดทำซ้ำ)</span>
+                    </div>
+                    <span className="text-[10px] text-cyan-300 font-mono font-bold bg-cyan-950/80 px-2 py-0.5 rounded border border-cyan-800 shrink-0">
+                      Shockable &amp; Non-Shockable
+                    </span>
+                  </div>
+
+                  <p className="text-[11px] text-amber-300/80 font-medium -mt-0.5">
                     คลิกเพื่อบันทึกหัตถการฉุกเฉินและการรักษาขั้นสูง (AHA ACLS 2025)
                   </p>
 
@@ -442,18 +457,19 @@ export function ControlBar({
                       const isFlashing = isFlashIv || isFlashAirway || isFlashEtco2;
 
                       let btnStyle = isDone
-                        ? 'bg-emerald-950/90 border-emerald-700 text-emerald-300'
+                        ? 'bg-emerald-950/90 border-emerald-700 text-emerald-300 opacity-95 cursor-default'
                         : isFlashing
-                        ? 'bg-amber-600 hover:bg-amber-500 border-amber-300 text-white font-black animate-pulse ring-2 ring-amber-400 shadow-md'
-                        : 'bg-slate-950/90 hover:bg-slate-800 border-amber-900/40 text-slate-200';
+                        ? 'bg-amber-600 hover:bg-amber-500 border-amber-300 text-white font-black animate-pulse ring-2 ring-amber-400 shadow-md cursor-pointer'
+                        : 'bg-slate-950/90 hover:bg-slate-800 border-amber-900/40 text-slate-200 cursor-pointer';
 
                       return (
                         <button
                           key={proc.name}
+                          disabled={isDone}
                           onClick={() => {
-                            if (handleLogProcedure) handleLogProcedure(proc.name);
+                            if (!isDone && handleLogProcedure) handleLogProcedure(proc.name);
                           }}
-                          className={`p-3 rounded-xl text-left font-bold text-xs transition-all cursor-pointer flex items-center justify-between border active:scale-95 shadow-md ${btnStyle}`}
+                          className={`p-3 rounded-xl text-left font-bold text-xs transition-all flex items-center justify-between border active:scale-95 shadow-md ${btnStyle}`}
                         >
                           <div>
                             <span className="block font-black font-mono text-sm">{proc.short}</span>
@@ -463,10 +479,15 @@ export function ControlBar({
                                 ⚡ แนะนำให้บันทึกหัตถการนี้
                               </span>
                             )}
+                            {isDone && (
+                              <span className="text-[9px] font-mono text-emerald-400 block font-semibold mt-0.5">
+                                ✓ พร้อมใช้งานต่อเนื่อง (ไม่ต้องทำซ้ำ)
+                              </span>
+                            )}
                           </div>
                           {isDone ? (
-                            <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-900/60 px-2 py-1 rounded-md border border-emerald-700 shrink-0 ml-1">
-                              <Check className="w-3.5 h-3.5 text-emerald-400" /> ทำแล้ว
+                            <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-300 bg-emerald-900/60 px-2 py-1 rounded-md border border-emerald-700 shrink-0 ml-1">
+                              <Check className="w-3.5 h-3.5 text-emerald-400" /> ทำแล้ว (ต่อเนื่อง)
                             </span>
                           ) : isFlashing ? (
                             <AlertTriangle className="w-4 h-4 text-amber-200 shrink-0 ml-1 animate-bounce" />

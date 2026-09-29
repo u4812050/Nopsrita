@@ -12,6 +12,8 @@ export interface SummaryStats {
   cprSubCycle302: number;
   shockCount: number;
   epiCount: number;
+  shockableEpiCount?: number;
+  nonShockableEpiCount?: number;
   amioCount: number;
   lidoCount: number;
   atropineCount: number;

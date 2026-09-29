@@ -68,6 +68,14 @@ export default function App() {
   const [epiTimeRemaining, setEpiTimeRemaining] = useState<number>(240); // 240s (4 minutes)
   const [epiAlertActive, setEpiAlertActive] = useState<boolean>(false);
   const [epiTimerStarted, setEpiTimerStarted] = useState<boolean>(false);
+
+  // Separated Epinephrine state for Shockable and Non-Shockable
+  const [shockableEpiCount, setShockableEpiCount] = useState<number>(0);
+  const [nonShockableEpiCount, setNonShockableEpiCount] = useState<number>(0);
+  const [shockableEpiTimeRemaining, setShockableEpiTimeRemaining] = useState<number>(240);
+  const [nonShockableEpiTimeRemaining, setNonShockableEpiTimeRemaining] = useState<number>(240);
+  const [shockableEpiTimerStarted, setShockableEpiTimerStarted] = useState<boolean>(false);
+  const [nonShockableEpiTimerStarted, setNonShockableEpiTimerStarted] = useState<boolean>(false);
   const [amioAlertActive, setAmioAlertActive] = useState<boolean>(false);
   const [lidoAlertActive, setLidoAlertActive] = useState<boolean>(false);
   const [ivAccessAlertActive, setIvAccessAlertActive] = useState<boolean>(false);
@@ -78,16 +86,33 @@ export default function App() {
   const [showLogoModal, setShowLogoModal] = useState<boolean>(false);
   const [showInstallModal, setShowInstallModal] = useState<boolean>(false);
 
-  // Auto-open procedures pop-up modal when a procedure alert is triggered according to ACLS protocol
-  useEffect(() => {
-    if (ivAccessAlertActive || airwayAlertActive || etco2AlertActive) {
-      setShowProceduresModal(true);
-    }
-  }, [ivAccessAlertActive, airwayAlertActive, etco2AlertActive]);
-
   const hasCompletedIvAccess = completedProcedures.some(p => p.includes('IV / IO') || p.includes('IV Access') || p.includes('IV Line'));
   const hasCompletedAirway = completedProcedures.some(p => p.includes('Advanced Airway') || p.includes('ET Tube') || p.includes('ET-Tube'));
   const hasCompletedEtco2 = completedProcedures.some(p => p.includes('Intubation Confirmed') || p.includes('ETCO2') || p.includes('Capnography') || p.includes('PETCO2'));
+
+  // Auto-clear procedure alerts if already completed across continuous resuscitation
+  useEffect(() => {
+    if (hasCompletedIvAccess && ivAccessAlertActive) {
+      setIvAccessAlertActive(false);
+    }
+    if (hasCompletedAirway && airwayAlertActive) {
+      setAirwayAlertActive(false);
+    }
+    if (hasCompletedEtco2 && etco2AlertActive) {
+      setEtco2AlertActive(false);
+    }
+  }, [hasCompletedIvAccess, hasCompletedAirway, hasCompletedEtco2, ivAccessAlertActive, airwayAlertActive, etco2AlertActive]);
+
+  // Auto-open procedures pop-up modal ONLY when an uncompleted procedure alert is triggered according to ACLS protocol
+  useEffect(() => {
+    const shouldAlertIv = ivAccessAlertActive && !hasCompletedIvAccess;
+    const shouldAlertAirway = airwayAlertActive && !hasCompletedAirway;
+    const shouldAlertEtco2 = etco2AlertActive && !hasCompletedEtco2;
+
+    if (shouldAlertIv || shouldAlertAirway || shouldAlertEtco2) {
+      setShowProceduresModal(true);
+    }
+  }, [ivAccessAlertActive, airwayAlertActive, etco2AlertActive, hasCompletedIvAccess, hasCompletedAirway, hasCompletedEtco2]);
 
   // Counters
   const [epiCount, setEpiCount] = useState<number>(0);
@@ -167,17 +192,19 @@ export default function App() {
   const [shockButtonFlashing, setShockButtonFlashing] = useState<boolean>(false);
 
   // Auto-open Medication Due pop-up modal when medication is due according to ACLS protocol
+  // For Non-Shockable, only show the Epinephrine Pop-up AFTER Asystole or PEA has been selected
   useEffect(() => {
-    const isEpiPrepOnly = lastRhythmDecision === 'shockable' && shockCount < 2 && epiCount === 0;
+    const isEpiPrepOnly = lastRhythmDecision === 'shockable' && shockCount < 2 && shockableEpiCount === 0;
+    const isNonShockWithoutSubRhythm = lastRhythmDecision === 'non-shockable' && !selectedNonShockableRhythm;
     if (
-      (epiAlertActive && !isEpiPrepOnly) ||
+      (epiAlertActive && !isEpiPrepOnly && !isNonShockWithoutSubRhythm) ||
       amioAlertActive ||
       lidoAlertActive ||
       mgSo4AlertActive
     ) {
       setShowMedDueModal(true);
     }
-  }, [epiAlertActive, amioAlertActive, lidoAlertActive, mgSo4AlertActive, lastRhythmDecision, shockCount, epiCount]);
+  }, [epiAlertActive, amioAlertActive, lidoAlertActive, mgSo4AlertActive, lastRhythmDecision, shockCount, shockableEpiCount, selectedNonShockableRhythm]);
 
   // Transition helper: Show Guidelines, speak High Quality CPR reminder, then auto-switch to CPR Timer
   const isSpeakingThaiRef = useRef<boolean>(false);
@@ -259,6 +286,12 @@ export default function App() {
           setEpiTimeRemaining(parsed.epiTimeRemaining ?? 240);
           setEpiTimerStarted(parsed.epiTimerStarted || false);
           setEpiCount(parsed.epiCount || 0);
+          setShockableEpiCount(parsed.shockableEpiCount || 0);
+          setNonShockableEpiCount(parsed.nonShockableEpiCount || 0);
+          setShockableEpiTimeRemaining(parsed.shockableEpiTimeRemaining ?? 240);
+          setNonShockableEpiTimeRemaining(parsed.nonShockableEpiTimeRemaining ?? 240);
+          setShockableEpiTimerStarted(parsed.shockableEpiTimerStarted || false);
+          setNonShockableEpiTimerStarted(parsed.nonShockableEpiTimerStarted || false);
           setShockCount(parsed.shockCount || 0);
           setAmioCount(parsed.amioCount || 0);
           setAmioAlertActive(parsed.amioAlertActive || false);
@@ -312,6 +345,12 @@ export default function App() {
         epiTimeRemaining,
         epiTimerStarted,
         epiCount,
+        shockableEpiCount,
+        nonShockableEpiCount,
+        shockableEpiTimeRemaining,
+        nonShockableEpiTimeRemaining,
+        shockableEpiTimerStarted,
+        nonShockableEpiTimerStarted,
         shockCount,
         amioCount,
         amioAlertActive,
@@ -869,7 +908,52 @@ export default function App() {
           }
         }
 
-        if (epiTimerStarted) {
+        // Epinephrine timer countdown separated for Shockable and Non-Shockable
+        if (lastRhythmDecision === 'shockable') {
+          if (shockableEpiTimerStarted) {
+            setShockableEpiTimeRemaining(prev => {
+              if (prev <= 1) {
+                if (prev === 1) {
+                  playAlertChime('med_due');
+                  speakThai("ครบกำหนดสี่นาที ถึงเวลาให้ยาเอพิเนฟริน หนึ่งมิลลิกรัมค่ะ");
+                  setEpiAlertActive(true);
+                  setShowMedDueModal(true);
+                  setGuidanceMessage(
+                    "⚡ ครบกำหนด 4 นาที! ถึงเวลาบริหารยา EPINEPHRINE 1mg IV/IO (Shockable)"
+                  );
+                }
+                setEpiTimeRemaining(0);
+                return 0;
+              }
+              const nextVal = prev - 1;
+              setEpiTimeRemaining(nextVal);
+              return nextVal;
+            });
+          }
+        } else if (lastRhythmDecision === 'non-shockable') {
+          if (nonShockableEpiTimerStarted) {
+            setNonShockableEpiTimeRemaining(prev => {
+              if (prev <= 1) {
+                if (prev === 1) {
+                  playAlertChime('med_due');
+                  speakThai("ครบกำหนดสี่นาที ถึงเวลาให้ยาเอพิเนฟริน หนึ่งมิลลิกรัมค่ะ");
+                  setEpiAlertActive(true);
+                  if (selectedNonShockableRhythm) {
+                    setShowMedDueModal(true);
+                  }
+                  setGuidanceMessage(
+                    "⚡ ครบกำหนด 4 นาที! ถึงเวลาบริหารยา EPINEPHRINE 1mg IV/IO (Non-Shockable)"
+                  );
+                }
+                setEpiTimeRemaining(0);
+                return 0;
+              }
+              const nextVal = prev - 1;
+              setEpiTimeRemaining(nextVal);
+              return nextVal;
+            });
+          }
+        } else if (epiTimerStarted) {
           setEpiTimeRemaining(prev => {
             if (prev <= 1) {
               if (prev === 1) {
@@ -892,7 +976,7 @@ export default function App() {
     return () => {
       if (mainTicker) clearInterval(mainTicker);
     };
-  }, [caseActive, cprActive, cprCycle, voiceAlertsOn, epiTimerStarted, metronomeMode]);
+  }, [caseActive, cprActive, cprCycle, voiceAlertsOn, epiTimerStarted, shockableEpiTimerStarted, nonShockableEpiTimerStarted, lastRhythmDecision, metronomeMode]);
 
   // --- PULSE & EKG CHECK TIMER EFFECT ---
   useEffect(() => {
@@ -1105,12 +1189,12 @@ export default function App() {
         playAlertChime('mode_switch');
         addLog("CPR 30:2 x 5 Cycles", 'cpr');
         setGuidanceMessage(`⚡ CPR 30:2 x 5 Cycles (รอบที่ ${calculatedCycle}/5)`);
-        speakThai("ซีพีอาสามสิบต่อสอง ห้ารอบ");
+        speakThai("ซีพีอา30ต่อ2 ห้ารอบ");
         return calculatedCycle;
       } else {
         addLog("CPR 30:2 x 5 Cycles", 'cpr');
         playAlertChime('mode_switch');
-        speakThai("ซีพีอาสามสิบต่อสอง ห้ารอบ");
+        speakThai("ซีพีอา30ต่อ2 ห้ารอบ");
       }
       return cprSubCycle302;
     }
@@ -1127,10 +1211,39 @@ export default function App() {
       setPulseCheckTime(10);
     }
 
+    const prevDecision = lastRhythmDecision;
     setLastRhythmDecision('shockable');
     setSelectedShockableRhythm(null);
 
-    addLog("Rhythm Checked: Shockable", "rhythm");
+    // If switching from Non-Shockable, separate the protocols
+    if (prevDecision === 'non-shockable') {
+      setNonShockableEpiTimerStarted(false);
+      addLog("Rhythm Checked: Shockable (สลับจาก Non-Shockable เข้าสู่เกณฑ์ Shockable: Epinephrine ให้หลังช็อกครั้งที่ 2)", "rhythm");
+    } else {
+      addLog("Rhythm Checked: Shockable", "rhythm");
+    }
+
+    // Maintain shared procedures across continuous Cardiac Arrest (carry over from Non-Shockable or prior actions)
+    if (hasCompletedIvAccess) {
+      setIvAccessAlertActive(false);
+    }
+    if (hasCompletedAirway) {
+      setAirwayAlertActive(false);
+    }
+    if (hasCompletedEtco2) {
+      setEtco2AlertActive(false);
+    }
+    if (hasCompletedAirway && hasCompletedEtco2 && metronomeMode !== 'continuous') {
+      setMetronomeMode('continuous');
+    }
+
+    // Set active display to shockable timer
+    setEpiTimeRemaining(shockableEpiTimeRemaining);
+    setEpiTimerStarted(shockableEpiTimerStarted);
+
+    if (shockCount < 2 && shockableEpiCount === 0) {
+      setEpiAlertActive(false);
+    }
 
     setGuidanceMessage(
       "พบคลื่นไฟฟ้าหัวใจ SHOCKABLE! โปรดเลือกชนิดคลื่น (VF, Pulseless VT หรือ Torsades de pointes) แล้วกดปุ่มปล่อยช็อกหัวใจตรงกลางหน้าจอค่ะ"
@@ -1160,6 +1273,11 @@ export default function App() {
     metronomeBeatRef.current = 0;
     setMetronomeBeat(0);
     lastPulseCheckedCycleRef.current = 0;
+
+    // If airway is already secured & confirmed, maintain continuous 2-min CPR mode
+    if (hasCompletedAirway && hasCompletedEtco2 && metronomeMode !== 'continuous') {
+      setMetronomeMode('continuous');
+    }
 
     const nextShock = shockCount + 1;
     setShockCount(nextShock);
@@ -1198,10 +1316,10 @@ export default function App() {
       } else {
         setIvAccessAlertActive(false);
         setGuidanceMessage(
-          "SHOCK DELIVERED! Defibrillation #1 complete. เตรียมยา EPINEPHRINE 1mg (ให้ยาหลัง Shock #2) เริ่มกดหน้าอก 2 นาที!"
+          "SHOCK DELIVERED! Defibrillation #1 complete. เตรียมยา EPINEPHRINE 1mg (ให้ยาหลัง Shock #2) เริ่มกดหน้าอก 2 นาที! (เปิดเส้น IV/IO พร้อมต่อเนื่อง)"
         );
-        addLog(`Defibrillation #1 Delivered (200J)`, "shock");
-        speakThai("ปล่อยช็อกครั้งที่หนึ่ง เรียบร้อยแล้วค่ะ ขอเปิดเส้นตรวจเลือดครบชุด เตรียมให้ยาเอพิเนฟริน หนึ่งมิลลิกรัม แล้วเริ่มกดหน้าอกต่อทันที สองนาทีค่ะ", () => {
+        addLog(`Defibrillation #1 Delivered (200J) [IV/IO พร้อมต่อเนื่อง]`, "shock");
+        speakThai("ปล่อยช็อกครั้งที่หนึ่ง เรียบร้อยแล้วค่ะ เตรียมให้ยาเอพิเนฟริน หนึ่งมิลลิกรัม แล้วเริ่มกดหน้าอกต่อทันที สองนาทีค่ะ", () => {
           setEpiAlertActive(true);
           triggerGuidelineToCprTransition();
           playAlertChime('med_due');
@@ -1294,46 +1412,93 @@ export default function App() {
       setPulseCheckTime(10);
     }
 
+    const prevDecision = lastRhythmDecision;
     setLastRhythmDecision('non-shockable');
     setSelectedNonShockableRhythm(null);
 
     setCprActive(true);
     setCprTimeRemaining(120);
 
-    addLog("Rhythm Checked: Non-Shockable", "rhythm");
+    // Maintain shared procedures across continuous Cardiac Arrest (carry over from Shockable or prior actions)
+    if (hasCompletedIvAccess) {
+      setIvAccessAlertActive(false);
+    }
+    if (hasCompletedAirway) {
+      setAirwayAlertActive(false);
+    }
+    if (hasCompletedEtco2) {
+      setEtco2AlertActive(false);
+    }
+    if (hasCompletedAirway && hasCompletedEtco2 && metronomeMode !== 'continuous') {
+      setMetronomeMode('continuous');
+    }
 
-    if (epiCount === 0) {
+    // ในกรณีให้ในกลุ่ม Shockable มาแล้วและคลื่นไฟฟ้าหัวใจถัดไปเป็น Non-Shockable ให้นับการให้ยาใหม่ใน Non-Shockable
+    const hadShockableActivity = prevDecision === 'shockable' || shockableEpiTimerStarted || shockableEpiCount > 0;
+    if (hadShockableActivity) {
+      setShockableEpiTimerStarted(false);
+      setShockableEpiTimeRemaining(240);
+      addLog("Rhythm Checked: Non-Shockable (นับการให้ยาใหม่)", "rhythm");
+    } else {
+      addLog("Rhythm Checked: Non-Shockable", "rhythm");
+    }
+
+    if (nonShockableEpiCount === 0) {
+      // สำหรับ Non-Shockable เข็มแรกให้ทันที แต่รอให้เลือกชนิดคลื่น Asystole หรือ PEA ก่อนจึงแสดงหน้าต่างให้ยา
+      setNonShockableEpiTimerStarted(false);
+      setNonShockableEpiTimeRemaining(240);
+      setEpiTimeRemaining(0);
+      setEpiTimerStarted(false);
+
       if (!hasCompletedIvAccess) {
         setGuidanceMessage(
-          "พบคลื่นไฟฟ้าหัวใจ NON-SHOCKABLE! โปรดเลือกชนิดคลื่น (Asystole/PEA) และเปิดเส้น IV/IO เพื่อให้ยา Epinephrine 1mg ทันที (นับ 4 นาทีหลังให้ยา)"
+          hadShockableActivity
+            ? "พบคลื่นไฟฟ้าหัวใจ NON-SHOCKABLE! นับการให้ยาใหม่ และโปรดเลือกชนิดคลื่น (Asystole/PEA) พร้อมเปิดเส้น IV/IO"
+            : "พบคลื่นไฟฟ้าหัวใจ NON-SHOCKABLE! โปรดเลือกชนิดคลื่น (Asystole/PEA) และเปิดเส้น IV/IO เพื่อให้ยา Epinephrine 1mg ทันที (นับ 4 นาทีหลังให้ยา)"
         );
-        speakThai("คลื่นไฟฟ้าหัวใจช็อกไม่ได้ โปรดเลือกชนิดคลื่นไฟฟ้าหัวใจ อะซิสโทลี หรือ พีอีเอ และเปิดเส้นให้ยานะคะ", () => {
-          speakHighQualityCpr();
-        });
+        speakThai(
+          hadShockableActivity
+            ? "คลื่นไฟฟ้าหัวใจช็อกไม่ได้ นับการให้ยาใหม่ โปรดเลือกชนิดคลื่นไฟฟ้าหัวใจ อะซิสโทลี หรือ พีอีเอ นะคะ"
+            : "คลื่นไฟฟ้าหัวใจช็อกไม่ได้ โปรดเลือกชนิดคลื่นไฟฟ้าหัวใจ อะซิสโทลี หรือ พีอีเอ และเปิดเส้นให้ยานะคะ",
+          () => {
+            speakHighQualityCpr();
+          }
+        );
       } else {
+        setIvAccessAlertActive(false);
         setGuidanceMessage(
-          "พบคลื่นไฟฟ้าหัวใจ NON-SHOCKABLE! บริหารยา EPINEPHRINE 1mg ทันที (เข็มแรก) และเริ่มนับเวลาให้ยาซ้ำทุก 4 นาที"
+          hadShockableActivity
+            ? "พบคลื่นไฟฟ้าหัวใจ NON-SHOCKABLE! นับการให้ยาใหม่ และโปรดเลือกชนิดคลื่น (Asystole หรือ PEA) เพื่อเปิดหน้าต่างบริหารยา EPINEPHRINE 1mg"
+            : "พบคลื่นไฟฟ้าหัวใจ NON-SHOCKABLE! โปรดเลือกชนิดคลื่น (Asystole หรือ PEA) เพื่อเปิดหน้าต่างบริหารยา EPINEPHRINE 1mg ทันที (เข็มแรก)"
         );
-        setEpiAlertActive(true);
-        setShowMedDueModal(true);
-        speakThai("คลื่นไฟฟ้าหัวใจช็อกไม่ได้ ให้ยาเอพิเนฟริน เข็มแรก หนึ่งมิลลิกรัม ทันทีค่ะ", () => {
-          speakHighQualityCpr();
-        });
+        speakThai(
+          hadShockableActivity
+            ? "คลื่นไฟฟ้าหัวใจช็อกไม่ได้ นับการให้ยาใหม่ โปรดเลือกชนิดคลื่นไฟฟ้าหัวใจ อะซิสโทลี หรือ พีอีเอ นะคะ"
+            : "คลื่นไฟฟ้าหัวใจช็อกไม่ได้ โปรดเลือกชนิดคลื่นไฟฟ้าหัวใจ อะซิสโทลี หรือ พีอีเอ นะคะ",
+          () => {
+            speakHighQualityCpr();
+          }
+        );
       }
     } else {
-      if (epiTimeRemaining <= 0 || epiAlertActive) {
+      // หากเคยให้ในกลุ่ม Non-Shockable ไปแล้ว ให้นับต่อตามรอบ Non-Shockable ของตนเอง
+      setEpiTimeRemaining(nonShockableEpiTimeRemaining);
+      setEpiTimerStarted(nonShockableEpiTimerStarted);
+
+      if (nonShockableEpiTimeRemaining <= 0 || !nonShockableEpiTimerStarted) {
         setGuidanceMessage(
           "พบคลื่นไฟฟ้าหัวใจ NON-SHOCKABLE! ครบกำหนด 4 นาที ถึงเวลาบริหารยา EPINEPHRINE 1mg IV/IO"
         );
         setEpiAlertActive(true);
-        setShowMedDueModal(true);
+        if (selectedNonShockableRhythm) {
+          setShowMedDueModal(true);
+        }
         speakThai("คลื่นไฟฟ้าหัวใจช็อกไม่ได้ ครบกำหนดสี่นาที ถึงเวลาให้ยาเอพิเนฟริน หนึ่งมิลลิกรัมค่ะ", () => {
           speakHighQualityCpr();
         });
       } else {
-        const remainingMinutes = Math.ceil(epiTimeRemaining / 60);
         setGuidanceMessage(
-          `พบคลื่นไฟฟ้าหัวใจ NON-SHOCKABLE! กดหน้าอก CPR ต่อเนื่อง 2 นาที • นับเวลาบริหารยา Epinephrine 1mg ทุก 4 นาที (เหลืออีก ${formatMMSS(epiTimeRemaining)})`
+          `พบคลื่นไฟฟ้าหัวใจ NON-SHOCKABLE! กดหน้าอก CPR ต่อเนื่อง 2 นาที • นับเวลาบริหารยา Epinephrine 1mg ทุก 4 นาที (เหลืออีก ${formatMMSS(nonShockableEpiTimeRemaining)})`
         );
         speakThai("คลื่นไฟฟ้าหัวใจช็อกไม่ได้ เริ่มกดหน้าอกต่อทันที สองนาทีค่ะ และนับเวลาให้ยาเอพิเนฟรินทุกสี่นาทีนะคะ", () => {
           speakHighQualityCpr();
@@ -1343,6 +1508,32 @@ export default function App() {
 
     setActiveTab('trc_cardiac');
     setMobileViewTab('guidelines');
+  };
+
+  const handleSelectNonShockableRhythm = (rhythm: NonShockableRhythmType) => {
+    setSelectedNonShockableRhythm(rhythm);
+    if (!rhythm) return;
+
+    addLog(`Selected Rhythm Type: ${rhythm}`, 'rhythm');
+
+    if (!hasCompletedIvAccess) {
+      setIvAccessAlertActive(true);
+      setShowProceduresModal(true);
+      speakThai(`เลือก คลื่นไฟฟ้าหัวใจ ${rhythm === 'Asystole' ? 'อะซิสโทลี' : 'พีอีเอ'} เปิดเส้น ไอวี หรือ ไอโอ แอคเซส ค่ะ`);
+    } else {
+      setIvAccessAlertActive(false);
+      if (nonShockableEpiCount === 0) {
+        setEpiAlertActive(true);
+        setShowMedDueModal(true);
+        speakThai(`เลือก คลื่นไฟฟ้าหัวใจ ${rhythm === 'Asystole' ? 'อะซิสโทลี' : 'พีอีเอ'} ให้ยาเอพิเนฟริน เข็มแรก หนึ่งมิลลิกรัม ทันทีค่ะ`);
+      } else if (nonShockableEpiTimeRemaining <= 0 || !nonShockableEpiTimerStarted) {
+        setEpiAlertActive(true);
+        setShowMedDueModal(true);
+        speakThai(`เลือก คลื่นไฟฟ้าหัวใจ ${rhythm === 'Asystole' ? 'อะซิสโทลี' : 'พีอีเอ'} ครบกำหนดสี่นาที ให้ยาเอพิเนฟริน หนึ่งมิลลิกรัมค่ะ`);
+      } else {
+        speakThai(`เลือก คลื่นไฟฟ้าหัวใจ ${rhythm === 'Asystole' ? 'อะซิสโทลี' : 'พีอีเอ'} เริ่มกดหน้าอกต่อทันที สองนาทีค่ะ และนับเวลาให้ยาเอพิเนฟรินทุกสี่นาทีนะคะ`);
+      }
+    }
   };
 
   const handleRhythmBradycardia = () => {
@@ -1454,21 +1645,20 @@ export default function App() {
       return;
     }
 
-    if (lastRhythmDecision === 'shockable' && shockCount < 2 && epiCount === 0) {
-      setGuidanceMessage("⚠️ ยาเอพิเนฟรินเตรียมพร้อมแล้ว (โปรดรอให้ยาหลังช็อกครั้งที่ 2 ตามแนวทาง ACLS)");
-      speakThai("ยาเอพิเนฟรินเตรียมพร้อมแล้วค่ะ ตามแนวทาง ACLS ให้บริหารยาหลังช็อกครั้งที่สองนะคะ");
+    if (lastRhythmDecision === 'shockable' && shockCount < 2 && shockableEpiCount === 0) {
+      setGuidanceMessage("⚠️ ยาเอพิเนฟรินพร้อม รอให้ยา หลังช็อกครั้งที่สองนะคะ");
+      speakThai("ยาเอพิเนฟรินพร้อม รอให้ยา หลังช็อกครั้งที่สองนะคะ");
       return;
     }
 
-    const nextEpi = epiCount + 1;
-    setEpiCount(nextEpi);
+    const thaiNumbers = ["", "หนึ่ง", "สอง", "สาม", "สี่", "ห้า", "หก", "เจ็ด", "แปด", "เก้า", "สิบ"];
+    const totalEpi = epiCount + 1;
+    setEpiCount(totalEpi);
     setEpiTimeRemaining(240);
     setEpiAlertActive(false);
     setEpiTimerStarted(true);
     setShowMedDueModal(false);
 
-    addLog(`Medication: Epinephrine 1mg + NSS up to 10ml IV/IO Push administered (Total Dose #${nextEpi})`, "med");
-    
     // Close any other open modals to prevent popup collision or bleed-through
     setShowQuickActionModal(false);
     setShowAltMedsModal(false);
@@ -1479,28 +1669,98 @@ export default function App() {
     setShowUnstableTachyModal(false);
     setShowPalsModal(false);
 
-    if (nextEpi === 1) {
-      // เชื่อมโยงใส่ท่อช่วยหายใจเฉพาะเข็มที่ 1 (Link to Advanced Airway ET-Tube on Dose #1 only)
-      setAirwayAlertActive(true);
-      setEtco2AlertActive(true);
-      setShowProceduresModal(true);
+    if (lastRhythmDecision === 'shockable') {
+      const nextShockableEpi = shockableEpiCount + 1;
+      setShockableEpiCount(nextShockableEpi);
+      setShockableEpiTimeRemaining(240);
+      setShockableEpiTimerStarted(true);
 
-      setGuidanceMessage(
-        `EPINEPHRINE #1 GIVEN! เริ่มนับเวลาให้ยาซ้ำทุก 4 นาที • พิจารณาใส่ท่อช่วยหายใจขั้นสูง (Advanced Airway / ET-Tube) และติดตาม ETCO2`
-      );
-      speakThai(`ให้ยาเอพิเนฟริน เข็มที่หนึ่ง เรียบร้อยแล้วค่ะ เริ่มนับเวลาให้ยาซ้ำทุกสี่นาทีนะคะ พิจารณาใส่ท่อช่วยหายใจขั้นสูงค่ะ`);
+      addLog(`Medication: Epinephrine 1mg + NSS up to 10ml IV/IO Push [Shockable Dose #${nextShockableEpi}, Total Dose #${totalEpi}]`, "med");
+
+      const isAirwayDone = hasCompletedAirway;
+      const isEtco2Done = hasCompletedEtco2;
+      const isBothAirwayDone = isAirwayDone && isEtco2Done;
+
+      // Only prompt for airway/ETCO2 if NOT yet completed across continuous resuscitation
+      if (!isBothAirwayDone && (totalEpi === 1 || nextShockableEpi === 1)) {
+        if (!isAirwayDone) {
+          setAirwayAlertActive(true);
+          setEtco2AlertActive(true);
+          setShowProceduresModal(true);
+          setGuidanceMessage(
+            `EPINEPHRINE #${nextShockableEpi} GIVEN! นับเวลาให้ยาซ้ำทุก 4 นาที • ขอพิจารณาใส่ท่อช่วยหายใจขั้นสูง (Advanced Airway / ET-Tube) และติดตาม ETCO2`
+          );
+          speakThai(`ให้ยาเอพิเนฟริน เข็มที่หนึ่ง เรียบร้อยค่ะ นับเวลาให้ยาซ้ำทุกสี่นาที ขอพิจารณาใส่ท่อช่วยหายใจขั้นสูงค่ะ`);
+        } else if (!isEtco2Done) {
+          setAirwayAlertActive(false);
+          setEtco2AlertActive(true);
+          setShowProceduresModal(true);
+          setGuidanceMessage(
+            `EPINEPHRINE #${nextShockableEpi} GIVEN! นับเวลาให้ยาซ้ำทุก 4 นาที • โปรดยืนยันตำแหน่งท่อช่วยหายใจด้วย ETCO2 Capnography`
+          );
+          speakThai(`ให้ยาเอพิเนฟริน เข็มที่หนึ่ง เรียบร้อยค่ะ นับเวลาให้ยาซ้ำทุกสี่นาที โปรดยืนยันตำแหน่งท่อด้วยอีทีซีโอทูนะคะ`);
+        }
+      } else {
+        setAirwayAlertActive(false);
+        setEtco2AlertActive(false);
+        setShowProceduresModal(false);
+
+        const epiDoseThai = nextShockableEpi <= 10 ? `เข็มที่${thaiNumbers[nextShockableEpi]}` : `เข็มที่ ${nextShockableEpi}`;
+        setGuidanceMessage(
+          isBothAirwayDone
+            ? `EPINEPHRINE #${nextShockableEpi} GIVEN! บริหารยาเอพิเนฟริน 1mg เรียบร้อยแล้ว (นับเวลาให้ยาซ้ำทุก 4 นาที • ทางเดินหายใจขั้นสูงและ ETCO2 พร้อมต่อเนื่อง)`
+            : `EPINEPHRINE #${nextShockableEpi} GIVEN! บริหารยาเอพิเนฟริน 1mg เรียบร้อยแล้ว (นับเวลาให้ยาซ้ำทุก 4 นาที)`
+        );
+        speakThai(`ให้ยาเอพิเนฟริน ${epiDoseThai} เรียบร้อยค่ะ นับเวลาให้ยาซ้ำทุกสี่นาทีนะคะ`);
+      }
+    } else if (lastRhythmDecision === 'non-shockable') {
+      const nextNonShockableEpi = nonShockableEpiCount + 1;
+      setNonShockableEpiCount(nextNonShockableEpi);
+      setNonShockableEpiTimeRemaining(240);
+      setNonShockableEpiTimerStarted(true);
+
+      addLog(`Medication: Epinephrine 1mg + NSS up to 10ml IV/IO Push [Non-Shockable Dose #${nextNonShockableEpi}, Total Dose #${totalEpi}]`, "med");
+
+      const isAirwayDone = hasCompletedAirway;
+      const isEtco2Done = hasCompletedEtco2;
+      const isBothAirwayDone = isAirwayDone && isEtco2Done;
+
+      // Only prompt for airway/ETCO2 if NOT yet completed across continuous resuscitation
+      if (!isBothAirwayDone && (totalEpi === 1 || nextNonShockableEpi === 1)) {
+        if (!isAirwayDone) {
+          setAirwayAlertActive(true);
+          setEtco2AlertActive(true);
+          setShowProceduresModal(true);
+          setGuidanceMessage(
+            `EPINEPHRINE #${nextNonShockableEpi} GIVEN! นับเวลาให้ยาซ้ำทุก 4 นาที • ขอพิจารณาใส่ท่อช่วยหายใจขั้นสูง (Advanced Airway / ET-Tube) และติดตาม ETCO2`
+          );
+          speakThai(`ให้ยาเอพิเนฟริน เข็มที่หนึ่ง เรียบร้อยค่ะ นับเวลาให้ยาซ้ำทุกสี่นาที ขอพิจารณาใส่ท่อช่วยหายใจขั้นสูงค่ะ`);
+        } else if (!isEtco2Done) {
+          setAirwayAlertActive(false);
+          setEtco2AlertActive(true);
+          setShowProceduresModal(true);
+          setGuidanceMessage(
+            `EPINEPHRINE #${nextNonShockableEpi} GIVEN! นับเวลาให้ยาซ้ำทุก 4 นาที • โปรดยืนยันตำแหน่งท่อช่วยหายใจด้วย ETCO2 Capnography`
+          );
+          speakThai(`ให้ยาเอพิเนฟริน เข็มที่หนึ่ง เรียบร้อยค่ะ นับเวลาให้ยาซ้ำทุกสี่นาที โปรดยืนยันตำแหน่งท่อด้วยอีทีซีโอทูนะคะ`);
+        }
+      } else {
+        setAirwayAlertActive(false);
+        setEtco2AlertActive(false);
+        setShowProceduresModal(false);
+
+        const epiDoseThai = nextNonShockableEpi <= 10 ? `เข็มที่${thaiNumbers[nextNonShockableEpi]}` : `เข็มที่ ${nextNonShockableEpi}`;
+        setGuidanceMessage(
+          isBothAirwayDone
+            ? `EPINEPHRINE #${nextNonShockableEpi} GIVEN! บริหารยาเอพิเนฟริน 1mg เรียบร้อยแล้ว (นับเวลาให้ยาซ้ำทุก 4 นาที • ทางเดินหายใจขั้นสูงและ ETCO2 พร้อมต่อเนื่อง)`
+            : `EPINEPHRINE #${nextNonShockableEpi} GIVEN! บริหารยาเอพิเนฟริน 1mg เรียบร้อยแล้ว (นับเวลาให้ยาซ้ำทุก 4 นาที)`
+        );
+        speakThai(`ให้ยาเอพิเนฟริน ${epiDoseThai} เรียบร้อยค่ะ นับเวลาให้ยาซ้ำทุกสี่นาทีนะคะ`);
+      }
     } else {
-      // เข็มถัดไป (Dose #2, #3, …): ไม่ต้อง pop up เพื่อเลือกการใส่ท่อช่วยหายใจอีก
-      setAirwayAlertActive(false);
-      setEtco2AlertActive(false);
-      setShowProceduresModal(false);
-
-      const thaiNumbers = ["", "หนึ่ง", "สอง", "สาม", "สี่", "ห้า", "หก", "เจ็ด", "แปด", "เก้า", "สิบ"];
-      const epiDoseThai = nextEpi <= 10 ? `เข็มที่${thaiNumbers[nextEpi]}` : `เข็มที่ ${nextEpi}`;
-      setGuidanceMessage(
-        `EPINEPHRINE #${nextEpi} GIVEN! บริหารยาเอพิเนฟริน 1mg เรียบร้อยแล้ว (เริ่มนับเวลารอบถัดไปทุก 4 นาที)`
-      );
-      speakThai(`ให้ยาเอพิเนฟริน ${epiDoseThai} เรียบร้อยแล้วค่ะ เริ่มนับเวลารอบถัดไปทุกสี่นาทีนะคะ`);
+      addLog(`Medication: Epinephrine 1mg + NSS up to 10ml IV/IO Push administered (Total Dose #${totalEpi})`, "med");
+      const epiDoseThai = totalEpi <= 10 ? `เข็มที่${thaiNumbers[totalEpi]}` : `เข็มที่ ${totalEpi}`;
+      speakThai(`ให้ยาเอพิเนฟริน ${epiDoseThai} เรียบร้อยค่ะ นับเวลาให้ยาซ้ำทุกสี่นาทีนะคะ`);
     }
   };
 
@@ -1615,7 +1875,14 @@ export default function App() {
       setShowProceduresModal(false);
       setShowQuickActionModal(false);
 
-      if (lastRhythmDecision === 'non-shockable' || shockCount >= 2 || epiCount > 0) {
+      if (lastRhythmDecision === 'non-shockable') {
+        if (selectedNonShockableRhythm) {
+          setShowMedDueModal(true);
+          speakThai("เปิดเส้นให้ยาเรียบร้อยแล้วค่ะ ให้ยาเอพิเนฟริน หนึ่งมิลลิกรัม ทันทีค่ะ");
+        } else {
+          speakThai("เปิดเส้นให้ยาเรียบร้อยแล้วค่ะ โปรดเลือกชนิดคลื่นไฟฟ้าหัวใจ อะซิสโทลี หรือ พีอีเอ เพื่อเปิดหน้าต่างบริหารยานะคะ");
+        }
+      } else if (shockCount >= 2 || epiCount > 0) {
         setShowMedDueModal(true);
         speakThai("เปิดเส้นให้ยาเรียบร้อยแล้วค่ะ ให้ยาเอพิเนฟริน หนึ่งมิลลิกรัม ทันทีค่ะ");
       } else {
@@ -1822,6 +2089,12 @@ export default function App() {
     setEtco2AlertActive(false);
     setCompletedProcedures([]);
     setEpiCount(0);
+    setShockableEpiCount(0);
+    setNonShockableEpiCount(0);
+    setShockableEpiTimeRemaining(240);
+    setNonShockableEpiTimeRemaining(240);
+    setShockableEpiTimerStarted(false);
+    setNonShockableEpiTimerStarted(false);
     setShockCount(0);
     setAmioCount(0);
     setLidoCount(0);
@@ -1887,6 +2160,8 @@ export default function App() {
       cprSubCycle302,
       shockCount,
       epiCount,
+      shockableEpiCount,
+      nonShockableEpiCount,
       amioCount,
       lidoCount,
       atropineCount,
@@ -2246,6 +2521,8 @@ export default function App() {
               hasCompletedIvAccess={hasCompletedIvAccess}
               handleAdministerEpinephrine={handleAdministerEpinephrine}
               epiCount={epiCount}
+              shockableEpiCount={shockableEpiCount}
+              nonShockableEpiCount={nonShockableEpiCount}
               epiTimeRemaining={epiTimeRemaining}
               epiTimerStarted={epiTimerStarted}
               epiAlertActive={epiAlertActive}
@@ -2260,6 +2537,9 @@ export default function App() {
               handleRhythmTachycardia={handleRhythmTachycardia}
               handleRhythmROSC={handleRhythmROSC}
               lastRhythmDecision={lastRhythmDecision}
+              selectedNonShockableRhythm={selectedNonShockableRhythm}
+              onSelectNonShockableRhythm={handleSelectNonShockableRhythm}
+              onOpenQuickActionModal={() => setShowQuickActionModal(true)}
               shockCount={shockCount}
               shockButtonFlashing={shockButtonFlashing}
             />
@@ -2409,6 +2689,8 @@ export default function App() {
         setShockButtonFlashing={setShockButtonFlashing}
         handleAdministerEpinephrine={handleAdministerEpinephrine}
         epiCount={epiCount}
+        shockableEpiCount={shockableEpiCount}
+        nonShockableEpiCount={nonShockableEpiCount}
         epiTimeRemaining={epiTimeRemaining}
         epiTimerStarted={epiTimerStarted}
         formatMMSS={formatMMSS}
@@ -2528,9 +2810,11 @@ export default function App() {
         onClose={() => setShowMedDueModal(false)}
         epiAlertActive={epiAlertActive}
         epiCount={epiCount}
+        shockableEpiCount={shockableEpiCount}
+        nonShockableEpiCount={nonShockableEpiCount}
         epiTimeRemaining={epiTimeRemaining}
         handleAdministerEpinephrine={handleAdministerEpinephrine}
-        isEpiPrepOnly={lastRhythmDecision === 'shockable' && shockCount < 2 && epiCount === 0}
+        isEpiPrepOnly={lastRhythmDecision === 'shockable' && shockCount < 2 && shockableEpiCount === 0}
         amioAlertActive={amioAlertActive}
         amioCount={amioCount}
         handleAdministerAmiodarone={handleAdministerAmiodarone}
@@ -2543,6 +2827,7 @@ export default function App() {
         handleLogProcedure={handleLogProcedure}
         shockCount={shockCount}
         lastRhythmDecision={lastRhythmDecision}
+        selectedNonShockableRhythm={selectedNonShockableRhythm}
         formatMMSS={formatMMSS}
       />
     </div>

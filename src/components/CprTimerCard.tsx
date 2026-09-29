@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
-import { Clock, RotateCcw, Heart, Activity, Check, Zap, HeartOff } from 'lucide-react';
+import { Clock, RotateCcw, Heart, Activity, Check, Zap, HeartOff, ShieldAlert } from 'lucide-react';
 import { ALT_RESUSCITATION_MEDS, AltMedItem } from '../data/altMeds';
-import { LogEntry } from '../types';
+import { LogEntry, NonShockableRhythmType } from '../types';
 
 export { ALT_RESUSCITATION_MEDS };
 export type { AltMedItem };
@@ -42,6 +42,8 @@ interface CprTimerCardProps {
   hasCompletedIvAccess?: boolean;
   handleAdministerEpinephrine?: () => void;
   epiCount?: number;
+  shockableEpiCount?: number;
+  nonShockableEpiCount?: number;
   epiTimeRemaining?: number;
   epiTimerStarted?: boolean;
   epiAlertActive?: boolean;
@@ -58,6 +60,9 @@ interface CprTimerCardProps {
   handleRhythmTachycardia?: () => void;
   handleRhythmROSC?: () => void;
   lastRhythmDecision?: 'shockable' | 'non-shockable' | 'bradycardia' | 'tachycardia' | 'rosc' | null;
+  selectedNonShockableRhythm?: NonShockableRhythmType;
+  onSelectNonShockableRhythm?: (rhythm: NonShockableRhythmType) => void;
+  onOpenQuickActionModal?: () => void;
   shockCount?: number;
   shockButtonFlashing?: boolean;
 }
@@ -94,6 +99,8 @@ export function CprTimerCard({
   hasCompletedIvAccess = false,
   handleAdministerEpinephrine,
   epiCount = 0,
+  shockableEpiCount = 0,
+  nonShockableEpiCount = 0,
   epiTimeRemaining = 0,
   epiTimerStarted = false,
   epiAlertActive = false,
@@ -109,6 +116,9 @@ export function CprTimerCard({
   handleRhythmTachycardia,
   handleRhythmROSC,
   lastRhythmDecision = null,
+  selectedNonShockableRhythm = null,
+  onSelectNonShockableRhythm,
+  onOpenQuickActionModal,
   shockCount = 0,
   shockButtonFlashing = false,
 }: CprTimerCardProps) {
@@ -269,12 +279,22 @@ export function CprTimerCard({
 
           {/* 1. EPINEPHRINE */}
           {(() => {
-            const isEpiPrepOnly = lastRhythmDecision === 'shockable' && (shockCount ?? 0) < 2 && (epiCount ?? 0) === 0;
+            const isShockable = lastRhythmDecision === 'shockable';
+            const isNonShockable = lastRhythmDecision === 'non-shockable';
+            const currentRhythmEpiCount = isShockable ? shockableEpiCount : isNonShockable ? nonShockableEpiCount : epiCount;
+            const isEpiPrepOnly = isShockable && (shockCount ?? 0) < 2 && currentRhythmEpiCount === 0;
+            const isNonShockWithoutSubRhythm = isNonShockable && !selectedNonShockableRhythm;
+            const isEpiActuallyAlerting = epiAlertActive && !isEpiPrepOnly && !isNonShockWithoutSubRhythm;
             return (
               <button
                 type="button"
                 id="btn_cpr_epinephrine"
                 onClick={() => {
+                  if (isNonShockWithoutSubRhythm) {
+                    speakThai("โปรดเลือกชนิดคลื่นไฟฟ้าหัวใจ อะซิสโทลี หรือ พีอีเอ ก่อนนะคะ");
+                    if (onOpenQuickActionModal) onOpenQuickActionModal();
+                    return;
+                  }
                   if (epiAlertActive && !isEpiPrepOnly && onOpenMedDueModal) {
                     onOpenMedDueModal();
                   } else if (handleAdministerEpinephrine) {
@@ -282,34 +302,56 @@ export function CprTimerCard({
                   }
                 }}
                 className={`p-1 xs:p-1.5 rounded-lg text-left transition-all active:scale-95 cursor-pointer flex flex-col justify-between border relative overflow-hidden isolate h-[40px] xs:h-[45px] ${
-                  epiAlertActive
-                    ? isEpiPrepOnly
-                      ? 'bg-gradient-to-b from-amber-600 via-amber-700 to-amber-900 border-2 border-amber-300 text-white animate-pulse ring-2 ring-amber-500/80 shadow-[0_0_16px_rgba(245,158,11,0.8)]'
-                      : 'bg-gradient-to-b from-rose-600 via-rose-700 to-red-900 border-2 border-rose-300 text-white animate-pulse ring-2 ring-rose-500/80 shadow-[0_0_16px_rgba(244,63,94,0.8)]'
+                  isEpiActuallyAlerting
+                    ? 'bg-gradient-to-b from-rose-600 via-rose-700 to-red-900 border-2 border-rose-300 text-white animate-pulse ring-2 ring-rose-500/80 shadow-[0_0_16px_rgba(244,63,94,0.8)]'
+                    : isEpiPrepOnly && epiAlertActive
+                    ? 'bg-gradient-to-b from-amber-600 via-amber-700 to-amber-900 border-2 border-amber-300 text-white animate-pulse ring-2 ring-amber-500/80 shadow-[0_0_16px_rgba(245,158,11,0.8)]'
+                    : isNonShockWithoutSubRhythm
+                    ? 'bg-slate-950 hover:bg-slate-800 border-cyan-800/80 text-cyan-200'
                     : 'bg-slate-950 hover:bg-slate-800 border-slate-800 text-slate-200'
                 }`}
               >
-                {epiAlertActive && (
+                {isEpiActuallyAlerting && (
                   <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/30 via-white/10 to-transparent pointer-events-none" />
                 )}
                 <div className="flex items-center justify-between w-full relative z-1">
                   <span className={`text-[8.5px] xs:text-[9.5px] font-black font-mono leading-tight truncate ${
-                    epiAlertActive ? 'text-white' : 'text-cyan-300'
+                    isEpiActuallyAlerting ? 'text-white' : 'text-cyan-300'
                   }`}>
                     EPINEPHRINE
                   </span>
                   <span className={`text-[7px] xs:text-[8px] font-mono font-bold px-1 rounded border ml-0.5 shrink-0 ${
-                    epiAlertActive
-                      ? isEpiPrepOnly ? 'bg-amber-950 text-amber-200 border-amber-400' : 'bg-white text-rose-800 border-rose-200'
+                    isEpiActuallyAlerting
+                      ? 'bg-white text-rose-800 border-rose-200 font-black'
+                      : isEpiPrepOnly && epiAlertActive
+                      ? 'bg-amber-950 text-amber-200 border-amber-400'
+                      : isNonShockWithoutSubRhythm
+                      ? 'bg-cyan-950 text-cyan-300 border-cyan-700 font-bold'
                       : 'bg-cyan-950 text-cyan-300 border-cyan-800'
                   }`}>
-                    {isEpiPrepOnly && epiAlertActive ? 'รอ#2' : `#${epiCount ?? 0}`}
+                    {isEpiPrepOnly && epiAlertActive
+                      ? 'รอ#2'
+                      : isNonShockWithoutSubRhythm
+                      ? 'เลือกคลื่น'
+                      : isShockable
+                      ? `Shk #${shockableEpiCount}`
+                      : isNonShockable
+                      ? `Non-Shk #${nonShockableEpiCount}`
+                      : `#${epiCount}`}
                   </span>
                 </div>
                 <div className="flex items-center justify-between w-full text-[6.5px] xs:text-[7.5px] font-mono relative z-1">
                   <span className="truncate opacity-90">
-                    {epiAlertActive
-                      ? isEpiPrepOnly ? '⚠️ เตรียมยา' : '⚡ ให้ 1mg'
+                    {isEpiActuallyAlerting
+                      ? '⚡ ให้ 1mg ทันที'
+                      : isEpiPrepOnly && epiAlertActive
+                      ? '⚠️ รอ Shock #2'
+                      : isNonShockWithoutSubRhythm
+                      ? '⚡ รอเลือก Asys/PEA'
+                      : isShockable
+                      ? 'Shk: 1mg/4น.'
+                      : isNonShockable
+                      ? 'Non-Shk: 1mg'
                       : '1mg ทุก 4น.'}
                   </span>
                   {epiTimerStarted ? (
@@ -714,6 +756,51 @@ export function CprTimerCard({
           <span className="text-[8.5px] bg-black/60 text-amber-300 border border-amber-500/30 px-1.5 py-0.5 rounded font-mono font-bold">
             Shock #{(shockCount ?? 0) + 1}
           </span>
+        </div>
+      )}
+
+      {/* NON-SHOCKABLE Status Display Banner & Sub-rhythm Selector */}
+      {lastRhythmDecision === 'non-shockable' && (
+        <div
+          className={`w-full py-1 xs:py-1.5 px-2 rounded-lg font-black text-xs flex items-center justify-between transition-all border my-0.5 shadow-md shrink-0 ${
+            !selectedNonShockableRhythm
+              ? 'bg-gradient-to-r from-slate-950 via-cyan-950/90 to-slate-950 border-cyan-500/90 text-white ring-2 ring-cyan-500/50 shadow-[0_0_16px_rgba(6,182,212,0.35)] animate-pulse'
+              : 'bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 border-slate-700 text-slate-200'
+          }`}
+        >
+          <div className="flex items-center gap-1.5">
+            <ShieldAlert className={`w-3.5 h-3.5 text-cyan-400 shrink-0 ${!selectedNonShockableRhythm ? 'animate-bounce' : ''}`} />
+            <span className="font-mono font-black text-[10px] xs:text-[11px]">NON-SHOCKABLE</span>
+            <span className={`text-[7px] px-1 py-0.2 rounded font-bold uppercase ${
+              selectedNonShockableRhythm ? 'bg-cyan-950 text-cyan-300 border border-cyan-800' : 'bg-rose-950 text-rose-300 border border-rose-800 animate-pulse'
+            }`}>
+              {selectedNonShockableRhythm ? selectedNonShockableRhythm : 'รอเลือกคลื่น'}
+            </span>
+          </div>
+          <div className="flex items-center gap-1 shrink-0">
+            <button
+              type="button"
+              onClick={() => onSelectNonShockableRhythm?.('Asystole')}
+              className={`text-[8.5px] px-2 py-0.5 rounded font-mono font-bold transition-all cursor-pointer border ${
+                selectedNonShockableRhythm === 'Asystole'
+                  ? 'bg-cyan-600 text-white border-cyan-300 shadow-sm ring-1 ring-cyan-400'
+                  : 'bg-slate-900 hover:bg-slate-800 text-slate-300 border-slate-700'
+              }`}
+            >
+              Asystole
+            </button>
+            <button
+              type="button"
+              onClick={() => onSelectNonShockableRhythm?.('PEA')}
+              className={`text-[8.5px] px-2 py-0.5 rounded font-mono font-bold transition-all cursor-pointer border ${
+                selectedNonShockableRhythm === 'PEA'
+                  ? 'bg-cyan-600 text-white border-cyan-300 shadow-sm ring-1 ring-cyan-400'
+                  : 'bg-slate-900 hover:bg-slate-800 text-slate-300 border-slate-700'
+              }`}
+            >
+              PEA
+            </button>
+          </div>
         </div>
       )}
 

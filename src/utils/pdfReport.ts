@@ -16,6 +16,8 @@ export interface SummaryStats {
   cprSubCycle302: number;
   shockCount: number;
   epiCount: number;
+  shockableEpiCount?: number;
+  nonShockableEpiCount?: number;
   amioCount: number;
   lidoCount: number;
   atropineCount: number;
@@ -433,7 +435,10 @@ export async function generateResuscitationPDF(logs: LogEntry[], stats: SummaryS
 
   // Column 2
   doc.text(`Defibrillations Delivered: ${stats.shockCount} Shocks`, 85, 31);
-  doc.text(`Epinephrine (Adrenaline): ${stats.epiCount} Doses (${stats.epiCount} mg)`, 85, 36);
+  const epiDetail = (stats.shockableEpiCount !== undefined && stats.nonShockableEpiCount !== undefined && (stats.shockableEpiCount > 0 || stats.nonShockableEpiCount > 0))
+    ? `Epinephrine: ${stats.epiCount} Doses (${stats.shockableEpiCount} Shk / ${stats.nonShockableEpiCount} Non-Shk)`
+    : `Epinephrine (Adrenaline): ${stats.epiCount} Doses (${stats.epiCount} mg)`;
+  doc.text(epiDetail, 85, 36);
   doc.text(`Amiodarone: ${stats.amioCount} Doses`, 85, 41);
 
   // Column 3

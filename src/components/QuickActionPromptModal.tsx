@@ -23,6 +23,8 @@ interface QuickActionPromptModalProps {
   setShockButtonFlashing?: (val: boolean) => void;
   handleAdministerEpinephrine: () => void;
   epiCount: number;
+  shockableEpiCount?: number;
+  nonShockableEpiCount?: number;
   epiTimeRemaining?: number;
   epiTimerStarted?: boolean;
   formatMMSS?: (sec: number) => string;
@@ -61,6 +63,8 @@ export function QuickActionPromptModal({
   setShockButtonFlashing,
   handleAdministerEpinephrine,
   epiCount,
+  shockableEpiCount = 0,
+  nonShockableEpiCount = 0,
   epiTimeRemaining = 240,
   epiTimerStarted = false,
   formatMMSS,
@@ -335,16 +339,19 @@ export function QuickActionPromptModal({
                       if (setIvAccessAlertActive) setIvAccessAlertActive(true);
                       if (setShowProceduresModal) setShowProceduresModal(true);
                       speakThai('เลือก คลื่นไฟฟ้าหัวใจ อะซิสโทลี เปิดเส้น ไอวี หรือ ไอโอ แอคเซส ค่ะ');
-                    } else if (epiCount === 0) {
-                      if (setEpiAlertActive) setEpiAlertActive(true);
-                      if (setShowMedDueModal) setShowMedDueModal(true);
-                      speakThai('เลือก คลื่นไฟฟ้าหัวใจ อะซิสโทลี ให้ยาเอพิเนฟริน เข็มแรก หนึ่งมิลลิกรัม ทันทีค่ะ');
-                    } else if (epiTimeRemaining <= 0) {
-                      if (setEpiAlertActive) setEpiAlertActive(true);
-                      if (setShowMedDueModal) setShowMedDueModal(true);
-                      speakThai('เลือก คลื่นไฟฟ้าหัวใจ อะซิสโทลี ครบกำหนดสี่นาที ให้ยาเอพิเนฟริน หนึ่งมิลลิกรัมค่ะ');
                     } else {
-                      speakThai('เลือก คลื่นไฟฟ้าหัวใจ อะซิสโทลี เริ่มกดหน้าอกต่อทันที สองนาทีค่ะ และนับเวลาให้ยาเอพิเนฟรินทุกสี่นาทีนะคะ');
+                      if (setIvAccessAlertActive) setIvAccessAlertActive(false);
+                      if (nonShockableEpiCount === 0) {
+                        if (setEpiAlertActive) setEpiAlertActive(true);
+                        if (setShowMedDueModal) setShowMedDueModal(true);
+                        speakThai('เลือก คลื่นไฟฟ้าหัวใจ อะซิสโทลี ให้ยาเอพิเนฟริน เข็มแรก หนึ่งมิลลิกรัม ทันทีค่ะ');
+                      } else if (epiTimeRemaining <= 0) {
+                        if (setEpiAlertActive) setEpiAlertActive(true);
+                        if (setShowMedDueModal) setShowMedDueModal(true);
+                        speakThai('เลือก คลื่นไฟฟ้าหัวใจ อะซิสโทลี ครบกำหนดสี่นาที ให้ยาเอพิเนฟริน หนึ่งมิลลิกรัมค่ะ');
+                      } else {
+                        speakThai('เลือก คลื่นไฟฟ้าหัวใจ อะซิสโทลี เริ่มกดหน้าอกต่อทันที สองนาทีค่ะ และนับเวลาให้ยาเอพิเนฟรินทุกสี่นาทีนะคะ');
+                      }
                     }
                   }}
                   className={`p-1.5 rounded-lg border text-left flex items-center gap-2 cursor-pointer transition-all ${
@@ -369,16 +376,19 @@ export function QuickActionPromptModal({
                       if (setIvAccessAlertActive) setIvAccessAlertActive(true);
                       if (setShowProceduresModal) setShowProceduresModal(true);
                       speakThai('เลือก คลื่นไฟฟ้าหัวใจ พีอีเอ เปิดเส้น ไอวี หรือ ไอโอ แอคเซส ค่ะ');
-                    } else if (epiCount === 0) {
-                      if (setEpiAlertActive) setEpiAlertActive(true);
-                      if (setShowMedDueModal) setShowMedDueModal(true);
-                      speakThai('เลือก คลื่นไฟฟ้าหัวใจ พีอีเอ ให้ยาเอพิเนฟริน เข็มแรก หนึ่งมิลลิกรัม ทันทีค่ะ');
-                    } else if (epiTimeRemaining <= 0) {
-                      if (setEpiAlertActive) setEpiAlertActive(true);
-                      if (setShowMedDueModal) setShowMedDueModal(true);
-                      speakThai('เลือก คลื่นไฟฟ้าหัวใจ พีอีเอ ครบกำหนดสี่นาที ให้ยาเอพิเนฟริน หนึ่งมิลลิกรัมค่ะ');
                     } else {
-                      speakThai('เลือก คลื่นไฟฟ้าหัวใจ พีอีเอ เริ่มกดหน้าอกต่อทันที สองนาทีค่ะ และนับเวลาให้ยาเอพิเนฟรินทุกสี่นาทีนะคะ');
+                      if (setIvAccessAlertActive) setIvAccessAlertActive(false);
+                      if (nonShockableEpiCount === 0) {
+                        if (setEpiAlertActive) setEpiAlertActive(true);
+                        if (setShowMedDueModal) setShowMedDueModal(true);
+                        speakThai('เลือก คลื่นไฟฟ้าหัวใจ พีอีเอ ให้ยาเอพิเนฟริน เข็มแรก หนึ่งมิลลิกรัม ทันทีค่ะ');
+                      } else if (epiTimeRemaining <= 0) {
+                        if (setEpiAlertActive) setEpiAlertActive(true);
+                        if (setShowMedDueModal) setShowMedDueModal(true);
+                        speakThai('เลือก คลื่นไฟฟ้าหัวใจ พีอีเอ ครบกำหนดสี่นาที ให้ยาเอพิเนฟริน หนึ่งมิลลิกรัมค่ะ');
+                      } else {
+                        speakThai('เลือก คลื่นไฟฟ้าหัวใจ พีอีเอ เริ่มกดหน้าอกต่อทันที สองนาทีค่ะ และนับเวลาให้ยาเอพิเนฟรินทุกสี่นาทีนะคะ');
+                      }
                     }
                   }}
                   className={`p-1.5 rounded-lg border text-left flex items-center gap-2 cursor-pointer transition-all ${

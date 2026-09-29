@@ -7,6 +7,8 @@ interface QuickMedsShocksPanelProps {
   hasCompletedIvAccess?: boolean;
   handleAdministerEpinephrine: () => void;
   epiCount: number;
+  shockableEpiCount?: number;
+  nonShockableEpiCount?: number;
   epiTimeRemaining: number;
   epiTimerStarted: boolean;
   epiAlertActive: boolean;
@@ -39,6 +41,8 @@ export function QuickMedsShocksPanel({
   hasCompletedIvAccess = false,
   handleAdministerEpinephrine,
   epiCount,
+  shockableEpiCount = 0,
+  nonShockableEpiCount = 0,
   epiTimeRemaining,
   epiTimerStarted,
   epiAlertActive,
@@ -160,7 +164,10 @@ export function QuickMedsShocksPanel({
       <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
         {/* EPINEPHRINE 1mg */}
         {(() => {
-          const isEpiPrepOnly = lastRhythmDecision === 'shockable' && shockCount < 2 && epiCount === 0;
+          const isShockable = lastRhythmDecision === 'shockable';
+          const isNonShockable = lastRhythmDecision === 'non-shockable';
+          const currentRhythmEpiCount = isShockable ? shockableEpiCount : isNonShockable ? nonShockableEpiCount : epiCount;
+          const isEpiPrepOnly = isShockable && shockCount < 2 && currentRhythmEpiCount === 0;
           return (
             <button
               onClick={handleAdministerEpinephrine}
@@ -189,7 +196,13 @@ export function QuickMedsShocksPanel({
                       : 'bg-white text-rose-800 border-rose-200 shadow-xs font-black'
                     : 'bg-cyan-950 text-cyan-300 border-cyan-800'
                 }`}>
-                  {isEpiPrepOnly && epiAlertActive ? 'รอ Shock #2' : `#${epiCount}`}
+                  {isEpiPrepOnly && epiAlertActive
+                    ? 'รอ Shock #2'
+                    : isShockable
+                    ? `Shk #${shockableEpiCount}`
+                    : isNonShockable
+                    ? `Non-Shk #${nonShockableEpiCount}`
+                    : `#${epiCount}`}
                 </span>
               </div>
               <div className="flex items-center justify-between mt-1 text-[8px] sm:text-[9px] font-mono font-semibold relative z-1">
@@ -204,6 +217,10 @@ export function QuickMedsShocksPanel({
                     ? isEpiPrepOnly
                       ? '⚠️ เตรียมยา (รอ Shock #2)'
                       : '⚡ ให้ยา 1mg ทันที'
+                    : isShockable
+                    ? 'Shk: 1mg/4น.'
+                    : isNonShockable
+                    ? 'Non-Shk: 1mg'
                     : '1mg IV ทุก 4 นาที'}
                 </span>
                 {epiTimerStarted ? (

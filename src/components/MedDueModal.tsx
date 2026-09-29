@@ -9,6 +9,8 @@ interface MedDueModalProps {
   // Epinephrine
   epiAlertActive: boolean;
   epiCount: number;
+  shockableEpiCount?: number;
+  nonShockableEpiCount?: number;
   epiTimeRemaining: number;
   handleAdministerEpinephrine: () => void;
   isEpiPrepOnly?: boolean;
@@ -28,6 +30,7 @@ interface MedDueModalProps {
   // Context
   shockCount?: number;
   lastRhythmDecision?: RhythmDecision;
+  selectedNonShockableRhythm?: string | null;
   formatMMSS: (seconds: number) => string;
 }
 
@@ -36,6 +39,8 @@ export function MedDueModal({
   onClose,
   epiAlertActive,
   epiCount,
+  shockableEpiCount = 0,
+  nonShockableEpiCount = 0,
   epiTimeRemaining,
   handleAdministerEpinephrine,
   isEpiPrepOnly = false,
@@ -51,9 +56,12 @@ export function MedDueModal({
   handleLogProcedure,
   shockCount = 0,
   lastRhythmDecision,
+  selectedNonShockableRhythm,
   formatMMSS,
 }: MedDueModalProps) {
+  // Epinephrine Pop-up modal for Non-Shockable group MUST only display when Asystole or PEA is selected
   if (!isOpen) return null;
+  if (lastRhythmDecision === 'non-shockable' && !selectedNonShockableRhythm) return null;
 
   // Determine which medications are currently due
   const isEpiDue = epiAlertActive && !isEpiPrepOnly;
@@ -62,7 +70,7 @@ export function MedDueModal({
 
   const handleAdministerEpiAndClose = () => {
     if (!hasCompletedIvAccess && handleLogProcedure) {
-      handleLogProcedure('IV / IO Access Established');
+      handleLogProcedure('IV / IO Line Established');
     }
     handleAdministerEpinephrine();
     onClose();
@@ -140,19 +148,31 @@ export function MedDueModal({
             >
               <div className="flex items-start justify-between">
                 <div className="space-y-0.5">
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                     <span className="text-xs font-mono font-black text-rose-400 bg-rose-950/80 px-2 py-0.5 rounded-md border border-rose-800 tracking-wider uppercase">
-                      DOSE #{epiCount + 1}
+                      {lastRhythmDecision === 'shockable'
+                        ? `SHOCKABLE DOSE #${shockableEpiCount + 1}`
+                        : lastRhythmDecision === 'non-shockable'
+                        ? `NON-SHOCK DOSE #${nonShockableEpiCount + 1}`
+                        : `DOSE #${epiCount + 1}`}
                     </span>
                     <span className="text-[10px] text-amber-300 font-mono font-bold flex items-center gap-1">
                       <Clock className="w-3 h-3 text-amber-400" />
-                      {epiCount === 0 ? 'เข็มแรก (Initial Dose - ให้ทันที)' : 'ครบกำหนดทุก 4 นาที (ทุก 3–5 นาที)'}
+                      {lastRhythmDecision === 'non-shockable' && nonShockableEpiCount === 0
+                        ? 'เข็มแรกของกลุ่มช็อกไม่ได้ (ให้ทันที)'
+                        : lastRhythmDecision === 'shockable' && shockableEpiCount === 0
+                        ? 'เข็มแรกของกลุ่มช็อกได้ (หลัง Shock #2)'
+                        : 'ครบกำหนดทุก 4 นาที'}
                     </span>
-                    {lastRhythmDecision === 'non-shockable' && (
+                    {lastRhythmDecision === 'non-shockable' ? (
                       <span className="text-[9px] text-cyan-300 font-mono font-bold bg-cyan-950/80 px-1.5 py-0.5 rounded border border-cyan-800">
-                        กลุ่ม Non-Shock (นับเวลาทุก 4 นาที)
+                        Non-Shockable ({selectedNonShockableRhythm || 'Asystole/PEA'})
                       </span>
-                    )}
+                    ) : lastRhythmDecision === 'shockable' ? (
+                      <span className="text-[9px] text-amber-300 font-mono font-bold bg-amber-950/80 px-1.5 py-0.5 rounded border border-amber-800">
+                        Shockable (แยกนับอิสระ)
+                      </span>
+                    ) : null}
                   </div>
                   <h4 className="text-lg sm:text-xl font-black text-white font-mono tracking-tight pt-1">
                     EPINEPHRINE 1 mg
@@ -186,7 +206,13 @@ export function MedDueModal({
               >
                 <Zap className="w-5 h-5 text-amber-300 fill-amber-300 shrink-0 animate-pulse" />
                 <span className="tracking-wide">กดให้ยา EPINEPHRINE 1mg ทันที</span>
-                <span className="text-xs font-mono font-bold opacity-90">(Dose #{epiCount + 1})</span>
+                <span className="text-xs font-mono font-bold opacity-90">
+                  ({lastRhythmDecision === 'shockable'
+                    ? `Shk #${shockableEpiCount + 1}`
+                    : lastRhythmDecision === 'non-shockable'
+                    ? `Non-Shk #${nonShockableEpiCount + 1}`
+                    : `Dose #${epiCount + 1}`})
+                </span>
               </button>
             </div>
           )}
