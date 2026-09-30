@@ -40,7 +40,7 @@ function translateLogTextToEnglish(text: string): string {
 
   // Common phrases mapping
   const replacements: [RegExp, string][] = [
-    [/คลำชีพจร:\s*ยืนยันไม่พบชีพจร\s*\(No Pulse\)\s*—\s*พร้อมCPR Started/gi, 'คลำชีพจร: ยืนยันไม่พบชีพจร (No Pulse) — พร้อมCPR Started'],
+    [/คลำชีพจร:\s*ยืนยันไม่พบชีพจร\s*\(No Pulse\).*/gi, 'Pulse Check: Confirmed No Pulse — CPR Started'],
     [/เริ่ม CPR/gi, 'CPR Started'],
     [/หยุด CPR|หยุดกดหน้าอก/gi, 'CPR Paused'],
     [/กดหน้าอกต่อ/gi, 'Resume CPR'],

@@ -783,10 +783,10 @@ export default function App() {
             nextDelayMs = currentBeat === 30 ? 1200 : intervalMs;
           } else if (currentBeat === 31) {
             playAlertChime('vent_cue');
-            nextDelayMs = 1500;
+            nextDelayMs = 1750;
           } else if (currentBeat === 32) {
             playAlertChime('vent_cue');
-            nextDelayMs = 1500;
+            nextDelayMs = 1750;
 
             const completedCycle = cprSubCycleRef.current;
             if (completedCycle === 5) {
@@ -1117,6 +1117,42 @@ export default function App() {
       } else {
         speakThai("เริ่มซีพีอา ค่ะ", undefined, 1.1);
       }
+    }
+  };
+
+  const startCPR = () => {
+    if (cprActive) return;
+    if (!caseActive) {
+      setCaseActive(true);
+      setCaseStartTime(Date.now());
+      addLog("Case Started / Code Blue Resuscitation Activated", "system");
+    }
+
+    if (pulseCheckActive) {
+      setPulseCheckActive(false);
+      setPulseCheckTime(10);
+      addLog("Pulse check cancelled by manually starting CPR", "system");
+    }
+
+    setNoPulseConfirmed(true);
+    setCprActive(true);
+    if (metronomeMode === '30:2') {
+      const cycleNum = cprSubCycleRef.current || cprSubCycle302;
+      if (cycleNum === 1) {
+        speakThai("เริ่มซีพีอา รอบหนึ่งค่ะ", undefined, 1.05);
+      } else if (cycleNum === 2) {
+        speakThai("รอบสอง", undefined, 1.1);
+      } else if (cycleNum === 3) {
+        speakThai("รอบสาม", undefined, 1.1);
+      } else if (cycleNum === 4) {
+        speakThai("รอบสี่", undefined, 1.1);
+      } else if (cycleNum === 5) {
+        speakThai("รอบที่ห้า เตรียมเปลี่ยนค่ะ", undefined, 1.05);
+      } else {
+        speakThai("เริ่มซีพีอา ค่ะ", undefined, 1.1);
+      }
+    } else {
+      speakThai("เริ่มซีพีอา ค่ะ", undefined, 1.1);
     }
   };
 
@@ -2500,6 +2536,7 @@ export default function App() {
               setCprSubCycle302={setCprSubCycle302}
               cprSubCycleRef={cprSubCycleRef}
               toggleCPR={toggleCPR}
+              startCPR={startCPR}
               resetCPRCycle={resetCPRCycle}
               startPulseCheck={startPulseCheck}
               caseActive={caseActive}

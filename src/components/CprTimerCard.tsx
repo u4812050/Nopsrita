@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { Clock, RotateCcw, Heart, Activity, Check, Zap, HeartOff, ShieldAlert } from 'lucide-react';
 import { ALT_RESUSCITATION_MEDS, AltMedItem } from '../data/altMeds';
 import { LogEntry, NonShockableRhythmType } from '../types';
@@ -15,6 +15,7 @@ interface CprTimerCardProps {
   setCprSubCycle302: (sub: number) => void;
   cprSubCycleRef: React.MutableRefObject<number>;
   toggleCPR: () => void;
+  startCPR?: () => void;
   resetCPRCycle: () => void;
   startPulseCheck: () => void;
   caseActive: boolean;
@@ -76,6 +77,7 @@ export function CprTimerCard({
   setCprSubCycle302,
   cprSubCycleRef,
   toggleCPR,
+  startCPR,
   resetCPRCycle,
   startPulseCheck,
   caseActive,
@@ -130,6 +132,21 @@ export function CprTimerCard({
 
   const [highlightNoPulse, setHighlightNoPulse] = useState<boolean>(false);
 
+  const cprActiveRef = useRef(cprActive);
+  useEffect(() => {
+    cprActiveRef.current = cprActive;
+  }, [cprActive]);
+
+  const noPulseConfirmedRef = useRef(noPulseConfirmed);
+  useEffect(() => {
+    noPulseConfirmedRef.current = noPulseConfirmed;
+  }, [noPulseConfirmed]);
+
+  const startCPRRef = useRef(startCPR || toggleCPR);
+  useEffect(() => {
+    startCPRRef.current = startCPR || toggleCPR;
+  }, [startCPR, toggleCPR]);
+
   const handleToggleNoPulse = () => {
     if (cprActive) {
       speakThai("กำลังทำ ซีพีอา อยู่ค่ะ");
@@ -140,12 +157,19 @@ export function CprTimerCard({
       setNoPulseConfirmed((prev) => {
         const nextVal = !prev;
         if (nextVal) {
-          addLog("คลำชีพจร: ยืนยันไม่พบชีพจร (No Pulse) — พร้อมCPR Started", "rhythm");
+          addLog("คลำชีพจร: ยืนยันไม่พบชีพจร (No Pulse) — พร้อมเริ่ม CPR", "rhythm");
           if (playAlertChime) playAlertChime('pulse_check');
-          speakThai("ไม่พบชีพจรเริ่มซีพีอาได้ค่ะ");
           if (setGuidanceMessage) {
-            setGuidanceMessage("⚡ ยืนยันตรวจไม่พบชีพจร (No Pulse) เรียบร้อย • กดปุ่ม START CPR เพื่อเริ่มกดหน้าอก");
+            setGuidanceMessage("⚡ ยืนยันตรวจไม่พบชีพจร (No Pulse) • กำลังเริ่ม CPR อัตโนมัติเมื่อเสียงพูดจบ...");
           }
+          speakThai("ไม่พบชีพจรเริ่มซีพีอาได้ค่ะ", () => {
+            // เมื่อพูดบทปุ่มนี้จบลง ให้เริ่ม start CPR อัตโนมัติ (หากยังยืนยันสถานะ No Pulse และยังไม่ได้เริ่ม CPR)
+            if (noPulseConfirmedRef.current && !cprActiveRef.current) {
+              if (startCPRRef.current) {
+                startCPRRef.current();
+              }
+            }
+          });
         } else {
           addLog("ยกเลิกการยืนยันสถานะ No Pulse", "system");
           speakThai("ยกเลิกสถานะ");
@@ -821,7 +845,7 @@ export function CprTimerCard({
                 </span>
               ) : (
                 <span className="text-[10px] xs:text-[11px] font-bold text-amber-400 animate-pulse flex items-center gap-1 truncate">
-                  🌬️ ช่วยหายใจ {metronomeBeat === 31 ? 'ครั้งที่ 1/2' : 'ครั้งที่ 2/2'} (1.5 วิ)
+                  🌬️ ช่วยหายใจ {metronomeBeat === 31 ? 'ครั้งที่ 1/2' : 'ครั้งที่ 2/2'} (1.75 วิ)
                 </span>
               )
             ) : (
@@ -910,7 +934,7 @@ export function CprTimerCard({
             title={
               noPulseConfirmed
                 ? "ยืนยันตรวจไม่พบชีพจร (No Pulse) แล้ว (กดเพื่อยกเลิก)"
-                : "กดเพื่อยืนยันตรวจไม่พบชีพจร (No Pulse) ก่อนจึงจะกด START CPR ได้"
+                : "กดเพื่อยืนยันตรวจไม่พบชีพจร (No Pulse) — เมื่อเสียงพูดจบจะเริ่ม START CPR อัตโนมัติ"
             }
             className={`absolute left-1 xs:left-1.5 top-1/2 -translate-y-1/2 z-20 w-8.5 h-8.5 xs:w-9.5 xs:h-9.5 sm:w-10 sm:h-10 rounded-full flex flex-col items-center justify-center cursor-pointer select-none transition-all duration-200 border-2 shadow-lg active:scale-90 ${
               noPulseConfirmed
