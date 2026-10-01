@@ -30,6 +30,7 @@ import {
   FIVE_TS,
 } from '../types';
 import { AsystoleEkgIcon, PeaEkgIcon, FirstDegreeAvBlockIcon, MobitzTwoEkgIcon, CompleteHeartBlockEkgIcon } from './EkgIcons';
+import { ReversibleCauseIcon } from './ReversibleCauseIllustrations';
 
 interface GuidancePanelProps {
   activeTab: GuidelineTab;
@@ -716,9 +717,15 @@ export function GuidancePanel({
           <div className="space-y-3">
             {/* 5Hs Column */}
             <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2">
-              <h4 className="font-black text-cyan-400 text-xs uppercase tracking-wider">
-                5Hs Reversible Causes (สาเหตุทางสรีรวิทยา)
-              </h4>
+              <div className="flex items-center justify-between">
+                <h4 className="font-black text-cyan-400 text-xs uppercase tracking-wider flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                  5Hs Reversible Causes (สาเหตุทางสรีรวิทยา)
+                </h4>
+                <span className="text-[10px] font-mono text-cyan-300 font-bold bg-cyan-950/80 px-2 py-0.5 rounded border border-cyan-800">
+                  {checked5H.length} / 5
+                </span>
+              </div>
               <div className="space-y-1.5">
                 {FIVE_HS.map((item) => {
                   const isChecked = checked5H.includes(item.id);
@@ -726,21 +733,29 @@ export function GuidancePanel({
                     <button
                       key={item.id}
                       onClick={() => toggle5H(item.id)}
-                      className={`w-full p-2 rounded-lg text-left transition-all cursor-pointer flex items-start gap-2 border ${
+                      className={`w-full p-2 rounded-xl text-left transition-all cursor-pointer flex items-center gap-2.5 border ${
                         isChecked
-                          ? 'bg-cyan-950/80 border-cyan-500 text-white'
-                          : 'bg-slate-900/60 border-slate-800 text-slate-300 hover:bg-slate-800'
+                          ? 'bg-gradient-to-r from-cyan-950/90 via-slate-900 to-cyan-950/70 border-cyan-400 text-white shadow-[0_0_12px_rgba(6,182,212,0.25)] ring-1 ring-cyan-500/50'
+                          : 'bg-slate-900/60 border-slate-800/90 text-slate-300 hover:bg-slate-850 hover:border-slate-700'
                       }`}
                     >
                       <input
                         type="checkbox"
                         checked={isChecked}
                         readOnly
-                        className="accent-cyan-500 h-4 w-4 rounded mt-0.5 cursor-pointer"
+                        className="accent-cyan-500 h-4 w-4 rounded shrink-0 cursor-pointer"
                       />
-                      <div>
-                        <span className="font-bold text-xs block leading-tight">{item.label}</span>
-                        <span className="text-[10px] text-slate-400 block mt-0.5">{item.desc}</span>
+                      {/* Clinical Vector Illustration Thumbnail */}
+                      <div className={`shrink-0 w-11 h-11 rounded-lg p-0.5 border flex items-center justify-center transition-all ${
+                        isChecked
+                          ? 'border-cyan-400 shadow-[0_0_8px_rgba(6,182,212,0.4)] scale-105'
+                          : 'border-slate-800 bg-slate-950/90 opacity-90'
+                      }`}>
+                        <ReversibleCauseIcon id={item.id} className="w-full h-full rounded-md" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <span className="font-bold text-xs block leading-tight text-slate-100">{item.label}</span>
+                        <span className="text-[10px] text-cyan-200/70 block mt-0.5 leading-snug">{item.desc}</span>
                       </div>
                     </button>
                   );
@@ -750,9 +765,15 @@ export function GuidancePanel({
 
             {/* 5Ts Column */}
             <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2">
-              <h4 className="font-black text-amber-400 text-xs uppercase tracking-wider">
-                5Ts Reversible Causes (สาเหตุทางพยาธิสภาพ)
-              </h4>
+              <div className="flex items-center justify-between">
+                <h4 className="font-black text-amber-400 text-xs uppercase tracking-wider flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                  5Ts Reversible Causes (สาเหตุทางพยาธิสภาพ)
+                </h4>
+                <span className="text-[10px] font-mono text-amber-300 font-bold bg-amber-950/80 px-2 py-0.5 rounded border border-amber-800">
+                  {checked5T.length} / 5
+                </span>
+              </div>
               <div className="space-y-1.5">
                 {FIVE_TS.map((item) => {
                   const isChecked = checked5T.includes(item.id);
@@ -760,21 +781,29 @@ export function GuidancePanel({
                     <button
                       key={item.id}
                       onClick={() => toggle5T(item.id)}
-                      className={`w-full p-2 rounded-lg text-left transition-all cursor-pointer flex items-start gap-2 border ${
+                      className={`w-full p-2 rounded-xl text-left transition-all cursor-pointer flex items-center gap-2.5 border ${
                         isChecked
-                          ? 'bg-amber-950/80 border-amber-500 text-white'
-                          : 'bg-slate-900/60 border-slate-800 text-slate-300 hover:bg-slate-800'
+                          ? 'bg-gradient-to-r from-amber-950/90 via-slate-900 to-amber-950/70 border-amber-400 text-white shadow-[0_0_12px_rgba(245,158,11,0.25)] ring-1 ring-amber-500/50'
+                          : 'bg-slate-900/60 border-slate-800/90 text-slate-300 hover:bg-slate-850 hover:border-slate-700'
                       }`}
                     >
                       <input
                         type="checkbox"
                         checked={isChecked}
                         readOnly
-                        className="accent-amber-500 h-4 w-4 rounded mt-0.5 cursor-pointer"
+                        className="accent-amber-500 h-4 w-4 rounded shrink-0 cursor-pointer"
                       />
-                      <div>
-                        <span className="font-bold text-xs block leading-tight">{item.label}</span>
-                        <span className="text-[10px] text-slate-400 block mt-0.5">{item.desc}</span>
+                      {/* Clinical Vector Illustration Thumbnail */}
+                      <div className={`shrink-0 w-11 h-11 rounded-lg p-0.5 border flex items-center justify-center transition-all ${
+                        isChecked
+                          ? 'border-amber-400 shadow-[0_0_8px_rgba(245,158,11,0.4)] scale-105'
+                          : 'border-slate-800 bg-slate-950/90 opacity-90'
+                      }`}>
+                        <ReversibleCauseIcon id={item.id} className="w-full h-full rounded-md" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <span className="font-bold text-xs block leading-tight text-slate-100">{item.label}</span>
+                        <span className="text-[10px] text-amber-200/70 block mt-0.5 leading-snug">{item.desc}</span>
                       </div>
                     </button>
                   );

@@ -109,7 +109,7 @@ export function UnstableBradycardiaModal({
               <button
                 onClick={() => {
                   handleLogProcedure('Transcutaneous Pacing (TCP) Started');
-                  triggerReassessmentAlert?.('Transcutaneous Pacing (TCP)', 'เริ่มทำเพ๊สซิ่งผ่านผิวหนัง เรียบร้อยค่ะ', true);
+                  triggerReassessmentAlert?.('Transcutaneous Pacing (TCP)', 'เริ่มทำ ทานคิวทาเนี๊ยสเพ๊สซิ่งค่ะ', true);
                 }}
                 className="py-2 px-3 bg-gradient-to-r from-amber-950 via-amber-900/90 to-amber-950 hover:from-amber-900 hover:to-amber-800 border-2 border-amber-500 hover:border-amber-400 text-amber-100 rounded-xl text-left transition-all cursor-pointer flex flex-col gap-1 shadow-lg group relative overflow-hidden"
               >

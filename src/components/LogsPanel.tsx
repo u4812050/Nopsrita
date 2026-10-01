@@ -121,7 +121,7 @@ export function LogsPanel({
             className="px-3.5 py-1.5 bg-cyan-700 hover:bg-cyan-600 text-white rounded-lg font-black text-xs cursor-pointer shadow-xs active:scale-95 shrink-0 flex items-center gap-1"
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>Log</span>
+            <span>Add</span>
           </button>
         </form>
       )}

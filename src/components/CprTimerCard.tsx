@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect, useRef } from 'react';
-import { Clock, RotateCcw, Heart, Activity, Check, Zap, HeartOff, ShieldAlert } from 'lucide-react';
+import { Clock, RotateCcw, Heart, Activity, Check, Zap, HeartOff, ShieldAlert, Lock, Unlock } from 'lucide-react';
 import { ALT_RESUSCITATION_MEDS, AltMedItem } from '../data/altMeds';
 import { LogEntry, NonShockableRhythmType } from '../types';
 
@@ -66,6 +66,8 @@ interface CprTimerCardProps {
   onOpenQuickActionModal?: () => void;
   shockCount?: number;
   shockButtonFlashing?: boolean;
+  pulseUnlocked?: boolean;
+  setPulseUnlocked?: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export function CprTimerCard({
@@ -123,6 +125,8 @@ export function CprTimerCard({
   onOpenQuickActionModal,
   shockCount = 0,
   shockButtonFlashing = false,
+  pulseUnlocked: propPulseUnlocked,
+  setPulseUnlocked: propSetPulseUnlocked,
 }: CprTimerCardProps) {
   // Real-time latest log for the mini LiveResus Log (newest first - 1 line)
   const latestLog = useMemo(() => {
@@ -131,6 +135,31 @@ export function CprTimerCard({
   }, [logs]);
 
   const [highlightNoPulse, setHighlightNoPulse] = useState<boolean>(false);
+
+  // Pulse Rhythm Cover state: ปกคลุมกลุ่มปุ่ม Bradycardia / Tachycardia / ROSC เพื่อป้องกันการกดใช้งานโดยไม่ตั้งใจ
+  const [internalPulseUnlocked, setInternalPulseUnlocked] = useState<boolean>(() => {
+    return lastRhythmDecision === 'bradycardia' || lastRhythmDecision === 'tachycardia' || lastRhythmDecision === 'rosc';
+  });
+
+  const pulseUnlocked = propPulseUnlocked !== undefined ? propPulseUnlocked : internalPulseUnlocked;
+  const setPulseUnlocked = propSetPulseUnlocked || setInternalPulseUnlocked;
+
+  // Auto-sync unlock state based on rhythm decision & case status:
+  useEffect(() => {
+    if (lastRhythmDecision === 'bradycardia' || lastRhythmDecision === 'tachycardia' || lastRhythmDecision === 'rosc') {
+      setPulseUnlocked(true);
+    } else {
+      // เมื่อ lastRhythmDecision เป็น null (เช่น Reset case), shockable, non-shockable ให้กลับมาล็อก
+      setPulseUnlocked(false);
+    }
+  }, [lastRhythmDecision, setPulseUnlocked]);
+
+  // เมื่อรีเซ็ตเคส (!caseActive) หรือเริ่มทำ CPR (cprActive) ให้ล็อกกลุ่มปุ่ม Pulse Rhythm เสมอ
+  useEffect(() => {
+    if (!caseActive || cprActive) {
+      setPulseUnlocked(false);
+    }
+  }, [caseActive, cprActive, setPulseUnlocked]);
 
   const cprActiveRef = useRef(cprActive);
   useEffect(() => {
@@ -305,15 +334,20 @@ export function CprTimerCard({
           {(() => {
             const isShockable = lastRhythmDecision === 'shockable';
             const isNonShockable = lastRhythmDecision === 'non-shockable';
+            const isRosc = lastRhythmDecision === 'rosc';
             const currentRhythmEpiCount = isShockable ? shockableEpiCount : isNonShockable ? nonShockableEpiCount : epiCount;
             const isEpiPrepOnly = isShockable && (shockCount ?? 0) < 2 && currentRhythmEpiCount === 0;
             const isNonShockWithoutSubRhythm = isNonShockable && !selectedNonShockableRhythm;
-            const isEpiActuallyAlerting = epiAlertActive && !isEpiPrepOnly && !isNonShockWithoutSubRhythm;
+            const isEpiActuallyAlerting = !isRosc && epiAlertActive && !isEpiPrepOnly && !isNonShockWithoutSubRhythm;
             return (
               <button
                 type="button"
                 id="btn_cpr_epinephrine"
                 onClick={() => {
+                  if (isRosc) {
+                    speakThai("ผู้ป่วยมีชีพจรแล้วค่ะ สิ้นสุดการให้ยาในภาวะหัวใจหยุดเต้น");
+                    return;
+                  }
                   if (isNonShockWithoutSubRhythm) {
                     speakThai("โปรดเลือกชนิดคลื่นไฟฟ้าหัวใจ อะซิสโทลี หรือ พีอีเอ ก่อนนะคะ");
                     if (onOpenQuickActionModal) onOpenQuickActionModal();
@@ -326,7 +360,9 @@ export function CprTimerCard({
                   }
                 }}
                 className={`p-1 xs:p-1.5 rounded-lg text-left transition-all active:scale-95 cursor-pointer flex flex-col justify-between border relative overflow-hidden isolate h-[40px] xs:h-[45px] ${
-                  isEpiActuallyAlerting
+                  isRosc
+                    ? 'bg-slate-950/90 border-slate-800 text-slate-400 opacity-60'
+                    : isEpiActuallyAlerting
                     ? 'bg-gradient-to-b from-rose-600 via-rose-700 to-red-900 border-2 border-rose-300 text-white animate-pulse ring-2 ring-rose-500/80 shadow-[0_0_16px_rgba(244,63,94,0.8)]'
                     : isEpiPrepOnly && epiAlertActive
                     ? 'bg-gradient-to-b from-amber-600 via-amber-700 to-amber-900 border-2 border-amber-300 text-white animate-pulse ring-2 ring-amber-500/80 shadow-[0_0_16px_rgba(245,158,11,0.8)]'
@@ -340,12 +376,14 @@ export function CprTimerCard({
                 )}
                 <div className="flex items-center justify-between w-full relative z-1">
                   <span className={`text-[8.5px] xs:text-[9.5px] font-black font-mono leading-tight truncate ${
-                    isEpiActuallyAlerting ? 'text-white' : 'text-cyan-300'
+                    isRosc ? 'text-slate-400' : isEpiActuallyAlerting ? 'text-white' : 'text-cyan-300'
                   }`}>
                     EPINEPHRINE
                   </span>
                   <span className={`text-[7px] xs:text-[8px] font-mono font-bold px-1 rounded border ml-0.5 shrink-0 ${
-                    isEpiActuallyAlerting
+                    isRosc
+                      ? 'bg-emerald-950/70 text-emerald-300 border-emerald-700 font-bold'
+                      : isEpiActuallyAlerting
                       ? 'bg-white text-rose-800 border-rose-200 font-black'
                       : isEpiPrepOnly && epiAlertActive
                       ? 'bg-amber-950 text-amber-200 border-amber-400'
@@ -353,7 +391,9 @@ export function CprTimerCard({
                       ? 'bg-cyan-950 text-cyan-300 border-cyan-700 font-bold'
                       : 'bg-cyan-950 text-cyan-300 border-cyan-800'
                   }`}>
-                    {isEpiPrepOnly && epiAlertActive
+                    {isRosc
+                      ? 'ROSC'
+                      : isEpiPrepOnly && epiAlertActive
                       ? 'รอ#2'
                       : isNonShockWithoutSubRhythm
                       ? 'เลือกคลื่น'
@@ -366,7 +406,9 @@ export function CprTimerCard({
                 </div>
                 <div className="flex items-center justify-between w-full text-[6.5px] xs:text-[7.5px] font-mono relative z-1">
                   <span className="truncate opacity-90">
-                    {isEpiActuallyAlerting
+                    {isRosc
+                      ? 'ยกเลิกยา (ROSC)'
+                      : isEpiActuallyAlerting
                       ? '⚡ ให้ 1mg ทันที'
                       : isEpiPrepOnly && epiAlertActive
                       ? '⚠️ รอ Shock #2'
@@ -378,7 +420,11 @@ export function CprTimerCard({
                       ? 'Non-Shk: 1mg'
                       : '1mg ทุก 4น.'}
                   </span>
-                  {epiTimerStarted ? (
+                  {isRosc ? (
+                    <span className="text-[6.5px] text-emerald-400 font-bold shrink-0">
+                      หยุดนับเวลา
+                    </span>
+                  ) : epiTimerStarted ? (
                     <span className={`font-black ml-0.5 shrink-0 ${epiTimeRemaining === 0 ? 'text-rose-400 animate-pulse' : 'text-amber-400'}`}>
                       {epiTimeRemaining === 0 ? 'DUE!' : formatMMSS(epiTimeRemaining ?? 0)}
                     </span>
@@ -396,26 +442,36 @@ export function CprTimerCard({
           <button
             type="button"
             id="btn_cpr_amiodarone"
-            onClick={handleAdministerAmiodarone}
+            onClick={() => {
+              if (lastRhythmDecision === 'rosc') {
+                speakThai("ผู้ป่วยมีชีพจรแล้วค่ะ สิ้นสุดการให้ยาในภาวะหัวใจหยุดเต้น");
+                return;
+              }
+              if (handleAdministerAmiodarone) handleAdministerAmiodarone();
+            }}
             className={`p-1 xs:p-1.5 rounded-lg text-left transition-all active:scale-95 cursor-pointer flex flex-col justify-between border h-[36px] xs:h-[40px] ${
-              amioAlertActive
+              lastRhythmDecision === 'rosc'
+                ? 'bg-slate-950/90 border-slate-800 text-slate-400 opacity-60'
+                : amioAlertActive
                 ? 'bg-indigo-900 border-indigo-400 text-white animate-pulse ring-2 ring-indigo-400 shadow-[0_0_12px_rgba(99,102,241,0.6)]'
                 : 'bg-slate-950 hover:bg-slate-800 border-slate-800 text-slate-200'
             }`}
           >
             <div className="flex items-center justify-between w-full">
-              <span className="text-[8px] xs:text-[9px] font-black text-indigo-300 font-mono truncate">
+              <span className={`text-[8px] xs:text-[9px] font-black font-mono truncate ${
+                lastRhythmDecision === 'rosc' ? 'text-slate-400' : 'text-indigo-300'
+              }`}>
                 AMIODARONE
               </span>
               <span className="text-[7px] xs:text-[8px] font-mono font-bold bg-indigo-950 text-indigo-300 px-1 rounded border border-indigo-800 shrink-0">
-                #{amioCount ?? 0}
+                {lastRhythmDecision === 'rosc' ? 'ROSC' : `#${amioCount ?? 0}`}
               </span>
             </div>
             <span
               className="text-[6.5px] xs:text-[7.5px] text-slate-400 font-semibold block truncate"
               title={(amioCount ?? 0) === 0 ? '1st Dose: 300 mg+D5W up to 20ml IV/IO' : '2nd Dose: 150 mg+D5W up to 20ml IV/IO'}
             >
-              {(amioCount ?? 0) === 0 ? '300mg+D5W 20ml' : '150mg+D5W 20ml'}
+              {lastRhythmDecision === 'rosc' ? 'ระงับยา CA' : (amioCount ?? 0) === 0 ? '300mg+D5W 20ml' : '150mg+D5W 20ml'}
             </span>
           </button>
 
@@ -423,23 +479,33 @@ export function CprTimerCard({
           <button
             type="button"
             id="btn_cpr_lidocaine"
-            onClick={handleAdministerLidocaine}
+            onClick={() => {
+              if (lastRhythmDecision === 'rosc') {
+                speakThai("ผู้ป่วยมีชีพจรแล้วค่ะ สิ้นสุดการให้ยาในภาวะหัวใจหยุดเต้น");
+                return;
+              }
+              if (handleAdministerLidocaine) handleAdministerLidocaine();
+            }}
             className={`p-1 xs:p-1.5 rounded-lg text-left transition-all active:scale-95 cursor-pointer flex flex-col justify-between border h-[36px] xs:h-[40px] ${
-              lidoAlertActive
+              lastRhythmDecision === 'rosc'
+                ? 'bg-slate-950/90 border-slate-800 text-slate-400 opacity-60'
+                : lidoAlertActive
                 ? 'bg-indigo-900 border-indigo-400 text-white animate-pulse ring-2 ring-indigo-400 shadow-[0_0_12px_rgba(99,102,241,0.6)]'
                 : 'bg-slate-950 hover:bg-slate-800 border-slate-800 text-slate-200'
             }`}
           >
             <div className="flex items-center justify-between w-full">
-              <span className="text-[8px] xs:text-[9px] font-black text-indigo-300 font-mono truncate">
+              <span className={`text-[8px] xs:text-[9px] font-black font-mono truncate ${
+                lastRhythmDecision === 'rosc' ? 'text-slate-400' : 'text-indigo-300'
+              }`}>
                 LIDOCAINE
               </span>
               <span className="text-[7px] xs:text-[8px] font-mono font-bold bg-indigo-950 text-indigo-300 px-1 rounded border border-indigo-800 shrink-0">
-                #{lidoCount ?? 0}
+                {lastRhythmDecision === 'rosc' ? 'ROSC' : `#${lidoCount ?? 0}`}
               </span>
             </div>
             <span className="text-[6.5px] xs:text-[7.5px] text-slate-400 font-semibold block truncate">
-              {(lidoCount ?? 0) === 0 ? '1-1.5 mg/kg' : '0.5-0.75 mg/kg'}
+              {lastRhythmDecision === 'rosc' ? 'ระงับยา CA' : (lidoCount ?? 0) === 0 ? '1-1.5 mg/kg' : '0.5-0.75 mg/kg'}
             </span>
           </button>
         </div>
@@ -697,67 +763,131 @@ export function CprTimerCard({
         </div>
 
         {/* RIGHT COLUMN: RHYTHM TRIGGERS & ROSC */}
-        <div className="flex-1 flex flex-col gap-1 xs:gap-1.5 min-w-0 max-w-[105px] xs:max-w-[125px] sm:max-w-[145px]">
-          <div className="text-[7.5px] xs:text-[8.5px] font-mono font-black text-amber-400 uppercase tracking-wider text-center border-b border-slate-800/80 pb-0.5 mb-0.5 flex items-center justify-center gap-1">
-            <span>RHYTHM</span>
+        <div className="flex-1 flex flex-col gap-1 xs:gap-1.5 min-w-0 max-w-[105px] xs:max-w-[125px] sm:max-w-[145px] relative">
+          <div className="text-[7.5px] xs:text-[8.5px] font-mono font-black uppercase tracking-wider text-center border-b border-slate-800/80 pb-0.5 mb-0.5 flex items-center justify-between px-0.5">
+            <span className={pulseUnlocked ? "text-emerald-400 font-bold" : "text-amber-400"}>
+              {pulseUnlocked ? "PULSE RHYTHM" : "RHYTHM"}
+            </span>
+            {pulseUnlocked && (
+              <button
+                type="button"
+                id="btn_relock_pulse"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setPulseUnlocked(false);
+                }}
+                title="กดเพื่อล็อกกลุ่มปุ่มชีพจร (ป้องกันการกดโดยไม่ตั้งใจ)"
+                className="text-[7px] font-mono px-1 py-0.2 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 flex items-center gap-0.5 cursor-pointer transition-all active:scale-95 shadow-sm"
+              >
+                <Lock className="w-2.5 h-2.5 text-amber-400" />
+                <span>ล็อก</span>
+              </button>
+            )}
           </div>
 
-          {/* 1. BRADYCARDIA */}
-          <button
-            type="button"
-            id="btn_cpr_bradycardia"
-            onClick={handleRhythmBradycardia}
-            className={`p-1 xs:p-1.5 rounded-lg text-center font-black transition-all cursor-pointer flex flex-col items-center justify-center border h-[36px] xs:h-[40px] ${
-              lastRhythmDecision === 'bradycardia'
-                ? 'bg-amber-600 text-white border-amber-300 ring-2 ring-amber-400 shadow-[0_0_14px_rgba(251,191,36,0.9)] animate-pulse'
-                : 'bg-amber-950/60 hover:bg-amber-900 text-amber-300 border-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.5)]'
-            }`}
-          >
-            <span className="text-[7.5px] xs:text-[8.5px] uppercase font-mono block leading-none tracking-tight truncate w-full">
-              BRADYCARDIA
-            </span>
-            <span className="text-[6.5px] xs:text-[7px] opacity-80 mt-0.5 truncate w-full">
-              HR &lt; 50
-            </span>
-          </button>
+          <div className="relative flex flex-col gap-1 xs:gap-1.5 w-full flex-1">
+            {/* 1. BRADYCARDIA */}
+            <button
+              type="button"
+              id="btn_cpr_bradycardia"
+              onClick={handleRhythmBradycardia}
+              className={`p-1 xs:p-1.5 rounded-lg text-center font-black transition-all cursor-pointer flex flex-col items-center justify-center border h-[36px] xs:h-[40px] ${
+                lastRhythmDecision === 'bradycardia'
+                  ? 'bg-amber-600 text-white border-amber-300 ring-2 ring-amber-400 shadow-[0_0_14px_rgba(251,191,36,0.9)] animate-pulse'
+                  : 'bg-amber-950/60 hover:bg-amber-900 text-amber-300 border-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.5)]'
+              }`}
+            >
+              <span className="text-[7.5px] xs:text-[8.5px] uppercase font-mono block leading-none tracking-tight truncate w-full">
+                BRADYCARDIA
+              </span>
+              <span className="text-[6.5px] xs:text-[7px] opacity-80 mt-0.5 truncate w-full">
+                HR &lt; 50
+              </span>
+            </button>
 
-          {/* 2. TACHYCARDIA */}
-          <button
-            type="button"
-            id="btn_cpr_tachycardia"
-            onClick={handleRhythmTachycardia}
-            className={`p-1 xs:p-1.5 rounded-lg text-center font-black transition-all cursor-pointer flex flex-col items-center justify-center border h-[36px] xs:h-[40px] ${
-              lastRhythmDecision === 'tachycardia'
-                ? 'bg-purple-600 text-white border-purple-300 ring-2 ring-purple-400 shadow-[0_0_14px_rgba(168,85,247,0.9)] animate-pulse'
-                : 'bg-purple-950/60 hover:bg-purple-900 text-purple-300 border-purple-400 shadow-[0_0_8px_rgba(168,85,247,0.5)]'
-            }`}
-          >
-            <span className="text-[7.5px] xs:text-[8.5px] uppercase font-mono block leading-none tracking-tight truncate w-full">
-              TACHYCARDIA
-            </span>
-            <span className="text-[6.5px] xs:text-[7px] opacity-80 mt-0.5 truncate w-full">
-              HR &ge; 150
-            </span>
-          </button>
+            {/* 2. TACHYCARDIA */}
+            <button
+              type="button"
+              id="btn_cpr_tachycardia"
+              onClick={handleRhythmTachycardia}
+              className={`p-1 xs:p-1.5 rounded-lg text-center font-black transition-all cursor-pointer flex flex-col items-center justify-center border h-[36px] xs:h-[40px] ${
+                lastRhythmDecision === 'tachycardia'
+                  ? 'bg-purple-600 text-white border-purple-300 ring-2 ring-purple-400 shadow-[0_0_14px_rgba(168,85,247,0.9)] animate-pulse'
+                  : 'bg-purple-950/60 hover:bg-purple-900 text-purple-300 border-purple-400 shadow-[0_0_8px_rgba(168,85,247,0.5)]'
+              }`}
+            >
+              <span className="text-[7.5px] xs:text-[8.5px] uppercase font-mono block leading-none tracking-tight truncate w-full">
+                TACHYCARDIA
+              </span>
+              <span className="text-[6.5px] xs:text-[7px] opacity-80 mt-0.5 truncate w-full">
+                HR &ge; 150
+              </span>
+            </button>
 
-          {/* 3. ROSC */}
-          <button
-            type="button"
-            id="btn_cpr_rosc"
-            onClick={handleRhythmROSC}
-            className={`p-1 xs:p-1.5 rounded-lg text-center font-black transition-all cursor-pointer flex flex-col items-center justify-center border h-[40px] xs:h-[45px] ${
-              lastRhythmDecision === 'rosc'
-                ? 'bg-emerald-600 text-white border-emerald-300 ring-2 ring-emerald-400 shadow-[0_0_18px_rgba(52,211,153,0.95)] animate-pulse'
-                : 'bg-emerald-950/70 hover:bg-emerald-900 text-emerald-300 border-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.6)]'
-            }`}
-          >
-            <span className="text-[8.5px] xs:text-[9.5px] uppercase font-mono block leading-none truncate w-full">
-              ROSC
-            </span>
-            <span className="text-[6.5px] xs:text-[7.5px] opacity-90 mt-0.5 truncate w-full text-emerald-200 font-bold">
-              Pulse Back
-            </span>
-          </button>
+            {/* 3. ROSC */}
+            <button
+              type="button"
+              id="btn_cpr_rosc"
+              onClick={handleRhythmROSC}
+              className={`p-1 xs:p-1.5 rounded-lg text-center font-black transition-all cursor-pointer flex flex-col items-center justify-center border h-[40px] xs:h-[45px] ${
+                lastRhythmDecision === 'rosc'
+                  ? 'bg-emerald-600 text-white border-emerald-300 ring-2 ring-emerald-400 shadow-[0_0_18px_rgba(52,211,153,0.95)] animate-pulse'
+                  : 'bg-emerald-950/70 hover:bg-emerald-900 text-emerald-300 border-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.6)]'
+              }`}
+            >
+              <span className="text-[8.5px] xs:text-[9.5px] uppercase font-mono block leading-none truncate w-full">
+                ROSC
+              </span>
+              <span className="text-[6.5px] xs:text-[7.5px] opacity-90 mt-0.5 truncate w-full text-emerald-200 font-bold">
+                Pulse Back
+              </span>
+            </button>
+
+            {/* PULSE COVER BUTTON: ปกคลุมกลุ่มปุ่มนี้เพื่อป้องกันการกดใช้งานโดยไม่ตั้งใจ ต้องกดเลือกก่อนหากจะใช้งานปุ่มกลุ่มนี้ */}
+            {!pulseUnlocked && (
+              <button
+                type="button"
+                id="btn_pulse_cover"
+                onClick={() => {
+                  setPulseUnlocked(true);
+                  if (playAlertChime) playAlertChime('pulse_check');
+                  speakThai("ตรวจพบชีพจร โปรดเลือกจังหวะหัวใจ หรือ อาร์โอเอสซีค่ะ");
+                  if (setGuidanceMessage) {
+                    setGuidanceMessage("⚡ คลำพบชีพจร (Pulse Present) • ปลดล็อกกลุ่มปุ่ม Bradycardia / Tachycardia / ROSC แล้ว");
+                  }
+                }}
+                title="กดปุ่ม Pulse นี้ก่อนเพื่อปลดล็อกกลุ่มปุ่ม (ป้องกันการกดใช้งานโดยไม่ตั้งใจ)"
+                className="absolute inset-0 z-20 w-full h-full rounded-xl bg-gradient-to-b from-teal-950/95 via-slate-900/95 to-emerald-950/95 border-2 border-emerald-500/80 hover:border-emerald-300 text-white shadow-[0_0_16px_rgba(16,185,129,0.35)] ring-2 ring-emerald-500/30 flex flex-col items-center justify-between p-2 cursor-pointer transition-all hover:scale-[1.02] active:scale-95 group backdrop-blur-[2px]"
+              >
+                {/* Top Badge */}
+                <div className="flex items-center gap-1 bg-emerald-950/80 border border-emerald-500/50 px-1.5 py-0.5 rounded-full shadow-inner">
+                  <span className="relative flex h-1.5 w-1.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                  </span>
+                  <span className="text-[7px] xs:text-[8px] font-black uppercase tracking-wider text-emerald-300 font-mono">
+                    PULSE
+                  </span>
+                </div>
+
+                {/* Center Pulse Animation */}
+                <div className="flex flex-col items-center justify-center my-0.5 relative">
+                  <Heart className="w-6 h-6 xs:w-7 xs:h-7 text-emerald-400 fill-emerald-400/40 animate-pulse drop-shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+                  <Activity className="w-3.5 h-3.5 text-teal-200 absolute -bottom-1" />
+                </div>
+
+                {/* Bottom Prompt */}
+                <div className="flex flex-col items-center text-center leading-tight">
+                  <span className="text-[8px] xs:text-[9px] font-bold text-white drop-shadow font-sans">
+                    คลำพบชีพจร
+                  </span>
+                  <span className="text-[6.5px] xs:text-[7px] text-emerald-300/90 font-mono mt-0.5 bg-emerald-900/60 px-1 py-0.2 rounded border border-emerald-700/50">
+                    กดเลือกใช้งาน
+                  </span>
+                </div>
+              </button>
+            )}
+          </div>
         </div>
       </div>
 

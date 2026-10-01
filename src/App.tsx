@@ -62,6 +62,7 @@ export default function App() {
   const [cprTimeRemaining, setCprTimeRemaining] = useState<number>(120); // 120s (2 minutes)
   const [cprActive, setCprActive] = useState<boolean>(false);
   const [noPulseConfirmed, setNoPulseConfirmed] = useState<boolean>(false);
+  const [pulseRhythmsUnlocked, setPulseRhythmsUnlocked] = useState<boolean>(false);
   const [cprCycle, setCprCycle] = useState<number>(1);
   const [cprSubCycle302, setCprSubCycle302] = useState<number>(1); // 30:2 x 5 Cycles
 
@@ -909,9 +910,54 @@ export default function App() {
         }
 
         // Epinephrine timer countdown separated for Shockable and Non-Shockable
-        if (lastRhythmDecision === 'shockable') {
-          if (shockableEpiTimerStarted) {
-            setShockableEpiTimeRemaining(prev => {
+        // Note: เมื่อเกิด ROSC กระบวนการให้ยาใน Cardiac Arrest ทั้งหมดจะถูกยกเลิกอัตโนมัติ ไม่นับเวลาต่อ
+        if (lastRhythmDecision !== 'rosc') {
+          if (lastRhythmDecision === 'shockable') {
+            if (shockableEpiTimerStarted) {
+              setShockableEpiTimeRemaining(prev => {
+                if (prev <= 1) {
+                  if (prev === 1) {
+                    playAlertChime('med_due');
+                    speakThai("ครบกำหนดสี่นาที ถึงเวลาให้ยาเอพิเนฟริน หนึ่งมิลลิกรัมค่ะ");
+                    setEpiAlertActive(true);
+                    setShowMedDueModal(true);
+                    setGuidanceMessage(
+                      "⚡ ครบกำหนด 4 นาที! ถึงเวลาบริหารยา EPINEPHRINE 1mg IV/IO (Shockable)"
+                    );
+                  }
+                  setEpiTimeRemaining(0);
+                  return 0;
+                }
+                const nextVal = prev - 1;
+                setEpiTimeRemaining(nextVal);
+                return nextVal;
+              });
+            }
+          } else if (lastRhythmDecision === 'non-shockable') {
+            if (nonShockableEpiTimerStarted) {
+              setNonShockableEpiTimeRemaining(prev => {
+                if (prev <= 1) {
+                  if (prev === 1) {
+                    playAlertChime('med_due');
+                    speakThai("ครบกำหนดสี่นาที ถึงเวลาให้ยาเอพิเนฟริน หนึ่งมิลลิกรัมค่ะ");
+                    setEpiAlertActive(true);
+                    if (selectedNonShockableRhythm) {
+                      setShowMedDueModal(true);
+                    }
+                    setGuidanceMessage(
+                      "⚡ ครบกำหนด 4 นาที! ถึงเวลาบริหารยา EPINEPHRINE 1mg IV/IO (Non-Shockable)"
+                    );
+                  }
+                  setEpiTimeRemaining(0);
+                  return 0;
+                }
+                const nextVal = prev - 1;
+                setEpiTimeRemaining(nextVal);
+                return nextVal;
+              });
+            }
+          } else if (epiTimerStarted) {
+            setEpiTimeRemaining(prev => {
               if (prev <= 1) {
                 if (prev === 1) {
                   playAlertChime('med_due');
@@ -919,56 +965,14 @@ export default function App() {
                   setEpiAlertActive(true);
                   setShowMedDueModal(true);
                   setGuidanceMessage(
-                    "⚡ ครบกำหนด 4 นาที! ถึงเวลาบริหารยา EPINEPHRINE 1mg IV/IO (Shockable)"
+                    "⚡ ครบกำหนด 4 นาที! ถึงเวลาบริหารยา EPINEPHRINE 1mg IV/IO"
                   );
                 }
-                setEpiTimeRemaining(0);
                 return 0;
               }
-              const nextVal = prev - 1;
-              setEpiTimeRemaining(nextVal);
-              return nextVal;
+              return prev - 1;
             });
           }
-        } else if (lastRhythmDecision === 'non-shockable') {
-          if (nonShockableEpiTimerStarted) {
-            setNonShockableEpiTimeRemaining(prev => {
-              if (prev <= 1) {
-                if (prev === 1) {
-                  playAlertChime('med_due');
-                  speakThai("ครบกำหนดสี่นาที ถึงเวลาให้ยาเอพิเนฟริน หนึ่งมิลลิกรัมค่ะ");
-                  setEpiAlertActive(true);
-                  if (selectedNonShockableRhythm) {
-                    setShowMedDueModal(true);
-                  }
-                  setGuidanceMessage(
-                    "⚡ ครบกำหนด 4 นาที! ถึงเวลาบริหารยา EPINEPHRINE 1mg IV/IO (Non-Shockable)"
-                  );
-                }
-                setEpiTimeRemaining(0);
-                return 0;
-              }
-              const nextVal = prev - 1;
-              setEpiTimeRemaining(nextVal);
-              return nextVal;
-            });
-          }
-        } else if (epiTimerStarted) {
-          setEpiTimeRemaining(prev => {
-            if (prev <= 1) {
-              if (prev === 1) {
-                playAlertChime('med_due');
-                speakThai("ครบกำหนดสี่นาที ถึงเวลาให้ยาเอพิเนฟริน หนึ่งมิลลิกรัมค่ะ");
-                setEpiAlertActive(true);
-                setShowMedDueModal(true);
-                setGuidanceMessage(
-                  "⚡ ครบกำหนด 4 นาที! ถึงเวลาบริหารยา EPINEPHRINE 1mg IV/IO"
-                );
-              }
-              return 0;
-            }
-            return prev - 1;
-          });
         }
 
       }, 1000);
@@ -1649,10 +1653,19 @@ export default function App() {
     }
 
     setNoPulseConfirmed(false);
+    // เมือ ROSC กระบวนการให้ยาใน Cardiac Arrest ทั้งหมดจะถูกยกเลิกอัตโนมัติ ไม่นับเวลาต่อ
     setEpiTimerStarted(false);
+    setShockableEpiTimerStarted(false);
+    setNonShockableEpiTimerStarted(false);
+    setEpiTimeRemaining(240);
+    setShockableEpiTimeRemaining(240);
+    setNonShockableEpiTimeRemaining(240);
     setEpiAlertActive(false);
     setAmioAlertActive(false);
     setLidoAlertActive(false);
+    setMgSo4AlertActive(false);
+    setShowMedDueModal(false);
+    setShowQuickActionModal(false);
     setIvAccessAlertActive(false);
     setAirwayAlertActive(false);
     setEtco2AlertActive(false);
@@ -1662,13 +1675,18 @@ export default function App() {
       "RETURN OF SPONTANEOUS CIRCULATION (ROSC) ACHIEVED! Initiate Post-Cardiac Arrest Care Protocol immediately."
     );
 
-    addLog("ROSC ACHIEVED!-> Switched to Post-Cardiac Arrest Care Protocol", "system");
+    addLog("ROSC ACHIEVED! -> Switched to Post-Cardiac Arrest Care Protocol", "system");
+    addLog("ROSC: ยกเลิกกระบวนการให้ยาและหยุดเวลานับถอยหลังยา Cardiac Arrest ทั้งหมด", "med");
     speakThai("ยินดีด้วยนะคะ คนไข้กลับมามีชีพจรแล้วค่ะ สิ้นสุดกระบวนการฟื้นคืนชีพ และเริ่มทำตามแนวทางการดูแลหลังกู้ชีพจรสำเร็จทันทีค่ะ");
     setActiveTab('trc_rosc');
     setMobileViewTab('guidelines');
   };
 
   const handleAdministerEpinephrine = () => {
+    if (lastRhythmDecision === 'rosc') {
+      speakThai("ผู้ป่วยมีชีพจรแล้วค่ะ สิ้นสุดการให้ยาในภาวะหัวใจหยุดเต้น");
+      return;
+    }
     if (!caseActive) {
       setCaseActive(true);
       setCaseStartTime(Date.now());
@@ -1801,6 +1819,10 @@ export default function App() {
   };
 
   const handleAdministerAmiodarone = () => {
+    if (lastRhythmDecision === 'rosc') {
+      speakThai("ผู้ป่วยมีชีพจรแล้วค่ะ สิ้นสุดการให้ยาในภาวะหัวใจหยุดเต้น");
+      return;
+    }
     if (!caseActive) {
       setCaseActive(true);
       setCaseStartTime(Date.now());
@@ -1826,6 +1848,10 @@ export default function App() {
   };
 
   const handleAdministerLidocaine = () => {
+    if (lastRhythmDecision === 'rosc') {
+      speakThai("ผู้ป่วยมีชีพจรแล้วค่ะ สิ้นสุดการให้ยาในภาวะหัวใจหยุดเต้น");
+      return;
+    }
     if (!caseActive) {
       setCaseActive(true);
       setCaseStartTime(Date.now());
@@ -2112,6 +2138,8 @@ export default function App() {
     setCprTimeRemaining(120);
     setCprActive(false);
     setNoPulseConfirmed(false);
+    setPulseRhythmsUnlocked(false);
+    setMetronomeMode('30:2');
     setCprCycle(1);
     setCprSubCycle302(1);
     cprSubCycleRef.current = 1;
@@ -2579,6 +2607,8 @@ export default function App() {
               onOpenQuickActionModal={() => setShowQuickActionModal(true)}
               shockCount={shockCount}
               shockButtonFlashing={shockButtonFlashing}
+              pulseUnlocked={pulseRhythmsUnlocked}
+              setPulseUnlocked={setPulseRhythmsUnlocked}
             />
           </div>
         </div>
