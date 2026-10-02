@@ -110,11 +110,17 @@ interface GuidancePanelProps {
   onOpenStableBradyModal?: () => void;
   onOpenStableTachyModal?: () => void;
   onOpenUnstableTachyModal?: () => void;
+  setMobileViewTab?: (tab: 'cpr' | 'meds' | 'guidelines' | 'logs') => void;
+  setGuidanceMessage?: (msg: string) => void;
+  playAlertChime?: (type: 'cpr_expire' | 'pulse_check' | 'med_due' | 'vent_cue' | 'mode_switch' | 'test') => void;
 }
 
 export function GuidancePanel({
   activeTab,
   setActiveTab,
+  setMobileViewTab,
+  setGuidanceMessage,
+  playAlertChime,
   guidanceMessage,
   lastRhythmDecision,
   selectedShockableRhythm,
@@ -315,9 +321,43 @@ export function GuidancePanel({
     }
 
     // ทำรายการสำเร็จ
-    setRoscCheckedSteps((prev) => [...prev, step.id]);
+    setRoscCheckedSteps((prev) => {
+      const next = [...prev, step.id];
+      const isCompletedAll = next.length === ROSC_STEPS_LIST.length;
+
+      if (isCompletedAll) {
+        // เมื่อกดเลือก ROSC ครบทั้งหมด A-F:
+        // 1. ส่งเสียง Chime เตือน
+        playAlertChime?.('med_due');
+
+        // 2. บันทึกประวัติ และอัปเดต Guidance Message
+        addLog('ROSC PROTOCOL COMPLETE: ปฏิบัติการดูแลหลังกู้ชีพจรสำเร็จครบทุกขั้นตอน (A-F) -> แนะนำให้ค้นหาและแก้ไข 5Hs & 5Ts Reversible Causes ทันที', 'system');
+        if (setGuidanceMessage) {
+          setGuidanceMessage('⚡ ROSC PROTOCOL COMPLETED! ตรวจหาสาเหตุและแก้ไข 5Hs & 5Ts Reversible Causes ทันที');
+        }
+
+        // 3. ส่งเสียงเตือนภาษาไทยค้นหา 5H 5T และสลับหน้า
+        speakThai?.(
+          'ดูแลหลังกู้ชีพจรสำเร็จครบถ้วนแล้วค่ะ กรุณาค้นหาสาเหตุ 5H 5T ที่ทำให้หัวใจหยุดเต้นต่อนะคะ',
+          () => {
+            setActiveTab('hsts');
+            if (setMobileViewTab) setMobileViewTab('guidelines');
+          },
+          1.05
+        );
+
+        // 4. สลับมาหน้า 5H 5T ทันที (พร้อม Fallback Timer)
+        setTimeout(() => {
+          setActiveTab('hsts');
+          if (setMobileViewTab) setMobileViewTab('guidelines');
+        }, 1600);
+      } else {
+        speakThai?.(step.voiceText);
+      }
+
+      return next;
+    });
     addLog(step.logText, 'system');
-    speakThai?.(step.voiceText);
   };
 
   const [localAbcCompletedSteps, setLocalAbcCompletedSteps] = useState<string[]>([]);
@@ -393,19 +433,24 @@ export function GuidancePanel({
           onClick={() => setActiveTab('trc_rosc')}
           className={`shrink-0 w-[62px] py-1.5 px-1 rounded-lg text-[10px] sm:text-[11px] font-black transition-all cursor-pointer whitespace-nowrap flex items-center justify-center gap-1 ${
             activeTab === 'trc_rosc'
-              ? 'bg-emerald-600 text-white shadow-xs'
+              ? 'bg-emerald-600 text-white shadow-xs ring-1 ring-emerald-400'
+              : isAllRoscDone
+              ? 'text-emerald-300 bg-emerald-950/40 border border-emerald-800'
               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
           }`}
         >
           <Heart className="w-3.5 h-3.5 shrink-0" />
           <span className="truncate">ROSC</span>
+          {isAllRoscDone && <Check className="w-2.5 h-2.5 text-emerald-400 stroke-[3]" />}
         </button>
 
         <button
           onClick={() => setActiveTab('hsts')}
           className={`shrink-0 w-[82px] py-1.5 px-1 rounded-lg text-[10px] sm:text-[11px] font-black transition-all cursor-pointer whitespace-nowrap flex items-center justify-center gap-1 ${
             activeTab === 'hsts'
-              ? 'bg-cyan-600 text-white shadow-xs'
+              ? 'bg-cyan-600 text-white shadow-xs ring-1 ring-cyan-300'
+              : isAllRoscDone
+              ? 'text-cyan-300 bg-cyan-950/80 border border-cyan-400/80 shadow-[0_0_10px_rgba(6,182,212,0.4)] animate-pulse hover:bg-cyan-900/60'
               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
           }`}
         >
@@ -708,6 +753,37 @@ export function GuidancePanel({
                   );
                 })}
               </div>
+
+              {/* Completed Notice Banner with Action to 5H 5T */}
+              {isAllRoscDone && (
+                <div className="p-3 rounded-xl bg-gradient-to-r from-emerald-950/90 via-cyan-950/80 to-slate-900 border-2 border-cyan-400 shadow-xl shadow-cyan-950/40 flex flex-col sm:flex-row items-center justify-between gap-2.5 animate-in fade-in duration-300">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="p-1.5 bg-cyan-500/20 text-cyan-300 rounded-lg border border-cyan-500/40 shrink-0">
+                      <Sparkles className="w-4 h-4 text-cyan-300 animate-spin" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-black text-white flex items-center gap-1.5">
+                        <Check className="w-3.5 h-3.5 text-emerald-400 stroke-[3]" />
+                        ดูแลหลังกู้ชีพจร (ROSC) ครบถ้วนแล้ว
+                      </h4>
+                      <p className="text-[10.5px] text-cyan-200/90">
+                        ขั้นตอนถัดไป: ตรวจสอบและแก้ไข <strong>5Hs & 5Ts Reversible Causes</strong>
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveTab('hsts');
+                      if (setMobileViewTab) setMobileViewTab('guidelines');
+                    }}
+                    className="w-full sm:w-auto px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-500 hover:to-teal-500 text-white font-bold text-xs shadow-md shadow-cyan-600/30 flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 transition-all shrink-0"
+                  >
+                    <span>สลับไปหน้า 5Hs & 5Ts ทันที</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         )}

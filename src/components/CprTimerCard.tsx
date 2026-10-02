@@ -1016,28 +1016,44 @@ export function CprTimerCard({
                 return (
                   <button
                     key={cycleNum}
+                    type="button"
                     onClick={() => {
                       setCprSubCycle302(cycleNum);
                       cprSubCycleRef.current = cycleNum;
-                      addLog(`Manually set 30:2 CPR CYCLE to ${cycleNum}/5`, 'cpr');
-                      if (cycleNum === 1) {
-                        speakThai("รอบหนึ่ง", undefined, 1.0);
-                      } else if (cycleNum === 2) {
-                        speakThai("รอบสอง", undefined, 1.0);
-                      } else if (cycleNum === 3) {
-                        speakThai("รอบสาม", undefined, 1.0);
-                      } else if (cycleNum === 4) {
-                        speakThai("รอบสี่", undefined, 1.0);
-                      } else if (cycleNum === 5) {
-                        speakThai("รอบที่ห้า เตรียมเปลี่ยนค่ะ", undefined, 1.05);
+                      if (!cprActive) {
+                        if (setNoPulseConfirmed) {
+                          setNoPulseConfirmed(true);
+                        }
+                        addLog(`เลือกและเริ่ม CPR 30:2 รอบ ${cycleNum}/5 ทันที`, 'cpr');
+                        if (startCPR) {
+                          startCPR();
+                        } else {
+                          toggleCPR();
+                        }
+                      } else {
+                        addLog(`ปรับเปลี่ยนเป็น CPR 30:2 รอบ ${cycleNum}/5`, 'cpr');
+                        if (cycleNum === 1) {
+                          speakThai("รอบหนึ่ง", undefined, 1.05);
+                        } else if (cycleNum === 2) {
+                          speakThai("รอบสอง", undefined, 1.1);
+                        } else if (cycleNum === 3) {
+                          speakThai("รอบสาม", undefined, 1.1);
+                        } else if (cycleNum === 4) {
+                          speakThai("รอบสี่", undefined, 1.1);
+                        } else if (cycleNum === 5) {
+                          speakThai("รอบที่ห้า เตรียมเปลี่ยนค่ะ", undefined, 1.05);
+                        }
                       }
                     }}
-                    className={`px-1.5 xs:px-2 py-0.5 rounded text-[9px] xs:text-[10px] font-mono font-black transition-all cursor-pointer ${
+                    title={`กดเพื่อเริ่ม CPR 30:2 รอบที่ ${cycleNum}/5 ทันที`}
+                    className={`px-1.5 xs:px-2 py-0.5 rounded text-[9px] xs:text-[10px] font-mono font-black transition-all cursor-pointer select-none active:scale-95 ${
                       isActive
-                        ? 'bg-cyan-600 text-white ring-1 ring-cyan-400'
+                        ? cprActive
+                          ? 'bg-cyan-500 text-white shadow-md shadow-cyan-500/50 ring-2 ring-cyan-300 animate-pulse'
+                          : 'bg-cyan-600 text-white ring-1 ring-cyan-400'
                         : isDone
-                          ? 'bg-emerald-950 text-emerald-400 border border-emerald-800'
-                          : 'bg-slate-900 text-slate-400 border border-slate-800 hover:bg-slate-800'
+                          ? 'bg-emerald-950 text-emerald-400 border border-emerald-800 hover:bg-emerald-900/60'
+                          : 'bg-slate-900 text-slate-400 border border-slate-800 hover:bg-slate-800 hover:text-white'
                     }`}
                   >
                     {isDone ? <Check className="w-3 h-3 text-emerald-400" /> : `${cycleNum}`}
@@ -1098,31 +1114,31 @@ export function CprTimerCard({
             onClick={handleStartBtnClick}
             className={`w-full h-full text-white rounded-xl text-xs xs:text-sm sm:text-base font-bold flex items-center justify-center gap-1.5 xs:gap-2 shadow-md transition-all duration-200 active:scale-[0.98] border pl-10 xs:pl-12 sm:pl-13 pr-2 select-none cursor-pointer ${
               cprActive
-                ? 'bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 border-amber-400/80 shadow-amber-900/30 ring-2 ring-amber-500/20'
+                ? 'bg-gradient-to-r from-red-600 via-rose-600 to-red-700 hover:from-red-500 hover:to-rose-500 border-white/90 shadow-red-900/50 ring-2 ring-red-400/50 text-white'
                 : !noPulseConfirmed
-                  ? 'bg-slate-900/90 hover:bg-slate-800/90 text-slate-300 border-slate-700/80 hover:border-rose-500/40 shadow-inner'
+                  ? 'bg-slate-900/90 hover:bg-slate-800/90 text-slate-200 border-slate-700/80 hover:border-blue-500/50 shadow-inner'
                   : cprButtonFlash
-                    ? 'bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 border-rose-400 animate-pulse ring-4 ring-rose-500/50'
-                    : 'bg-gradient-to-r from-cyan-600 via-cyan-500 to-teal-500 hover:from-cyan-500 hover:to-teal-400 border-cyan-300/80 shadow-[0_0_16px_rgba(6,182,212,0.45)] ring-2 ring-cyan-400/40 animate-pulse'
+                    ? 'bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 border-white animate-pulse ring-4 ring-red-500/50 text-white'
+                    : 'bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 border-white/90 shadow-[0_0_18px_rgba(37,99,235,0.5)] ring-2 ring-blue-400/50 animate-pulse text-white'
             }`}
           >
             {cprActive ? (
               <>
-                <Activity className="w-4 h-4 xs:w-5 xs:h-5 animate-bounce text-amber-100 shrink-0" />
-                <span className="tracking-wide font-black truncate">PAUSE CPR</span>
+                <Activity className="w-4 h-4 xs:w-5 xs:h-5 animate-bounce text-white shrink-0" />
+                <span className="tracking-wide font-black truncate text-white drop-shadow">PAUSE CPR</span>
               </>
             ) : !noPulseConfirmed ? (
               <div className="flex items-center gap-1 xs:gap-1.5 truncate">
-                <span className="tracking-wide font-black truncate text-[11px] xs:text-xs sm:text-sm text-slate-300">
+                <span className="tracking-wide font-black truncate text-[11px] xs:text-xs sm:text-sm text-slate-200">
                   START CPR
                 </span>
-                <span className="text-[8px] xs:text-[9px] font-bold text-rose-300 bg-rose-950/80 border border-rose-800/70 px-1 py-0.2 rounded shrink-0">
+                <span className="text-[8px] xs:text-[9px] font-bold text-white bg-red-900/90 border border-red-500 px-1.5 py-0.2 rounded shrink-0">
                   กด No Pulse ก่อน
                 </span>
               </div>
             ) : (
               <>
-                <Activity className="w-4 h-4 xs:w-5 xs:h-5 text-cyan-100 shrink-0" />
+                <Activity className="w-4 h-4 xs:w-5 xs:h-5 text-white shrink-0" />
                 <span className="tracking-wide font-black truncate text-white drop-shadow">
                   START CPR
                 </span>
@@ -1137,28 +1153,28 @@ export function CprTimerCard({
           onClick={resetCPRCycle}
           disabled={!caseActive}
           title="Reset CPR Timer to 02:00"
-          className="col-span-3 xs:col-span-2 sm:col-span-2 h-11 xs:h-12 bg-slate-800/80 hover:bg-slate-700/90 text-slate-300 hover:text-white rounded-xl flex flex-col items-center justify-center transition-all duration-200 active:scale-[0.96] cursor-pointer border border-slate-700/80 backdrop-blur-sm shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
+          className="col-span-3 xs:col-span-2 sm:col-span-2 h-11 xs:h-12 bg-slate-900/90 hover:bg-blue-950/80 text-slate-200 hover:text-white rounded-xl flex flex-col items-center justify-center transition-all duration-200 active:scale-[0.96] cursor-pointer border border-blue-900/40 hover:border-blue-500/60 backdrop-blur-sm shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          <RotateCcw className="w-3.5 h-3.5 xs:w-4 xs:h-4" />
-          <span className="text-[8px] xs:text-[9px] font-mono mt-0.5 text-slate-400">Reset</span>
+          <RotateCcw className="w-3.5 h-3.5 xs:w-4 xs:h-4 text-blue-400" />
+          <span className="text-[8px] xs:text-[9px] font-mono mt-0.5 text-slate-300">Reset</span>
         </button>
 
-        {/* Pulse & EKG Assessment Trigger Button */}
+        {/* Pulse & EKG Assessment Trigger Button (White, Red, Blue Theme) */}
         <button
           id="btn_pulse_check_trigger"
           onClick={startPulseCheck}
           title="Start 10-Second Pulse & EKG Check Timer"
           className={`col-span-3 xs:col-span-3 sm:col-span-2 h-11 xs:h-12 rounded-xl flex flex-col items-center justify-center transition-all duration-200 active:scale-[0.96] cursor-pointer border backdrop-blur-md shadow-sm group relative overflow-hidden ${
             pulseCheckActive
-              ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 font-black border-amber-300 shadow-lg shadow-amber-500/25 animate-pulse ring-2 ring-amber-300/70'
-              : 'bg-gradient-to-b from-amber-500/10 via-slate-900/90 to-slate-950/80 hover:from-amber-500/20 hover:via-slate-800/90 hover:to-slate-900 border-amber-500/30 hover:border-amber-400/60 ring-1 ring-amber-500/10 hover:ring-amber-400/30 text-amber-200 shadow-slate-950/50'
+              ? 'bg-gradient-to-r from-red-600 via-rose-600 to-blue-700 text-white font-black border-2 border-white shadow-lg shadow-red-600/50 animate-pulse ring-2 ring-blue-400'
+              : 'bg-gradient-to-b from-blue-950/80 via-slate-900/95 to-slate-950 hover:from-blue-900/70 hover:via-slate-850 hover:to-slate-900 border-blue-500/50 hover:border-red-500/80 ring-1 ring-blue-500/30 hover:ring-red-500/50 text-white shadow-md shadow-blue-950/50'
           }`}
         >
           <div className="flex items-center justify-center gap-1">
-            <Clock className={`w-3.5 h-3.5 transition-all duration-200 ${pulseCheckActive ? 'text-slate-950 stroke-[2.5]' : 'text-amber-400 group-hover:text-amber-300 group-hover:scale-105'}`} />
-            <Activity className={`w-3 h-3 transition-all duration-200 ${pulseCheckActive ? 'text-slate-950 stroke-[2.5]' : 'text-amber-300 group-hover:text-amber-200 group-hover:scale-105'}`} />
+            <Clock className={`w-3.5 h-3.5 transition-all duration-200 ${pulseCheckActive ? 'text-white stroke-[2.5]' : 'text-blue-400 group-hover:text-blue-300 group-hover:scale-105'}`} />
+            <Activity className={`w-3 h-3 transition-all duration-200 ${pulseCheckActive ? 'text-white stroke-[2.5]' : 'text-red-400 group-hover:text-red-300 group-hover:scale-110 animate-pulse'}`} />
           </div>
-          <span className={`text-[8px] xs:text-[9px] font-mono font-bold tracking-tight mt-0.5 transition-colors duration-200 ${pulseCheckActive ? 'text-slate-950 font-black' : 'text-amber-300/90 group-hover:text-amber-100'}`}>
+          <span className={`text-[8px] xs:text-[9px] font-mono font-bold tracking-tight mt-0.5 transition-colors duration-200 ${pulseCheckActive ? 'text-white font-black drop-shadow' : 'text-slate-100 group-hover:text-white'}`}>
             10s Check
           </span>
         </button>

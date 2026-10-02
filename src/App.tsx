@@ -26,6 +26,8 @@ import { InstallPromptModal } from './components/InstallPromptModal';
 import { SystemUsabilityScaleModal, SusResultData } from './components/SystemUsabilityScaleModal';
 import { MedDueModal } from './components/MedDueModal';
 import { Clock, Zap, Activity, ListFilter, Heart, Power, RotateCcw } from 'lucide-react';
+import { useScreenWakeLock } from './hooks/useScreenWakeLock';
+import { triggerHaptic, safeSpeakUtterance, unlockAudio } from './utils/deviceCompatibility';
 
 const SAVE_KEY = 'smart_acls_copilot_state_v2';
 
@@ -65,6 +67,9 @@ export default function App() {
   const [pulseRhythmsUnlocked, setPulseRhythmsUnlocked] = useState<boolean>(false);
   const [cprCycle, setCprCycle] = useState<number>(1);
   const [cprSubCycle302, setCprSubCycle302] = useState<number>(1); // 30:2 x 5 Cycles
+
+  // Universal Screen Keep-Awake / Wake Lock for iOS & Android
+  useScreenWakeLock(caseActive || cprActive);
 
   const [epiTimeRemaining, setEpiTimeRemaining] = useState<number>(240); // 240s (4 minutes)
   const [epiAlertActive, setEpiAlertActive] = useState<boolean>(false);
@@ -497,6 +502,7 @@ export default function App() {
       const now = ctx.currentTime;
 
       if (type === 'cpr_expire') {
+        triggerHaptic('alert');
         [523.25, 659.25, 783.99].forEach((freq, i) => {
           const osc = ctx.createOscillator();
           const gain = ctx.createGain();
@@ -667,7 +673,7 @@ export default function App() {
         if (selectedVoice) {
           utterance.voice = selectedVoice;
         }
-        window.speechSynthesis.speak(utterance);
+        safeSpeakUtterance(utterance, handleSpeechDone);
       } catch (err) {
         console.error("Speech Synthesis error:", err);
         isSpeakingThaiRef.current = false;
@@ -760,6 +766,7 @@ export default function App() {
 
       osc.start(ctx.currentTime);
       osc.stop(ctx.currentTime + (isAccent ? 0.09 : 0.06));
+      triggerHaptic('tick');
     } catch (err) {
       console.warn("Metronome Audio API error:", err);
     }
@@ -1294,6 +1301,7 @@ export default function App() {
   };
 
   const handleDeliverShock = () => {
+    triggerHaptic('shock');
     setShockButtonFlashing(false);
     if (!caseActive) {
       setCaseActive(true);
@@ -2624,6 +2632,9 @@ export default function App() {
             <GuidancePanel
               activeTab={activeTab}
               setActiveTab={setActiveTab}
+              setMobileViewTab={setMobileViewTab}
+              setGuidanceMessage={setGuidanceMessage}
+              playAlertChime={playAlertChime}
               guidanceMessage={guidanceMessage}
               lastRhythmDecision={lastRhythmDecision}
               selectedShockableRhythm={selectedShockableRhythm}

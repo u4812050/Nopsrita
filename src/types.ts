@@ -70,3 +70,17 @@ export const FIVE_TS = [
   { id: 'Thrombosis, pulmonary', label: 'Thrombosis, Pulmonary (ลิ่มเลือดอุดกั้นปอด)', desc: 'พิจารณาให้ยาสลายลิ่มเลือด Thrombolytic' },
   { id: 'Thrombosis, coronary', label: 'Thrombosis, Coronary (กล้ามเนื้อหัวใจขาดเลือด)', desc: 'ส่งทำฉีดสีหลอดเลือดหัวใจ CAG / PCI' }
 ];
+
+export interface SusRecord {
+  id: string;
+  timestamp: string;
+  score: number;
+  grade: string;
+  adjective: string;
+  evaluatorName: string;
+  evaluatorRole: string;
+  department: string;
+  comments: string;
+  answers: Record<number, number>;
+}
+
