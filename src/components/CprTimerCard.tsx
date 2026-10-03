@@ -203,7 +203,7 @@ export function CprTimerCard({
           addLog("ยกเลิกการยืนยันสถานะ No Pulse", "system");
           speakThai("ยกเลิกสถานะ");
           if (setGuidanceMessage) {
-            setGuidanceMessage("กรุณากดปุ่ม No Pulse วงกลมเพื่อยืนยันก่อนจึงจะกด START CPR ได้");
+            setGuidanceMessage("กรุณากดปุ่ม No Pulse สี่เหลี่ยมเพื่อยืนยันก่อนจึงจะกด START CPR ได้");
           }
         }
         return nextVal;
@@ -223,7 +223,7 @@ export function CprTimerCard({
       if (playAlertChime) playAlertChime('mode_switch');
       speakThai("กรุณากดปุ่ม No Pulse เพื่อยืนยันว่าไม่มีชีพจรก่อนเริ่ม CPR ค่ะ");
       if (setGuidanceMessage) {
-        setGuidanceMessage("⚠️ ต้องกดปุ่ม 'No Pulse' วงกลมเพื่อยืนยันก่อน จึงจะกด START CPR ได้");
+        setGuidanceMessage("⚠️ ต้องกดปุ่ม 'No Pulse' สี่เหลี่ยมเพื่อยืนยันก่อน จึงจะกด START CPR ได้");
       }
       return;
     }
@@ -1067,9 +1067,9 @@ export function CprTimerCard({
 
       {/* Actions Row */}
       <div className="grid grid-cols-12 gap-1.5 xs:gap-2 w-full mt-1 shrink-0">
-        {/* Main Start / Pause CPR Button Container with Overlaid Circular No Pulse Button */}
+        {/* Main Start / Pause CPR Button Container with Overlaid Rectangular No Pulse Button */}
         <div className="relative col-span-6 xs:col-span-7 sm:col-span-8 h-11 xs:h-12 flex items-center">
-          {/* Overlaid Circular No Pulse Button */}
+          {/* Overlaid Rectangular No Pulse Button covering Start CPR */}
           <button
             id="btn_no_pulse"
             type="button"
@@ -1082,27 +1082,34 @@ export function CprTimerCard({
                 ? "ยืนยันตรวจไม่พบชีพจร (No Pulse) แล้ว (กดเพื่อยกเลิก)"
                 : "กดเพื่อยืนยันตรวจไม่พบชีพจร (No Pulse) — เมื่อเสียงพูดจบจะเริ่ม START CPR อัตโนมัติ"
             }
-            className={`absolute left-1 xs:left-1.5 top-1/2 -translate-y-1/2 z-20 w-8.5 h-8.5 xs:w-9.5 xs:h-9.5 sm:w-10 sm:h-10 rounded-full flex flex-col items-center justify-center cursor-pointer select-none transition-all duration-200 border-2 shadow-lg active:scale-90 ${
+            className={
               noPulseConfirmed
-                ? 'bg-gradient-to-b from-emerald-500 via-emerald-600 to-teal-700 border-emerald-300 text-white shadow-[0_0_12px_rgba(16,185,129,0.85)] ring-2 ring-emerald-400/40 hover:scale-105'
-                : highlightNoPulse
-                  ? 'bg-gradient-to-b from-rose-500 via-red-600 to-rose-700 border-white text-white shadow-[0_0_20px_rgba(244,63,94,1)] ring-4 ring-rose-400 animate-bounce scale-110'
-                  : 'bg-gradient-to-b from-rose-600 via-rose-600 to-red-700 border-rose-300 text-white shadow-[0_0_14px_rgba(244,63,94,0.85)] ring-2 ring-rose-500/50 animate-pulse hover:scale-105'
-            }`}
+                ? 'absolute left-1 xs:left-1.5 top-1/2 -translate-y-1/2 z-20 h-7 xs:h-8 px-2 rounded-lg flex items-center justify-center gap-1 cursor-pointer select-none transition-all duration-200 border shadow-md active:scale-90 bg-gradient-to-r from-emerald-600 to-teal-700 border-emerald-300 text-white shadow-[0_0_10px_rgba(16,185,129,0.7)] hover:scale-105'
+                : `absolute inset-0 z-20 w-full h-full rounded-xl flex items-center justify-center gap-1.5 xs:gap-2 cursor-pointer select-none transition-all duration-200 border-2 shadow-lg active:scale-[0.98] ${
+                    highlightNoPulse
+                      ? 'bg-gradient-to-r from-rose-500 via-red-600 to-rose-700 border-white text-white shadow-[0_0_20px_rgba(244,63,94,1)] ring-4 ring-rose-400 animate-bounce'
+                      : 'bg-gradient-to-r from-red-600 via-rose-600 to-red-700 hover:from-red-500 hover:to-rose-500 border-white text-white shadow-[0_0_16px_rgba(244,63,94,0.85)] ring-2 ring-red-400/50 animate-pulse hover:scale-[1.01]'
+                  }`
+            }
           >
             {noPulseConfirmed ? (
-              <div className="flex flex-col items-center justify-center leading-none">
-                <Check className="w-3.5 h-3.5 xs:w-4 xs:h-4 stroke-[3] text-emerald-100 drop-shadow" />
-                <span className="text-[6px] font-black uppercase tracking-tighter text-emerald-100 mt-0.5">
+              <div className="flex items-center gap-1 leading-none">
+                <Check className="w-3.5 h-3.5 stroke-[3] text-emerald-100 drop-shadow" />
+                <span className="text-[7.5px] xs:text-[8.5px] font-black uppercase tracking-tighter text-emerald-100">
                   No Pulse
                 </span>
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center leading-none">
-                <HeartOff className="w-3 h-3 xs:w-3.5 xs:h-3.5 stroke-[2.5] text-rose-100 drop-shadow" />
-                <span className="text-[6px] font-black uppercase tracking-tight text-white font-mono mt-0.5">
-                  No Pulse
-                </span>
+              <div className="flex items-center justify-center gap-1.5 xs:gap-2 px-2 w-full truncate">
+                <HeartOff className="w-4 h-4 xs:w-5 xs:h-5 stroke-[2.5] text-white drop-shadow shrink-0 animate-pulse" />
+                <div className="flex flex-col items-center justify-center leading-none truncate">
+                  <span className="text-xs xs:text-sm sm:text-base font-black uppercase tracking-tight text-white font-mono drop-shadow truncate">
+                    NO PULSE (ตรวจไม่พบชีพจร)
+                  </span>
+                  <span className="text-[7px] xs:text-[8px] font-bold text-red-100 font-mono tracking-tighter mt-0.5 truncate">
+                    แตะสี่เหลี่ยมนี้เพื่อยืนยัน &amp; เริ่ม CPR
+                  </span>
+                </div>
               </div>
             )}
           </button>
@@ -1112,7 +1119,9 @@ export function CprTimerCard({
             id="start-btn"
             type="button"
             onClick={handleStartBtnClick}
-            className={`w-full h-full text-white rounded-xl text-xs xs:text-sm sm:text-base font-bold flex items-center justify-center gap-1.5 xs:gap-2 shadow-md transition-all duration-200 active:scale-[0.98] border pl-10 xs:pl-12 sm:pl-13 pr-2 select-none cursor-pointer ${
+            className={`w-full h-full text-white rounded-xl text-xs xs:text-sm sm:text-base font-bold flex items-center justify-center gap-1.5 xs:gap-2 shadow-md transition-all duration-200 active:scale-[0.98] border select-none cursor-pointer ${
+              noPulseConfirmed ? 'pl-20 xs:pl-22 sm:pl-24 pr-2' : 'px-3'
+            } ${
               cprActive
                 ? 'bg-gradient-to-r from-red-600 via-rose-600 to-red-700 hover:from-red-500 hover:to-rose-500 border-white/90 shadow-red-900/50 ring-2 ring-red-400/50 text-white'
                 : !noPulseConfirmed
@@ -1131,9 +1140,6 @@ export function CprTimerCard({
               <div className="flex items-center gap-1 xs:gap-1.5 truncate">
                 <span className="tracking-wide font-black truncate text-[11px] xs:text-xs sm:text-sm text-slate-200">
                   START CPR
-                </span>
-                <span className="text-[8px] xs:text-[9px] font-bold text-white bg-red-900/90 border border-red-500 px-1.5 py-0.2 rounded shrink-0">
-                  กด No Pulse ก่อน
                 </span>
               </div>
             ) : (
