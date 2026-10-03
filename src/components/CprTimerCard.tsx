@@ -189,7 +189,7 @@ export function CprTimerCard({
           addLog("คลำชีพจร: ยืนยันไม่พบชีพจร (No Pulse) — พร้อมเริ่ม CPR", "rhythm");
           if (playAlertChime) playAlertChime('pulse_check');
           if (setGuidanceMessage) {
-            setGuidanceMessage("⚡ ยืนยันตรวจไม่พบชีพจร (No Pulse) • กำลังเริ่ม CPR อัตโนมัติเมื่อเสียงพูดจบ...");
+            setGuidanceMessage("⚡ ยืนยันไม่พบชีพจร (No Pulse) • กำลังเริ่ม CPR อัตโนมัติเมื่อเสียงพูดจบ...");
           }
           speakThai("ไม่พบชีพจรเริ่มซีพีอาได้ค่ะ", () => {
             // เมื่อพูดบทปุ่มนี้จบลง ให้เริ่ม start CPR อัตโนมัติ (หากยังยืนยันสถานะ No Pulse และยังไม่ได้เริ่ม CPR)
@@ -1079,8 +1079,8 @@ export function CprTimerCard({
             }}
             title={
               noPulseConfirmed
-                ? "ยืนยันตรวจไม่พบชีพจร (No Pulse) แล้ว (กดเพื่อยกเลิก)"
-                : "กดเพื่อยืนยันตรวจไม่พบชีพจร (No Pulse) — เมื่อเสียงพูดจบจะเริ่ม START CPR อัตโนมัติ"
+                ? "ยืนยันไม่พบชีพจร (No Pulse) แล้ว (กดเพื่อยกเลิก)"
+                : "กดเพื่อยืนยันไม่พบชีพจร (No Pulse) — เมื่อเสียงพูดจบจะเริ่ม START CPR อัตโนมัติ"
             }
             className={
               noPulseConfirmed
@@ -1104,7 +1104,7 @@ export function CprTimerCard({
                 <HeartOff className="w-4 h-4 xs:w-5 xs:h-5 stroke-[2.5] text-white drop-shadow shrink-0 animate-pulse" />
                 <div className="flex flex-col items-center justify-center leading-none truncate">
                   <span className="text-xs xs:text-sm sm:text-base font-black uppercase tracking-tight text-white font-mono drop-shadow truncate">
-                    NO PULSE (ตรวจไม่พบชีพจร)
+                    NO PULSE(ไม่พบชีพจร)
                   </span>
                   <span className="text-[7px] xs:text-[8px] font-bold text-red-100 font-mono tracking-tighter mt-0.5 truncate">
                     แตะสี่เหลี่ยมนี้เพื่อยืนยัน &amp; เริ่ม CPR
